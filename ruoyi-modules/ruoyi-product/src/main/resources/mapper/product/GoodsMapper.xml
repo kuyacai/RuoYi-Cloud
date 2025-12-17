@@ -1,0 +1,133 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.ruoyi.product.mapper.GoodsMapper">
+    
+    <resultMap type="Goods" id="GoodsResult">
+        <result property="goodsId"    column="goods_id"    />
+        <result property="migrateSource"    column="migrate_source"    />
+        <result property="sourceShopName"    column="source_shop_name"    />
+        <result property="sourceId"    column="source_id"    />
+        <result property="sourceTitle"    column="source_title"    />
+        <result property="sourceUrl"    column="source_url"    />
+        <result property="sourceCategory"    column="source_category"    />
+        <result property="customerPhone"    column="customer_phone"    />
+        <result property="sourceItemNo"    column="source_item_no"    />
+        <result property="brand"    column="brand"    />
+        <result property="shopProductId"    column="shop_product_id"    />
+        <result property="shopId"    column="shop_id"    />
+        <result property="goodsStatus"    column="goods_status"    />
+        <result property="gmtCreate"    column="gmt_create"    />
+        <result property="gmtModified"    column="gmt_modified"    />
+    </resultMap>
+
+    <sql id="selectGoodsVo">
+        select goods_id, migrate_source, source_shop_name, source_id, source_title, source_url, source_category, customer_phone, source_item_no, brand, shop_product_id, shop_id, goods_status, gmt_create, gmt_modified from goods
+    </sql>
+
+    <select id="selectGoodsList" parameterType="Goods" resultMap="GoodsResult">
+        <include refid="selectGoodsVo"/>
+        <where>  
+            <if test="migrateSource != null  and migrateSource != ''"> and migrate_source = #{migrateSource}</if>
+            <if test="sourceShopName != null  and sourceShopName != ''"> and source_shop_name like concat('%', #{sourceShopName}, '%')</if>
+            <if test="sourceId != null  and sourceId != ''"> and source_id = #{sourceId}</if>
+            <if test="sourceTitle != null  and sourceTitle != ''"> and source_title = #{sourceTitle}</if>
+            <if test="sourceUrl != null  and sourceUrl != ''"> and source_url = #{sourceUrl}</if>
+            <if test="sourceCategory != null  and sourceCategory != ''"> and source_category = #{sourceCategory}</if>
+            <if test="customerPhone != null  and customerPhone != ''"> and customer_phone = #{customerPhone}</if>
+            <if test="sourceItemNo != null  and sourceItemNo != ''"> and source_item_no = #{sourceItemNo}</if>
+            <if test="brand != null  and brand != ''"> and brand = #{brand}</if>
+            <if test="shopProductId != null  and shopProductId != ''"> and shop_product_id = #{shopProductId}</if>
+            <if test="shopId != null  and shopId != ''"> and shop_id = #{shopId}</if>
+            <if test="goodsStatus != null  and goodsStatus != ''"> and goods_status = #{goodsStatus}</if>
+            <if test="gmtCreate != null "> and gmt_create = #{gmtCreate}</if>
+            <if test="gmtModified != null "> and gmt_modified = #{gmtModified}</if>
+        </where>
+    </select>
+    
+    <select id="selectGoodsByGoodsId" parameterType="String" resultMap="GoodsResult">
+        <include refid="selectGoodsVo"/>
+        where goods_id = #{goodsId}
+    </select>
+
+    <insert id="insertGoods" parameterType="Goods">
+        insert into goods
+        <trim prefix="(" suffix=")" suffixOverrides=",">
+            <if test="goodsId != null">goods_id,</if>
+            <if test="migrateSource != null">migrate_source,</if>
+            <if test="sourceShopName != null">source_shop_name,</if>
+            <if test="sourceId != null">source_id,</if>
+            <if test="sourceTitle != null">source_title,</if>
+            <if test="sourceUrl != null">source_url,</if>
+            <if test="sourceCategory != null">source_category,</if>
+            <if test="customerPhone != null">customer_phone,</if>
+            <if test="sourceItemNo != null">source_item_no,</if>
+            <if test="brand != null">brand,</if>
+            <if test="shopProductId != null">shop_product_id,</if>
+            <if test="shopId != null">shop_id,</if>
+            <if test="goodsStatus != null">goods_status,</if>
+            <if test="gmtCreate != null">gmt_create,</if>
+            <if test="gmtModified != null">gmt_modified,</if>
+         </trim>
+        <trim prefix="values (" suffix=")" suffixOverrides=",">
+            <if test="goodsId != null">#{goodsId},</if>
+            <if test="migrateSource != null">#{migrateSource},</if>
+            <if test="sourceShopName != null">#{sourceShopName},</if>
+            <if test="sourceId != null">#{sourceId},</if>
+            <if test="sourceTitle != null">#{sourceTitle},</if>
+            <if test="sourceUrl != null">#{sourceUrl},</if>
+            <if test="sourceCategory != null">#{sourceCategory},</if>
+            <if test="customerPhone != null">#{customerPhone},</if>
+            <if test="sourceItemNo != null">#{sourceItemNo},</if>
+            <if test="brand != null">#{brand},</if>
+            <if test="shopProductId != null">#{shopProductId},</if>
+            <if test="shopId != null">#{shopId},</if>
+            <if test="goodsStatus != null">#{goodsStatus},</if>
+            <if test="gmtCreate != null">#{gmtCreate},</if>
+            <if test="gmtModified != null">#{gmtModified},</if>
+         </trim>
+    </insert>
+
+    <update id="updateGoods" parameterType="Goods">
+        update goods
+        <trim prefix="SET" suffixOverrides=",">
+            <if test="migrateSource != null">migrate_source = #{migrateSource},</if>
+            <if test="sourceShopName != null">source_shop_name = #{sourceShopName},</if>
+            <if test="sourceId != null">source_id = #{sourceId},</if>
+            <if test="sourceTitle != null">source_title = #{sourceTitle},</if>
+            <if test="sourceUrl != null">source_url = #{sourceUrl},</if>
+            <if test="sourceCategory != null">source_category = #{sourceCategory},</if>
+            <if test="customerPhone != null">customer_phone = #{customerPhone},</if>
+            <if test="sourceItemNo != null">source_item_no = #{sourceItemNo},</if>
+            <if test="brand != null">brand = #{brand},</if>
+            <if test="shopProductId != null">shop_product_id = #{shopProductId},</if>
+            <if test="shopId != null">shop_id = #{shopId},</if>
+            <if test="goodsStatus != null">goods_status = #{goodsStatus},</if>
+            <if test="gmtCreate != null">gmt_create = #{gmtCreate},</if>
+            <if test="gmtModified != null">gmt_modified = #{gmtModified},</if>
+        </trim>
+        where goods_id = #{goodsId}
+    </update>
+
+    <delete id="deleteGoodsByGoodsId" parameterType="String">
+        delete from goods where goods_id = #{goodsId}
+    </delete>
+
+    <delete id="deleteGoodsByGoodsIds" parameterType="String">
+        delete from goods where goods_id in 
+        <foreach item="goodsId" collection="array" open="(" separator="," close=")">
+            #{goodsId}
+        </foreach>
+    </delete>
+
+    <select id="countBySourceId" parameterType="String" resultType="int">
+        select count(*) from goods where source_id = #{sourceId}
+    </select>
+
+    <select id="selectGoodsBySourceId" parameterType="String" resultMap="GoodsResult">
+        <include refid="selectGoodsVo"/>
+        where source_id = #{sourceId}
+    </select>
+    
+</mapper>

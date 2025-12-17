@@ -1,0 +1,138 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.ruoyi.product.mapper.PlatformPromotionActivityMapper">
+    
+    <resultMap type="PlatformPromotionActivity" id="PlatformPromotionActivityResult">
+        <result property="activityId"    column="activity_id"    />
+        <result property="activityName"    column="activity_name"    />
+        <result property="registrationPrice"    column="registration_price"    />
+        <result property="discountType"    column="discount_type"    />
+        <result property="fixedPrice"    column="fixed_price"    />
+        <result property="deductionAmount"    column="deduction_amount"    />
+        <result property="discountRate"    column="discount_rate"    />
+        <result property="platformType"    column="platform_type"    />
+        <result property="eventCode"    column="event_code"    />
+        <result property="shopId"    column="shop_id"    />
+        <result property="startTime"    column="start_time"    />
+        <result property="endTime"    column="end_time"    />
+        <result property="discountStatus"    column="discount_status"    />
+        <result property="platformActivityId"    column="platform_activity_id"    />
+        <result property="notes"    column="notes"    />
+        <result property="applyDeadline"    column="apply_deadline"    />
+        <result property="gmtCreate"    column="gmt_create"    />
+        <result property="gmtModified"    column="gmt_modified"    />
+    </resultMap>
+
+    <sql id="selectPlatformPromotionActivityVo">
+        select activity_id, activity_name, registration_price, discount_type, fixed_price, deduction_amount, discount_rate, platform_type, event_code, shop_id, start_time, end_time, discount_status, platform_activity_id, notes, apply_deadline, gmt_create, gmt_modified from platform_promotion_activity
+    </sql>
+
+    <select id="selectPlatformPromotionActivityList" parameterType="PlatformPromotionActivity" resultMap="PlatformPromotionActivityResult">
+        <include refid="selectPlatformPromotionActivityVo"/>
+        <where>  
+            <if test="activityName != null  and activityName != ''"> and activity_name like concat('%', #{activityName}, '%')</if>
+            <if test="registrationPrice != null "> and registration_price = #{registrationPrice}</if>
+            <if test="discountType != null  and discountType != ''"> and discount_type = #{discountType}</if>
+            <if test="fixedPrice != null "> and fixed_price = #{fixedPrice}</if>
+            <if test="deductionAmount != null "> and deduction_amount = #{deductionAmount}</if>
+            <if test="discountRate != null "> and discount_rate = #{discountRate}</if>
+            <if test="platformType != null  and platformType != ''"> and platform_type = #{platformType}</if>
+            <if test="eventCode != null  and eventCode != ''"> and event_code = #{eventCode}</if>
+            <if test="shopId != null  and shopId != ''"> and shop_id = #{shopId}</if>
+            <if test="startTime != null "> and start_time = #{startTime}</if>
+            <if test="endTime != null "> and end_time = #{endTime}</if>
+            <if test="discountStatus != null  and discountStatus != ''"> and discount_status = #{discountStatus}</if>
+            <if test="platformActivityId != null  and platformActivityId != ''"> and platform_activity_id = #{platformActivityId}</if>
+            <if test="notes != null  and notes != ''"> and notes = #{notes}</if>
+            <if test="applyDeadline != null "> and apply_deadline = #{applyDeadline}</if>
+            <if test="gmtCreate != null "> and gmt_create = #{gmtCreate}</if>
+            <if test="gmtModified != null "> and gmt_modified = #{gmtModified}</if>
+        </where>
+    </select>
+    
+    <select id="selectPlatformPromotionActivityByActivityId" parameterType="String" resultMap="PlatformPromotionActivityResult">
+        <include refid="selectPlatformPromotionActivityVo"/>
+        where activity_id = #{activityId}
+    </select>
+
+    <insert id="insertPlatformPromotionActivity" parameterType="PlatformPromotionActivity">
+        insert into platform_promotion_activity
+        <trim prefix="(" suffix=")" suffixOverrides=",">
+            <if test="activityId != null">activity_id,</if>
+            <if test="activityName != null and activityName != ''">activity_name,</if>
+            <if test="registrationPrice != null">registration_price,</if>
+            <if test="discountType != null and discountType != ''">discount_type,</if>
+            <if test="fixedPrice != null">fixed_price,</if>
+            <if test="deductionAmount != null">deduction_amount,</if>
+            <if test="discountRate != null">discount_rate,</if>
+            <if test="platformType != null">platform_type,</if>
+            <if test="eventCode != null">event_code,</if>
+            <if test="shopId != null and shopId != ''">shop_id,</if>
+            <if test="startTime != null">start_time,</if>
+            <if test="endTime != null">end_time,</if>
+            <if test="discountStatus != null">discount_status,</if>
+            <if test="platformActivityId != null">platform_activity_id,</if>
+            <if test="notes != null">notes,</if>
+            <if test="applyDeadline != null">apply_deadline,</if>
+            <if test="gmtCreate != null">gmt_create,</if>
+            <if test="gmtModified != null">gmt_modified,</if>
+         </trim>
+        <trim prefix="values (" suffix=")" suffixOverrides=",">
+            <if test="activityId != null">#{activityId},</if>
+            <if test="activityName != null and activityName != ''">#{activityName},</if>
+            <if test="registrationPrice != null">#{registrationPrice},</if>
+            <if test="discountType != null and discountType != ''">#{discountType},</if>
+            <if test="fixedPrice != null">#{fixedPrice},</if>
+            <if test="deductionAmount != null">#{deductionAmount},</if>
+            <if test="discountRate != null">#{discountRate},</if>
+            <if test="platformType != null">#{platformType},</if>
+            <if test="eventCode != null">#{eventCode},</if>
+            <if test="shopId != null and shopId != ''">#{shopId},</if>
+            <if test="startTime != null">#{startTime},</if>
+            <if test="endTime != null">#{endTime},</if>
+            <if test="discountStatus != null">#{discountStatus},</if>
+            <if test="platformActivityId != null">#{platformActivityId},</if>
+            <if test="notes != null">#{notes},</if>
+            <if test="applyDeadline != null">#{applyDeadline},</if>
+            <if test="gmtCreate != null">#{gmtCreate},</if>
+            <if test="gmtModified != null">#{gmtModified},</if>
+         </trim>
+    </insert>
+
+    <update id="updatePlatformPromotionActivity" parameterType="PlatformPromotionActivity">
+        update platform_promotion_activity
+        <trim prefix="SET" suffixOverrides=",">
+            <if test="activityName != null and activityName != ''">activity_name = #{activityName},</if>
+            <if test="registrationPrice != null">registration_price = #{registrationPrice},</if>
+            <if test="discountType != null and discountType != ''">discount_type = #{discountType},</if>
+            <if test="fixedPrice != null">fixed_price = #{fixedPrice},</if>
+            <if test="deductionAmount != null">deduction_amount = #{deductionAmount},</if>
+            <if test="discountRate != null">discount_rate = #{discountRate},</if>
+            <if test="platformType != null">platform_type = #{platformType},</if>
+            <if test="eventCode != null">event_code = #{eventCode},</if>
+            <if test="shopId != null and shopId != ''">shop_id = #{shopId},</if>
+            <if test="startTime != null">start_time = #{startTime},</if>
+            <if test="endTime != null">end_time = #{endTime},</if>
+            <if test="discountStatus != null">discount_status = #{discountStatus},</if>
+            <if test="platformActivityId != null">platform_activity_id = #{platformActivityId},</if>
+            <if test="notes != null">notes = #{notes},</if>
+            <if test="applyDeadline != null">apply_deadline = #{applyDeadline},</if>
+            <if test="gmtCreate != null">gmt_create = #{gmtCreate},</if>
+            <if test="gmtModified != null">gmt_modified = #{gmtModified},</if>
+        </trim>
+        where activity_id = #{activityId}
+    </update>
+
+    <delete id="deletePlatformPromotionActivityByActivityId" parameterType="String">
+        delete from platform_promotion_activity where activity_id = #{activityId}
+    </delete>
+
+    <delete id="deletePlatformPromotionActivityByActivityIds" parameterType="String">
+        delete from platform_promotion_activity where activity_id in 
+        <foreach item="activityId" collection="array" open="(" separator="," close=")">
+            #{activityId}
+        </foreach>
+    </delete>
+</mapper>

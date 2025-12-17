@@ -1,0 +1,108 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.ruoyi.product.mapper.NewUserGiftConfigMapper">
+    
+    <resultMap type="NewUserGiftConfig" id="NewUserGiftConfigResult">
+        <result property="id"    column="id"    />
+        <result property="configName"    column="config_name"    />
+        <result property="priceMin"    column="price_min"    />
+        <result property="priceMax"    column="price_max"    />
+        <result property="avgAmount"    column="avg_amount"    />
+        <result property="maxGiftAmount"    column="max_gift_amount"    />
+        <result property="referenceAmountLow"    column="reference_amount_low"    />
+        <result property="referenceAmountHigh"    column="reference_amount_high"    />
+        <result property="discountRate"    column="discount_rate"    />
+        <result property="configStatus"    column="config_status"    />
+        <result property="gmtCreate"    column="gmt_create"    />
+        <result property="gmtModified"    column="gmt_modified"    />
+    </resultMap>
+
+    <sql id="selectNewUserGiftConfigVo">
+        select id, config_name, price_min, price_max, avg_amount, max_gift_amount, reference_amount_low, reference_amount_high, discount_rate, config_status, gmt_create, gmt_modified from new_user_gift_config
+    </sql>
+
+    <select id="selectNewUserGiftConfigList" parameterType="NewUserGiftConfig" resultMap="NewUserGiftConfigResult">
+        <include refid="selectNewUserGiftConfigVo"/>
+        <where>  
+            <if test="configName != null  and configName != ''"> and config_name like concat('%', #{configName}, '%')</if>
+            <if test="priceMin != null "> and price_min = #{priceMin}</if>
+            <if test="priceMax != null "> and price_max = #{priceMax}</if>
+            <if test="avgAmount != null "> and avg_amount = #{avgAmount}</if>
+            <if test="maxGiftAmount != null "> and max_gift_amount = #{maxGiftAmount}</if>
+            <if test="referenceAmountLow != null "> and reference_amount_low = #{referenceAmountLow}</if>
+            <if test="referenceAmountHigh != null "> and reference_amount_high = #{referenceAmountHigh}</if>
+            <if test="discountRate != null "> and discount_rate = #{discountRate}</if>
+            <if test="configStatus != null  and configStatus != ''"> and config_status = #{configStatus}</if>
+            <if test="gmtCreate != null "> and gmt_create = #{gmtCreate}</if>
+            <if test="gmtModified != null "> and gmt_modified = #{gmtModified}</if>
+        </where>
+    </select>
+    
+    <select id="selectNewUserGiftConfigById" parameterType="String" resultMap="NewUserGiftConfigResult">
+        <include refid="selectNewUserGiftConfigVo"/>
+        where id = #{id}
+    </select>
+
+    <insert id="insertNewUserGiftConfig" parameterType="NewUserGiftConfig">
+        insert into new_user_gift_config
+        <trim prefix="(" suffix=")" suffixOverrides=",">
+            <if test="id != null">id,</if>
+            <if test="configName != null">config_name,</if>
+            <if test="priceMin != null">price_min,</if>
+            <if test="priceMax != null">price_max,</if>
+            <if test="avgAmount != null">avg_amount,</if>
+            <if test="maxGiftAmount != null">max_gift_amount,</if>
+            <if test="referenceAmountLow != null">reference_amount_low,</if>
+            <if test="referenceAmountHigh != null">reference_amount_high,</if>
+            <if test="discountRate != null">discount_rate,</if>
+            <if test="configStatus != null">config_status,</if>
+            <if test="gmtCreate != null">gmt_create,</if>
+            <if test="gmtModified != null">gmt_modified,</if>
+         </trim>
+        <trim prefix="values (" suffix=")" suffixOverrides=",">
+            <if test="id != null">#{id},</if>
+            <if test="configName != null">#{configName},</if>
+            <if test="priceMin != null">#{priceMin},</if>
+            <if test="priceMax != null">#{priceMax},</if>
+            <if test="avgAmount != null">#{avgAmount},</if>
+            <if test="maxGiftAmount != null">#{maxGiftAmount},</if>
+            <if test="referenceAmountLow != null">#{referenceAmountLow},</if>
+            <if test="referenceAmountHigh != null">#{referenceAmountHigh},</if>
+            <if test="discountRate != null">#{discountRate},</if>
+            <if test="configStatus != null">#{configStatus},</if>
+            <if test="gmtCreate != null">#{gmtCreate},</if>
+            <if test="gmtModified != null">#{gmtModified},</if>
+         </trim>
+    </insert>
+
+    <update id="updateNewUserGiftConfig" parameterType="NewUserGiftConfig">
+        update new_user_gift_config
+        <trim prefix="SET" suffixOverrides=",">
+            <if test="configName != null">config_name = #{configName},</if>
+            <if test="priceMin != null">price_min = #{priceMin},</if>
+            <if test="priceMax != null">price_max = #{priceMax},</if>
+            <if test="avgAmount != null">avg_amount = #{avgAmount},</if>
+            <if test="maxGiftAmount != null">max_gift_amount = #{maxGiftAmount},</if>
+            <if test="referenceAmountLow != null">reference_amount_low = #{referenceAmountLow},</if>
+            <if test="referenceAmountHigh != null">reference_amount_high = #{referenceAmountHigh},</if>
+            <if test="discountRate != null">discount_rate = #{discountRate},</if>
+            <if test="configStatus != null">config_status = #{configStatus},</if>
+            <if test="gmtCreate != null">gmt_create = #{gmtCreate},</if>
+            <if test="gmtModified != null">gmt_modified = #{gmtModified},</if>
+        </trim>
+        where id = #{id}
+    </update>
+
+    <delete id="deleteNewUserGiftConfigById" parameterType="String">
+        delete from new_user_gift_config where id = #{id}
+    </delete>
+
+    <delete id="deleteNewUserGiftConfigByIds" parameterType="String">
+        delete from new_user_gift_config where id in 
+        <foreach item="id" collection="array" open="(" separator="," close=")">
+            #{id}
+        </foreach>
+    </delete>
+</mapper>

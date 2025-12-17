@@ -1,0 +1,108 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.ruoyi.product.mapper.GoodsRevisionImageMapper">
+    
+    <resultMap type="GoodsRevisionImage" id="GoodsRevisionImageResult">
+        <result property="imageId"    column="image_id"    />
+        <result property="revisionId"    column="revision_id"    />
+        <result property="goodsId"    column="goods_id"    />
+        <result property="goodsSkuId"    column="goods_sku_id"    />
+        <result property="imageType"    column="image_type"    />
+        <result property="sourceUrl"    column="source_url"    />
+        <result property="selfUrl"    column="self_url"    />
+        <result property="localUri"    column="local_uri"    />
+        <result property="position"    column="position"    />
+        <result property="gmtCreate"    column="gmt_create"    />
+        <result property="gmtModified"    column="gmt_modified"    />
+    </resultMap>
+
+    <sql id="selectGoodsRevisionImageVo">
+        select image_id, revision_id, goods_id, goods_sku_id, image_type, source_url, self_url, local_uri, position, gmt_create, gmt_modified from goods_revision_image
+    </sql>
+
+    <select id="selectGoodsRevisionImageList" parameterType="GoodsRevisionImage" resultMap="GoodsRevisionImageResult">
+        <include refid="selectGoodsRevisionImageVo"/>
+        <where>  
+            <if test="revisionId != null  and revisionId != ''"> and revision_id = #{revisionId}</if>
+            <if test="goodsId != null  and goodsId != ''"> and goods_id = #{goodsId}</if>
+            <if test="goodsSkuId != null  and goodsSkuId != ''"> and goods_sku_id = #{goodsSkuId}</if>
+            <if test="imageType != null  and imageType != ''"> and image_type = #{imageType}</if>
+            <if test="sourceUrl != null  and sourceUrl != ''"> and source_url = #{sourceUrl}</if>
+            <if test="selfUrl != null  and selfUrl != ''"> and self_url = #{selfUrl}</if>
+            <if test="localUri != null  and localUri != ''"> and local_uri = #{localUri}</if>
+            <if test="position != null "> and position = #{position}</if>
+            <if test="gmtCreate != null "> and gmt_create = #{gmtCreate}</if>
+            <if test="gmtModified != null "> and gmt_modified = #{gmtModified}</if>
+        </where>
+    </select>
+    
+    <select id="selectGoodsRevisionImageByImageId" parameterType="String" resultMap="GoodsRevisionImageResult">
+        <include refid="selectGoodsRevisionImageVo"/>
+        where image_id = #{imageId}
+    </select>
+
+    <insert id="insertGoodsRevisionImage" parameterType="GoodsRevisionImage">
+        insert into goods_revision_image
+        <trim prefix="(" suffix=")" suffixOverrides=",">
+            <if test="imageId != null">image_id,</if>
+            <if test="revisionId != null and revisionId != ''">revision_id,</if>
+            <if test="goodsId != null and goodsId != ''">goods_id,</if>
+            <if test="goodsSkuId != null">goods_sku_id,</if>
+            <if test="imageType != null and imageType != ''">image_type,</if>
+            <if test="sourceUrl != null and sourceUrl != ''">source_url,</if>
+            <if test="selfUrl != null">self_url,</if>
+            <if test="localUri != null">local_uri,</if>
+            <if test="position != null">position,</if>
+            <if test="gmtCreate != null">gmt_create,</if>
+            <if test="gmtModified != null">gmt_modified,</if>
+         </trim>
+        <trim prefix="values (" suffix=")" suffixOverrides=",">
+            <if test="imageId != null">#{imageId},</if>
+            <if test="revisionId != null and revisionId != ''">#{revisionId},</if>
+            <if test="goodsId != null and goodsId != ''">#{goodsId},</if>
+            <if test="goodsSkuId != null">#{goodsSkuId},</if>
+            <if test="imageType != null and imageType != ''">#{imageType},</if>
+            <if test="sourceUrl != null and sourceUrl != ''">#{sourceUrl},</if>
+            <if test="selfUrl != null">#{selfUrl},</if>
+            <if test="localUri != null">#{localUri},</if>
+            <if test="position != null">#{position},</if>
+            <if test="gmtCreate != null">#{gmtCreate},</if>
+            <if test="gmtModified != null">#{gmtModified},</if>
+         </trim>
+    </insert>
+
+    <update id="updateGoodsRevisionImage" parameterType="GoodsRevisionImage">
+        update goods_revision_image
+        <trim prefix="SET" suffixOverrides=",">
+            <if test="revisionId != null and revisionId != ''">revision_id = #{revisionId},</if>
+            <if test="goodsId != null and goodsId != ''">goods_id = #{goodsId},</if>
+            <if test="goodsSkuId != null">goods_sku_id = #{goodsSkuId},</if>
+            <if test="imageType != null and imageType != ''">image_type = #{imageType},</if>
+            <if test="sourceUrl != null and sourceUrl != ''">source_url = #{sourceUrl},</if>
+            <if test="selfUrl != null">self_url = #{selfUrl},</if>
+            <if test="localUri != null">local_uri = #{localUri},</if>
+            <if test="position != null">position = #{position},</if>
+            <if test="gmtCreate != null">gmt_create = #{gmtCreate},</if>
+            <if test="gmtModified != null">gmt_modified = #{gmtModified},</if>
+        </trim>
+        where image_id = #{imageId}
+    </update>
+
+    <delete id="deleteGoodsRevisionImageByImageId" parameterType="String">
+        delete from goods_revision_image where image_id = #{imageId}
+    </delete>
+
+    <delete id="deleteGoodsRevisionImageByImageIds" parameterType="String">
+        delete from goods_revision_image where image_id in 
+        <foreach item="imageId" collection="array" open="(" separator="," close=")">
+            #{imageId}
+        </foreach>
+    </delete>
+
+    <select id="countByRevisionIdAndSourceUrl" parameterType="map" resultType="int">
+        select count(*) from goods_revision_image
+        where revision_id = #{revisionId} and source_url = #{sourceUrl}
+    </select>
+</mapper>

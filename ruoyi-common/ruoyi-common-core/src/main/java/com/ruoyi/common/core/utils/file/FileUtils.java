@@ -250,4 +250,125 @@ public class FileUtils
         String encode = URLEncoder.encode(s, StandardCharsets.UTF_8.toString());
         return encode.replaceAll("\\+", "%20");
     }
+    /**
+     * 获取文件后缀名（包括点）
+     * 例如：test.txt -> .txt
+     * 
+     * @param filename 文件名
+     * @return 文件后缀名，如 .txt、.xlsx
+     */
+    public static String getFileSuffix(String filename) {
+        if (filename == null) {
+            return null;
+        }
+        
+        // 获取文件名（去掉路径）
+        String name = getName(filename);
+        if (name == null) {
+            return null;
+        }
+        
+        // 查找最后一个点号的位置
+        int dotIndex = name.lastIndexOf('.');
+        if (dotIndex > 0 && dotIndex < name.length() - 1) {
+            return name.substring(dotIndex);
+        }
+        
+        return "";
+    }
+    
+    /**
+     * 获取文件后缀名（不包括点）
+     * 例如：test.txt -> txt
+     * 
+     * @param filename 文件名
+     * @return 文件后缀名，如 txt、xlsx
+     */
+    public static String getFileExtension(String filename) {
+        String suffix = getFileSuffix(filename);
+        if (StringUtils.isNotEmpty(suffix) && suffix.length() > 1) {
+            return suffix.substring(1);
+        }
+        return "";
+    }
+    
+    /**
+     * 获取不带后缀的文件名
+     * 例如：test.txt -> test
+     * 
+     * @param filename 文件名
+     * @return 不包含后缀的文件名
+     */
+    public static String getFileNameWithoutSuffix(String filename) {
+        if (filename == null) {
+            return null;
+        }
+        
+        String name = getName(filename);
+        if (name == null) {
+            return null;
+        }
+        
+        int dotIndex = name.lastIndexOf('.');
+        if (dotIndex > 0) {
+            return name.substring(0, dotIndex);
+        }
+        
+        return name;
+    }
+    
+    /**
+     * 判断是否是允许的文件类型
+     * 
+     * @param filename 文件名
+     * @param allowedExtensions 允许的后缀数组，如 {"xlsx", "xls", "csv"}
+     * @return 是否允许
+     */
+    public static boolean isAllowedExtension(String filename, String[] allowedExtensions) {
+        if (StringUtils.isEmpty(filename) || allowedExtensions == null || allowedExtensions.length == 0) {
+            return false;
+        }
+        
+        String extension = getFileExtension(filename).toLowerCase();
+        for (String allowedExt : allowedExtensions) {
+            if (allowedExt.toLowerCase().equals(extension)) {
+                return true;
+            }
+        }
+        
+        return false;
+    }
+    
+    /**
+     * 检查是否是图片文件
+     * 
+     * @param filename 文件名
+     * @return 是否是图片
+     */
+    public static boolean isImage(String filename) {
+        String[] imageExtensions = {"jpg", "jpeg", "png", "gif", "bmp", "webp"};
+        return isAllowedExtension(filename, imageExtensions);
+    }
+    
+    /**
+     * 检查是否是文档文件
+     * 
+     * @param filename 文件名
+     * @return 是否是文档
+     */
+    public static boolean isDocument(String filename) {
+        String[] docExtensions = {"doc", "docx", "pdf", "txt", "xls", "xlsx", "ppt", "pptx"};
+        return isAllowedExtension(filename, docExtensions);
+    }
+    
+    /**
+     * 检查是否是视频文件
+     * 
+     * @param filename 文件名
+     * @return 是否是视频
+     */
+    public static boolean isVideo(String filename) {
+        String[] videoExtensions = {"mp4", "avi", "mov", "wmv", "flv", "mkv"};
+        return isAllowedExtension(filename, videoExtensions);
+    }
 }

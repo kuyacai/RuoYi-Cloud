@@ -1,0 +1,103 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.ruoyi.product.mapper.ShopListingSkuMapper">
+    
+    <resultMap type="ShopListingSku" id="ShopListingSkuResult">
+        <result property="listingSkuId"    column="listing_sku_id"    />
+        <result property="listingSpuId"    column="listing_spu_id"    />
+        <result property="shopId"    column="shop_id"    />
+        <result property="shopProductId"    column="shop_product_id"    />
+        <result property="shopSkuId"    column="shop_sku_id"    />
+        <result property="itemId"    column="item_id"    />
+        <result property="marketPrice"    column="market_price"    />
+        <result property="channelStock"    column="channel_stock"    />
+        <result property="skuStatus"    column="sku_status"    />
+        <result property="gmtCreate"    column="gmt_create"    />
+        <result property="gmtModified"    column="gmt_modified"    />
+    </resultMap>
+
+    <sql id="selectShopListingSkuVo">
+        select listing_sku_id, listing_spu_id, shop_id, shop_product_id, shop_sku_id, item_id, market_price, channel_stock, sku_status, gmt_create, gmt_modified from shop_listing_sku
+    </sql>
+
+    <select id="selectShopListingSkuList" parameterType="ShopListingSku" resultMap="ShopListingSkuResult">
+        <include refid="selectShopListingSkuVo"/>
+        <where>  
+            <if test="listingSpuId != null  and listingSpuId != ''"> and listing_spu_id = #{listingSpuId}</if>
+            <if test="shopId != null  and shopId != ''"> and shop_id = #{shopId}</if>
+            <if test="shopProductId != null  and shopProductId != ''"> and shop_product_id = #{shopProductId}</if>
+            <if test="shopSkuId != null  and shopSkuId != ''"> and shop_sku_id = #{shopSkuId}</if>
+            <if test="itemId != null  and itemId != ''"> and item_id = #{itemId}</if>
+            <if test="marketPrice != null "> and market_price = #{marketPrice}</if>
+            <if test="channelStock != null "> and channel_stock = #{channelStock}</if>
+            <if test="skuStatus != null  and skuStatus != ''"> and sku_status = #{skuStatus}</if>
+            <if test="gmtCreate != null "> and gmt_create = #{gmtCreate}</if>
+            <if test="gmtModified != null "> and gmt_modified = #{gmtModified}</if>
+        </where>
+    </select>
+    
+    <select id="selectShopListingSkuByListingSkuId" parameterType="String" resultMap="ShopListingSkuResult">
+        <include refid="selectShopListingSkuVo"/>
+        where listing_sku_id = #{listingSkuId}
+    </select>
+
+    <insert id="insertShopListingSku" parameterType="ShopListingSku">
+        insert into shop_listing_sku
+        <trim prefix="(" suffix=")" suffixOverrides=",">
+            <if test="listingSkuId != null">listing_sku_id,</if>
+            <if test="listingSpuId != null and listingSpuId != ''">listing_spu_id,</if>
+            <if test="shopId != null and shopId != ''">shop_id,</if>
+            <if test="shopProductId != null and shopProductId != ''">shop_product_id,</if>
+            <if test="shopSkuId != null and shopSkuId != ''">shop_sku_id,</if>
+            <if test="itemId != null and itemId != ''">item_id,</if>
+            <if test="marketPrice != null">market_price,</if>
+            <if test="channelStock != null">channel_stock,</if>
+            <if test="skuStatus != null and skuStatus != ''">sku_status,</if>
+            <if test="gmtCreate != null">gmt_create,</if>
+            <if test="gmtModified != null">gmt_modified,</if>
+         </trim>
+        <trim prefix="values (" suffix=")" suffixOverrides=",">
+            <if test="listingSkuId != null">#{listingSkuId},</if>
+            <if test="listingSpuId != null and listingSpuId != ''">#{listingSpuId},</if>
+            <if test="shopId != null and shopId != ''">#{shopId},</if>
+            <if test="shopProductId != null and shopProductId != ''">#{shopProductId},</if>
+            <if test="shopSkuId != null and shopSkuId != ''">#{shopSkuId},</if>
+            <if test="itemId != null and itemId != ''">#{itemId},</if>
+            <if test="marketPrice != null">#{marketPrice},</if>
+            <if test="channelStock != null">#{channelStock},</if>
+            <if test="skuStatus != null and skuStatus != ''">#{skuStatus},</if>
+            <if test="gmtCreate != null">#{gmtCreate},</if>
+            <if test="gmtModified != null">#{gmtModified},</if>
+         </trim>
+    </insert>
+
+    <update id="updateShopListingSku" parameterType="ShopListingSku">
+        update shop_listing_sku
+        <trim prefix="SET" suffixOverrides=",">
+            <if test="listingSpuId != null and listingSpuId != ''">listing_spu_id = #{listingSpuId},</if>
+            <if test="shopId != null and shopId != ''">shop_id = #{shopId},</if>
+            <if test="shopProductId != null and shopProductId != ''">shop_product_id = #{shopProductId},</if>
+            <if test="shopSkuId != null and shopSkuId != ''">shop_sku_id = #{shopSkuId},</if>
+            <if test="itemId != null and itemId != ''">item_id = #{itemId},</if>
+            <if test="marketPrice != null">market_price = #{marketPrice},</if>
+            <if test="channelStock != null">channel_stock = #{channelStock},</if>
+            <if test="skuStatus != null and skuStatus != ''">sku_status = #{skuStatus},</if>
+            <if test="gmtCreate != null">gmt_create = #{gmtCreate},</if>
+            <if test="gmtModified != null">gmt_modified = #{gmtModified},</if>
+        </trim>
+        where listing_sku_id = #{listingSkuId}
+    </update>
+
+    <delete id="deleteShopListingSkuByListingSkuId" parameterType="String">
+        delete from shop_listing_sku where listing_sku_id = #{listingSkuId}
+    </delete>
+
+    <delete id="deleteShopListingSkuByListingSkuIds" parameterType="String">
+        delete from shop_listing_sku where listing_sku_id in 
+        <foreach item="listingSkuId" collection="array" open="(" separator="," close=")">
+            #{listingSkuId}
+        </foreach>
+    </delete>
+</mapper>

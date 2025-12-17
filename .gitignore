@@ -44,3 +44,76 @@ nbdist/
 !*/build/*.java
 !*/build/*.html
 !*/build/*.xml
+
+# macOS 系统垃圾
+.DS_Store
+.AppleDouble
+.LSOverride
+Icon
+__MACOSX
+*.icloud
+
+# IDE 补充（VSCode / Fleet）
+.vscode/*
+!.vscode/settings.json
+!.vscode/tasks.json
+!.vscode/launch.json
+!.vscode/extensions.json
+.fleet/
+.idea/*
+*.iml
+
+# Node / 前端（若以后切到 Vue3 目录）
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+.pnpm-debug.log*
+*.tsbuildinfo
+
+# Java / Maven 补充
+*.jar
+*.war
+*.nar
+*.ear
+*.zip
+*.tar.gz
+*.rar
+*.class
+*.bin
+*.ctxt
+*.sh~
+*.bat~
+*~
+hs_err_pid*
+replay_pid*
+
+# 日志 & 临时文件
+logs/
+*.log.*
+*.tmp
+*.temp
+*.old
+*.bak
+*.orig
+*.rej
+
+# 环境变量/密钥
+.env
+.env.local
+*.jks
+*.pem
+*.key
+*.p12
+*.crt
+
+# mysql
+mysql.md
+
+# run
+run/
+
+.vscode/
+*.sh
+sql/ry_product_bak.sql
+sql/shop.csv

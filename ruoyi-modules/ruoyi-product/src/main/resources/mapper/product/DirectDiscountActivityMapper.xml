@@ -1,0 +1,103 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.ruoyi.product.mapper.DirectDiscountActivityMapper">
+    
+    <resultMap type="DirectDiscountActivity" id="DirectDiscountActivityResult">
+        <result property="activityId"    column="activity_id"    />
+        <result property="activityName"    column="activity_name"    />
+        <result property="shopId"    column="shop_id"    />
+        <result property="discountType"    column="discount_type"    />
+        <result property="startTime"    column="start_time"    />
+        <result property="endTime"    column="end_time"    />
+        <result property="discountStatus"    column="discount_status"    />
+        <result property="platformActivityId"    column="platform_activity_id"    />
+        <result property="notes"    column="notes"    />
+        <result property="gmtCreate"    column="gmt_create"    />
+        <result property="gmtModified"    column="gmt_modified"    />
+    </resultMap>
+
+    <sql id="selectDirectDiscountActivityVo">
+        select activity_id, activity_name, shop_id, discount_type, start_time, end_time, discount_status, platform_activity_id, notes, gmt_create, gmt_modified from direct_discount_activity
+    </sql>
+
+    <select id="selectDirectDiscountActivityList" parameterType="DirectDiscountActivity" resultMap="DirectDiscountActivityResult">
+        <include refid="selectDirectDiscountActivityVo"/>
+        <where>  
+            <if test="activityName != null  and activityName != ''"> and activity_name like concat('%', #{activityName}, '%')</if>
+            <if test="shopId != null  and shopId != ''"> and shop_id = #{shopId}</if>
+            <if test="discountType != null  and discountType != ''"> and discount_type = #{discountType}</if>
+            <if test="startTime != null "> and start_time = #{startTime}</if>
+            <if test="endTime != null "> and end_time = #{endTime}</if>
+            <if test="discountStatus != null  and discountStatus != ''"> and discount_status = #{discountStatus}</if>
+            <if test="platformActivityId != null  and platformActivityId != ''"> and platform_activity_id = #{platformActivityId}</if>
+            <if test="notes != null  and notes != ''"> and notes = #{notes}</if>
+            <if test="gmtCreate != null "> and gmt_create = #{gmtCreate}</if>
+            <if test="gmtModified != null "> and gmt_modified = #{gmtModified}</if>
+        </where>
+    </select>
+    
+    <select id="selectDirectDiscountActivityByActivityId" parameterType="String" resultMap="DirectDiscountActivityResult">
+        <include refid="selectDirectDiscountActivityVo"/>
+        where activity_id = #{activityId}
+    </select>
+
+    <insert id="insertDirectDiscountActivity" parameterType="DirectDiscountActivity">
+        insert into direct_discount_activity
+        <trim prefix="(" suffix=")" suffixOverrides=",">
+            <if test="activityId != null">activity_id,</if>
+            <if test="activityName != null and activityName != ''">activity_name,</if>
+            <if test="shopId != null and shopId != ''">shop_id,</if>
+            <if test="discountType != null and discountType != ''">discount_type,</if>
+            <if test="startTime != null">start_time,</if>
+            <if test="endTime != null">end_time,</if>
+            <if test="discountStatus != null">discount_status,</if>
+            <if test="platformActivityId != null">platform_activity_id,</if>
+            <if test="notes != null">notes,</if>
+            <if test="gmtCreate != null">gmt_create,</if>
+            <if test="gmtModified != null">gmt_modified,</if>
+         </trim>
+        <trim prefix="values (" suffix=")" suffixOverrides=",">
+            <if test="activityId != null">#{activityId},</if>
+            <if test="activityName != null and activityName != ''">#{activityName},</if>
+            <if test="shopId != null and shopId != ''">#{shopId},</if>
+            <if test="discountType != null and discountType != ''">#{discountType},</if>
+            <if test="startTime != null">#{startTime},</if>
+            <if test="endTime != null">#{endTime},</if>
+            <if test="discountStatus != null">#{discountStatus},</if>
+            <if test="platformActivityId != null">#{platformActivityId},</if>
+            <if test="notes != null">#{notes},</if>
+            <if test="gmtCreate != null">#{gmtCreate},</if>
+            <if test="gmtModified != null">#{gmtModified},</if>
+         </trim>
+    </insert>
+
+    <update id="updateDirectDiscountActivity" parameterType="DirectDiscountActivity">
+        update direct_discount_activity
+        <trim prefix="SET" suffixOverrides=",">
+            <if test="activityName != null and activityName != ''">activity_name = #{activityName},</if>
+            <if test="shopId != null and shopId != ''">shop_id = #{shopId},</if>
+            <if test="discountType != null and discountType != ''">discount_type = #{discountType},</if>
+            <if test="startTime != null">start_time = #{startTime},</if>
+            <if test="endTime != null">end_time = #{endTime},</if>
+            <if test="discountStatus != null">discount_status = #{discountStatus},</if>
+            <if test="platformActivityId != null">platform_activity_id = #{platformActivityId},</if>
+            <if test="notes != null">notes = #{notes},</if>
+            <if test="gmtCreate != null">gmt_create = #{gmtCreate},</if>
+            <if test="gmtModified != null">gmt_modified = #{gmtModified},</if>
+        </trim>
+        where activity_id = #{activityId}
+    </update>
+
+    <delete id="deleteDirectDiscountActivityByActivityId" parameterType="String">
+        delete from direct_discount_activity where activity_id = #{activityId}
+    </delete>
+
+    <delete id="deleteDirectDiscountActivityByActivityIds" parameterType="String">
+        delete from direct_discount_activity where activity_id in 
+        <foreach item="activityId" collection="array" open="(" separator="," close=")">
+            #{activityId}
+        </foreach>
+    </delete>
+</mapper>
