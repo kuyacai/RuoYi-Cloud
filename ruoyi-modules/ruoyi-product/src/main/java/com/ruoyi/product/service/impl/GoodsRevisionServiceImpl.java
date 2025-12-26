@@ -1,9 +1,13 @@
 package com.ruoyi.product.service.impl;
 
+import java.util.ArrayList;
 import java.util.List;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.util.CollectionUtils;
+
 import com.ruoyi.product.mapper.GoodsRevisionMapper;
+import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
+import com.ruoyi.product.core.mybatisplus.impl.BaseServiceImpl;
 import com.ruoyi.product.domain.GoodsRevision;
 import com.ruoyi.product.service.IGoodsRevisionService;
 
@@ -14,101 +18,59 @@ import com.ruoyi.product.service.IGoodsRevisionService;
  * @date 2025-12-13
  */
 @Service
-public class GoodsRevisionServiceImpl implements IGoodsRevisionService 
-{
-    @Autowired
-    private GoodsRevisionMapper goodsRevisionMapper;
-
-    /**
-     * 查询商品版本
-     * 
-     * @param revisionId 商品版本主键
-     * @return 商品版本
-     */
+public class GoodsRevisionServiceImpl extends BaseServiceImpl<GoodsRevisionMapper, GoodsRevision>
+        implements IGoodsRevisionService {
     @Override
-    public GoodsRevision selectGoodsRevisionByRevisionId(String revisionId)
-    {
-        return goodsRevisionMapper.selectGoodsRevisionByRevisionId(revisionId);
+    public List<GoodsRevision> listFrozenByGoodsId(String goodsId) {
+        return this.list(new LambdaQueryWrapper<GoodsRevision>()
+                .eq(GoodsRevision::getGoodsId, goodsId)
+                .eq(GoodsRevision::getRevStatus, "frozen"));
     }
 
-    /**
-     * 查询商品版本列表
-     * 
-     * @param goodsRevision 商品版本
-     * @return 商品版本
-     */
     @Override
-    public List<GoodsRevision> selectGoodsRevisionList(GoodsRevision goodsRevision)
-    {
-        return goodsRevisionMapper.selectGoodsRevisionList(goodsRevision);
+    public List<GoodsRevision> listEditingByGoodsId(String goodsId) {
+        return this.list(new LambdaQueryWrapper<GoodsRevision>()
+                .eq(GoodsRevision::getGoodsId, goodsId)
+                .eq(GoodsRevision::getRevStatus, "editing"));
     }
 
-    /**
-     * 新增商品版本
-     * 
-     * @param goodsRevision 商品版本
-     * @return 结果
-     */
     @Override
-    public int insertGoodsRevision(GoodsRevision goodsRevision)
-    {
-        return goodsRevisionMapper.insertGoodsRevision(goodsRevision);
+    public List<GoodsRevision> listApprovingByGoodsId(String goodsId) {
+        return this.list(new LambdaQueryWrapper<GoodsRevision>()
+                .eq(GoodsRevision::getGoodsId, goodsId)
+                .eq(GoodsRevision::getRevStatus, "approving"));
     }
 
-    /**
-     * 修改商品版本
-     * 
-     * @param goodsRevision 商品版本
-     * @return 结果
-     */
     @Override
-    public int updateGoodsRevision(GoodsRevision goodsRevision)
-    {
-        return goodsRevisionMapper.updateGoodsRevision(goodsRevision);
+    public List<GoodsRevision> listByRevisionIds(List<String> revisionIds) {
+        if (CollectionUtils.isEmpty(revisionIds)) {
+            return new ArrayList<>();
+        }
+        // 直接使用 IService 自带的 listByIds 方法
+        return this.listByIds(revisionIds);
     }
 
-    /**
-     * 批量删除商品版本
-     * 
-     * @param revisionIds 需要删除的商品版本主键
-     * @return 结果
-     */
     @Override
-    public int deleteGoodsRevisionByRevisionIds(String[] revisionIds)
-    {
-        return goodsRevisionMapper.deleteGoodsRevisionByRevisionIds(revisionIds);
+    public List<GoodsRevision> listByGoodsId(String goodsId) {
+        return this.list(new LambdaQueryWrapper<GoodsRevision>()
+                .eq(GoodsRevision::getGoodsId, goodsId)
+                .orderByDesc(GoodsRevision::getGmtCreate)); // 对应 XML 中的 Order By gmt_create desc
     }
 
-    /**
-     * 删除商品版本信息
-     * 
-     * @param revisionId 商品版本主键
-     * @return 结果
-     */
     @Override
-    public int deleteGoodsRevisionByRevisionId(String revisionId)
-    {
-        return goodsRevisionMapper.deleteGoodsRevisionByRevisionId(revisionId);
+    public List<GoodsRevision> listByGoodsAndStatus(String goodsId, List<String> statusList) {
+        LambdaQueryWrapper<GoodsRevision> lqw = new LambdaQueryWrapper<>();
+        lqw.eq(GoodsRevision::getGoodsId, goodsId);
+
+        // 对应 XML 中的 <if test="statusList != null ...">
+        if (!CollectionUtils.isEmpty(statusList)) {
+            lqw.in(GoodsRevision::getRevStatus, statusList);
+        }
+
+        // 对应 XML 中的 ORDER BY gmt_modified DESC
+        lqw.orderByDesc(GoodsRevision::getGmtModified);
+
+        return this.list(lqw);
     }
 
-
-    /**
-     * 根据商品ID查询冻结的版本
-     * @param goodsId
-     * @return
-     */
-    @Override
-    public GoodsRevision selectFrozenRevisionByGoodsId(String goodsId) {
-        return goodsRevisionMapper.selectFrozenRevisionByGoodsId(goodsId);
-    }
-
-    /**
-     * 根据商品ID查询编辑中的版本
-     * @param goodsId
-     * @return
-     */
-    @Override
-    public GoodsRevision selectEditingRevisionByGoodsId(String goodsId) {
-        return goodsRevisionMapper.selectEditingRevisionByGoodsId(goodsId);
-    }
 }

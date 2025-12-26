@@ -1,6 +1,6 @@
 package com.ruoyi.product.mapper;
 
-import java.util.List;
+import com.ruoyi.product.core.mybatisplus.RootMapper;
 import com.ruoyi.product.domain.GoodsRevisionImage;
 
 /**
@@ -9,62 +9,6 @@ import com.ruoyi.product.domain.GoodsRevisionImage;
  * @author Rupert
  * @date 2025-12-13
  */
-public interface GoodsRevisionImageMapper 
+public interface GoodsRevisionImageMapper extends RootMapper<GoodsRevisionImage>
 {
-    /**
-     * 查询goods 图片
-     * 
-     * @param imageId goods 图片主键
-     * @return goods 图片
-     */
-    public GoodsRevisionImage selectGoodsRevisionImageByImageId(String imageId);
-
-    /**
-     * 查询goods 图片列表
-     * 
-     * @param goodsRevisionImage goods 图片
-     * @return goods 图片集合
-     */
-    public List<GoodsRevisionImage> selectGoodsRevisionImageList(GoodsRevisionImage goodsRevisionImage);
-
-    /**
-     * 新增goods 图片
-     * 
-     * @param goodsRevisionImage goods 图片
-     * @return 结果
-     */
-    public int insertGoodsRevisionImage(GoodsRevisionImage goodsRevisionImage);
-
-    /**
-     * 修改goods 图片
-     * 
-     * @param goodsRevisionImage goods 图片
-     * @return 结果
-     */
-    public int updateGoodsRevisionImage(GoodsRevisionImage goodsRevisionImage);
-
-    /**
-     * 删除goods 图片
-     * 
-     * @param imageId goods 图片主键
-     * @return 结果
-     */
-    public int deleteGoodsRevisionImageByImageId(String imageId);
-
-    /**
-     * 批量删除goods 图片
-     * 
-     * @param imageIds 需要删除的数据主键集合
-     * @return 结果
-     */
-    public int deleteGoodsRevisionImageByImageIds(String[] imageIds);
-
-    /**
-     * 根据 revisionId 和 sourceUrl 统计图片数量
-     * 
-     * @param revisionId 商品修订版ID
-     * @param sourceUrl 图片源地址
-     * @return 数量
-     */
-    public int countByRevisionIdAndSourceUrl(String revisionId, String sourceUrl);
 }

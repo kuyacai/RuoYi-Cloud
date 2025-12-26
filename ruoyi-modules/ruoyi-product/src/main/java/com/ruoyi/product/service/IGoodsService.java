@@ -1,6 +1,8 @@
 package com.ruoyi.product.service;
 
 import java.util.List;
+
+import com.ruoyi.product.core.mybatisplus.IBaseService;
 import com.ruoyi.product.domain.Goods;
 
 /**
@@ -9,62 +11,46 @@ import com.ruoyi.product.domain.Goods;
  * @author Rupert
  * @date 2025-12-13
  */
-public interface IGoodsService 
-{
-    /**
-     * 查询云商品根
-     * 
-     * @param goodsId 云商品根主键
-     * @return 云商品根
-     */
-    public Goods selectGoodsByGoodsId(String goodsId);
+public interface IGoodsService extends IBaseService<Goods> {
 
     /**
-     * 查询云商品根列表
-     * 
-     * @param goods 云商品根
-     * @return 云商品根集合
-     */
-    public List<Goods> selectGoodsList(Goods goods);
-
-    /**
-     * 新增云商品根
-     * 
-     * @param goods 云商品根
-     * @return 结果
-     */
-    public int insertGoods(Goods goods);
-
-    /**
-     * 修改云商品根
-     * 
-     * @param goods 云商品根
-     * @return 结果
-     */
-    public int updateGoods(Goods goods);
-
-    /**
-     * 批量删除云商品根
-     * 
-     * @param goodsIds 需要删除的云商品根主键集合
-     * @return 结果
-     */
-    public int deleteGoodsByGoodsIds(String[] goodsIds);
-
-    /**
-     * 删除云商品根信息
-     * 
-     * @param goodsId 云商品根主键
-     * @return 结果
-     */
-    public int deleteGoodsByGoodsId(String goodsId);
-
-    /**
-     * 根据源商品ID判断商品是否存在
+     * 根据来源ID，判断该商品是否存在。
      * @param sourceId
      * @return
      */
-    public boolean existsBySourceId(String sourceId);
+    boolean existsBySourceId(String sourceId);
 
-    public Goods selectGoodsBySourceId(String sourceId);
+    /**
+     * 根据来源ID统计商品数
+     * @param sourceId
+     * @return
+     */
+    int countBySourceId(String sourceId);
+
+    /**
+     * 根据来源查商品列表
+     * @param sourceId
+     * @return
+     */
+    List<Goods> listBySourceId(String sourceId);
+    /**
+     * 取最近插入的某个店铺的某个商品id的商品
+     * @param shopProductId
+     * @return
+     */
+    Goods getLatestByShopProductId(String shopProductId);
+    /**
+     * 根据goods_id批量查询
+     * @param goodsIds
+     * @return
+     */
+    List<Goods> listByBatchIds(List<String> goodsIds);
+
+
+    /**
+     * 根据来源ID查询商品信息
+     * * @param sourceId 来源唯一标识
+     * @return 商品实体，若不存在则返回 null
+     */
+    Goods selectGoodsBySourceId(String sourceId);
 }

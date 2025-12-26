@@ -9,21 +9,23 @@ import com.ruoyi.common.core.web.domain.AjaxResult;
 import com.ruoyi.product.constant.ImageType;
 import com.ruoyi.product.constant.RevStatus;
 import com.ruoyi.product.constant.RevisionType;
-import com.ruoyi.product.constant.TaskCode;
-import com.ruoyi.product.constant.TaskStatus;
+import com.ruoyi.product.constant.ItemTaskCode;
+import com.ruoyi.product.constant.ItemTaskStatus;
 import com.ruoyi.product.domain.Goods;
 import com.ruoyi.product.domain.GoodsRevision;
 import com.ruoyi.product.domain.GoodsRevisionImage;
 import com.ruoyi.product.domain.GoodsRevisionItem;
-import com.ruoyi.product.domain.GoodsRevisionSpu;
-import com.ruoyi.product.domain.ItemProcessResult;
-import com.ruoyi.product.domain.MiaoShouSKU;
+import com.ruoyi.product.domain.dto.ItemProcessResult;
+import com.ruoyi.product.domain.dto.MiaoShouSKU;
 import com.ruoyi.product.domain.ItemTask;
 import com.ruoyi.product.service.IGoodsRevisionImageService;
 import com.ruoyi.product.service.IGoodsRevisionItemService;
-import com.ruoyi.product.service.IGoodsRevisionSpuService;
 import com.ruoyi.product.service.IGoodsService;
 import com.ruoyi.product.service.IItemTaskService;
+
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+
 import com.ruoyi.product.service.IGoodsRevisionService;
 import java.lang.reflect.Method;
 import java.math.BigDecimal;
@@ -32,10 +34,6 @@ import org.apache.poi.ss.usermodel.Row;
 import org.apache.poi.ss.usermodel.Sheet;
 import org.apache.poi.ss.usermodel.Workbook;
 import org.apache.poi.xssf.streaming.SXSSFWorkbook;
-import org.checkerframework.checker.units.qual.s;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.PlatformTransactionManager;
 import org.springframework.transaction.TransactionDefinition;
@@ -60,35 +58,18 @@ import java.util.stream.Collectors;
 /**
  * SPU导入服务
  */
+@Slf4j
 @Service
-public class SkuImportService {
+@RequiredArgsConstructor
 
-    private static final Logger log = LoggerFactory.getLogger(SpuImportService.class);
+public class SkuImportService {
 
     private final PlatformTransactionManager transactionManager;
     private final IGoodsService goodsService;
     private final IGoodsRevisionImageService goodsRevisionImageService;
-    private final IGoodsRevisionSpuService goodsRevisionSpuService;
     private final IGoodsRevisionService goodsRevisionService;
     private final IGoodsRevisionItemService goodsRevisionItemService;
     private final IItemTaskService itemTaskService;
-
-    @Autowired
-    public SkuImportService(PlatformTransactionManager transactionManager,
-            IGoodsService goodsService,
-            IGoodsRevisionImageService goodsRevisionImageService,
-            IGoodsRevisionSpuService goodsRevisionSpuService,
-            IGoodsRevisionService goodsRevisionService,
-            IItemTaskService itemTaskService,
-            IGoodsRevisionItemService goodsRevisionItemService) {
-        this.transactionManager = transactionManager;
-        this.goodsService = goodsService;
-        this.goodsRevisionImageService = goodsRevisionImageService;
-        this.goodsRevisionSpuService = goodsRevisionSpuService;
-        this.goodsRevisionService = goodsRevisionService;
-        this.itemTaskService = itemTaskService;
-        this.goodsRevisionItemService = goodsRevisionItemService;
-    }
 
     /**
      * 新方法：处理单条SKU记录
@@ -111,22 +92,24 @@ public class SkuImportService {
             /* 2. 检查商品是否存在 */
             Goods goods = goodsService.selectGoodsBySourceId(sku.getSourceId());
             if (goods == null) {
-                transactionManager.rollback(status);
+                transactionManager.commit(status);
                 return ItemProcessResult.skip("商品未导入");
             }
 
             /* 3. 检查修订版本 */
-            GoodsRevision frozenRev = goodsRevisionService.selectFrozenRevisionByGoodsId(goods.getGoodsId());
-            if (frozenRev == null) {
+            List<GoodsRevision> frozenRevList = goodsRevisionService.listFrozenByGoodsId(goods.getGoodsId());
+            if (frozenRevList == null || frozenRevList.isEmpty()) {
                 transactionManager.rollback(status);
                 return ItemProcessResult.skip("无冻结版本");
             }
 
-            GoodsRevision editingRev = goodsRevisionService.selectEditingRevisionByGoodsId(goods.getGoodsId());
-            if (editingRev == null) {
+            List<GoodsRevision> editingRevList = goodsRevisionService.listEditingByGoodsId(goods.getGoodsId());
+            if (editingRevList == null || editingRevList.isEmpty()) {
                 transactionManager.rollback(status);
                 return ItemProcessResult.skip("无编辑版本");
             }
+            GoodsRevision frozenRev = frozenRevList.get(0);
+            GoodsRevision editingRev = editingRevList.get(0);
 
             /* 4. SKU去重检查 */
             boolean skuExists = goodsRevisionItemService.isBeenImported(
@@ -141,8 +124,8 @@ public class SkuImportService {
             insertSkuAndImages(sku, goods, editingRev, shopId);
 
             /* 6. 写任务 */
-            ItemTask task = buildItemTask(TaskCode.EDIT_SPEC.getCode(),
-                    editingRev.getRevisionId(), TaskStatus.PENDING.getCode());
+            ItemTask task = buildItemTask(ItemTaskCode.EDIT_SPEC.getCode(),
+                    editingRev.getRevisionId(), ItemTaskStatus.PENDING.getCode());
             itemTaskService.insertItemTask(task);
 
             transactionManager.commit(status);
@@ -224,7 +207,7 @@ public class SkuImportService {
     private void insertSkuAndImages(MiaoShouSKU sku, Goods goods, GoodsRevision goodsRev, String shopId) {
         // 1. goods_revision_item
         GoodsRevisionItem item = buildRevisionItem(sku, goodsRev.getRevisionId(), shopId, goods.getGoodsId());
-        goodsRevisionItemService.insertGoodsRevisionItem(item);
+        goodsRevisionItemService.save(item);
 
         // 2. 图片去重后写入
         saveImageIfAbsent(goodsRev.getRevisionId(), goods.getGoodsId(), sku.getMainImage1(),
@@ -262,14 +245,14 @@ public class SkuImportService {
 
     /* ====== 3. 私有方法：图片去重写入 ====== */
     private void saveImageIfAbsent(String revisionId, String goodsId,
-            String url, ImageType imageType, long position) {
+            String url, ImageType imageType, int position) {
         if (StringUtils.isBlank(url)) {
             return;
         }
         // 同 revision + url 唯一即认为已存在
-        boolean exists = goodsRevisionImageService
-                .existsByRevisionIdAndSourceUrl(revisionId, url);
-        if (exists) {
+        int img_counter = goodsRevisionImageService
+                .countByRevisionIdAndSourceUrl(revisionId, url);
+        if (img_counter>0) {
             return;
         }
         GoodsRevisionImage img = new GoodsRevisionImage();
@@ -283,7 +266,7 @@ public class SkuImportService {
         img.setLocalUri(null);
         img.setPosition(position);
         img.setGmtCreate(new Date());
-        goodsRevisionImageService.insertGoodsRevisionImage(img);
+        goodsRevisionImageService.save(img);
     }
 
     /* ====== 4. 构造 GoodsRevisionItem ====== */
@@ -303,28 +286,29 @@ public class SkuImportService {
         item.setSpec3OrLeadTime(sku.getSpec3OrLeadTime());
         item.setSpec3Note(sku.getSpec3Note());
 
-        item.setInStockQty(sku.getInStockQty() == null ? 0L : sku.getInStockQty().longValue());
-        item.setFullPrepayQty(sku.getFullPrepayQty() == null ? 0L : sku.getFullPrepayQty().longValue());
-        item.setShip3dQty(sku.getShip3dQty() == null ? 0L : sku.getShip3dQty().longValue());
-        item.setShip4dQty(sku.getShip4dQty() == null ? 0L : sku.getShip4dQty().longValue());
-        item.setShip5dQty(sku.getShip5dQty() == null ? 0L : sku.getShip5dQty().longValue());
-        item.setShip7dQty(sku.getShip7dQty() == null ? 0L : sku.getShip7dQty().longValue());
-        item.setShip10dQty(sku.getShip10dQty() == null ? 0L : sku.getShip10dQty().longValue());
-        item.setShip15dQty(sku.getShip15dQty() == null ? 0L : sku.getShip15dQty().longValue());
-        item.setShip20dQty(sku.getShip20dQty() == null ? 0L : sku.getShip20dQty().longValue());
-        item.setShip25dQty(sku.getShip25dQty() == null ? 0L : sku.getShip25dQty().longValue());
-        item.setShip30dQty(sku.getShip30dQty() == null ? 0L : sku.getShip30dQty().longValue());
-        item.setShip35dQty(sku.getShip35dQty() == null ? 0L : sku.getShip35dQty().longValue());
-        item.setShip45dQty(sku.getShip45dQty() == null ? 0L : sku.getShip45dQty().longValue());
+        item.setInStockQty(sku.getInStockQty() == null ? 0 : sku.getInStockQty());
+        item.setFullPrepayQty(sku.getFullPrepayQty() == null ? 0 : sku.getFullPrepayQty());
+        item.setShip3dQty(sku.getShip3dQty() == null ? 0 : sku.getShip3dQty());
+        item.setShip4dQty(sku.getShip4dQty() == null ? 0 : sku.getShip4dQty());
+        item.setShip5dQty(sku.getShip5dQty() == null ? 0 : sku.getShip5dQty());
+        item.setShip7dQty(sku.getShip7dQty() == null ? 0 : sku.getShip7dQty());
+        item.setShip10dQty(sku.getShip10dQty() == null ? 0 : sku.getShip10dQty());
+        item.setShip15dQty(sku.getShip15dQty() == null ? 0 : sku.getShip15dQty());
+        item.setShip20dQty(sku.getShip20dQty() == null ? 0 : sku.getShip20dQty());
+        item.setShip25dQty(sku.getShip25dQty() == null ? 0 : sku.getShip25dQty());
+        item.setShip30dQty(sku.getShip30dQty() == null ? 0 : sku.getShip30dQty());
+        item.setShip35dQty(sku.getShip35dQty() == null ? 0 : sku.getShip35dQty());
+        item.setShip45dQty(sku.getShip45dQty() == null ? 0 : sku.getShip45dQty());
 
-        // 金额转为“分”
-        item.setOrignialPrice(sku.getPrice() == null ? 0L
-                : sku.getPrice().multiply(BigDecimal.valueOf(100)).longValue());
-        // item.setMarketPrice();
-        item.setLowestPrice(sku.getLowestPrice() == null ? 0L
-                : sku.getLowestPrice().multiply(BigDecimal.valueOf(100)).longValue());
-        item.setHighestPrice(sku.getHighestPrice() == null ? 0L
-                : sku.getHighestPrice().multiply(BigDecimal.valueOf(100)).longValue());
+        // 金额转为“分"
+        item.setOrignialPrice(sku.getPrice() == null ? 0
+                : sku.getPrice().multiply(BigDecimal.valueOf(100)).intValue());
+
+        item.setLowestPrice(sku.getLowestPrice() == null ? 0
+                : sku.getLowestPrice().multiply(BigDecimal.valueOf(100)).intValue());
+
+        item.setHighestPrice(sku.getHighestPrice() == null ? 0
+                : sku.getHighestPrice().multiply(BigDecimal.valueOf(100)).intValue());
 
         item.setSkuStatus(sku.getSkuStatus());
         item.setBarcode(sku.getBarcode());
@@ -474,7 +458,7 @@ public class SkuImportService {
             List<String> urls, ImageType imageType) {
         if (CollectionUtils.isEmpty(urls))
             return;
-        long pos = 1;
+        int pos = 1;
         for (String url : urls) {
             if (StringUtils.isBlank(url)) {
                 pos++;
@@ -491,18 +475,17 @@ public class SkuImportService {
             img.setLocalUri(null);
             img.setPosition(pos++);
             img.setGmtCreate(new Date());
-            goodsRevisionImageService.insertGoodsRevisionImage(img);
+            goodsRevisionImageService.save(img);
         }
     }
 
     private GoodsRevision buildRevision(String revisionId, String goodsId,
-            RevStatus status, int isCurrent) {
+            RevStatus status) {
         GoodsRevision r = new GoodsRevision();
         r.setRevisionId(revisionId);
         r.setGoodsId(goodsId);
         r.setRevStatus(status.getCode());
         r.setRevisionType(RevisionType.MANUAL.getCode());
-        r.setIsCurrent(isCurrent);
         r.setGmtCreate(new Date());
         r.setGmtModified(new Date());
         return r;

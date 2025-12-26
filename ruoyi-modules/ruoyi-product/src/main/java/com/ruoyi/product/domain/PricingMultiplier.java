@@ -1,11 +1,13 @@
 package com.ruoyi.product.domain;
 
-import java.util.Date;
-import com.fasterxml.jackson.annotation.JsonFormat;
-import org.apache.commons.lang3.builder.ToStringBuilder;
-import org.apache.commons.lang3.builder.ToStringStyle;
-import com.ruoyi.common.core.annotation.Excel;
-import com.ruoyi.common.core.web.domain.BaseEntity;
+import com.baomidou.mybatisplus.annotation.IdType;
+import com.baomidou.mybatisplus.annotation.TableId;
+import com.baomidou.mybatisplus.annotation.TableName;
+import com.ruoyi.product.core.mybatisplus.ProductBaseEntity;
+
+import lombok.Data;
+import lombok.EqualsAndHashCode;
+import lombok.ToString;
 
 /**
  * 定价倍数对象 pricing_multiplier
@@ -13,102 +15,20 @@ import com.ruoyi.common.core.web.domain.BaseEntity;
  * @author Rupert
  * @date 2025-12-13
  */
-public class PricingMultiplier extends BaseEntity
-{
+@Data
+@EqualsAndHashCode(callSuper = true)
+@ToString(callSuper = true)
+@TableName(value = "pricing_multiplier", autoResultMap = true)
+public class PricingMultiplier extends ProductBaseEntity {
     private static final long serialVersionUID = 1L;
 
-    /** $column.columnComment */
+    @TableId(value = "id", type = IdType.INPUT)
     private String id;
 
-    /** $column.columnComment */
-    @Excel(name = "${comment}", readConverterExp = "$column.readConverterExp()")
-    private Long priceMin;
+    private Integer priceMin;
 
-    /** $column.columnComment */
-    @Excel(name = "${comment}", readConverterExp = "$column.readConverterExp()")
-    private Long priceMax;
+    private Integer priceMax;
 
-    /** $column.columnComment */
-    @Excel(name = "${comment}", readConverterExp = "$column.readConverterExp()")
-    private Long multiplier;
+    private Integer multiplier;
 
-    /** $column.columnComment */
-    @Excel(name = "${comment}", readConverterExp = "$column.readConverterExp()")
-    private Date gmtCreate;
-
-    /** $column.columnComment */
-    @Excel(name = "${comment}", readConverterExp = "$column.readConverterExp()")
-    private Date gmtModified;
-
-    public void setId(String id) 
-    {
-        this.id = id;
-    }
-
-    public String getId() 
-    {
-        return id;
-    }
-
-    public void setPriceMin(Long priceMin) 
-    {
-        this.priceMin = priceMin;
-    }
-
-    public Long getPriceMin() 
-    {
-        return priceMin;
-    }
-
-    public void setPriceMax(Long priceMax) 
-    {
-        this.priceMax = priceMax;
-    }
-
-    public Long getPriceMax() 
-    {
-        return priceMax;
-    }
-
-    public void setMultiplier(Long multiplier) 
-    {
-        this.multiplier = multiplier;
-    }
-
-    public Long getMultiplier() 
-    {
-        return multiplier;
-    }
-
-    public void setGmtCreate(Date gmtCreate) 
-    {
-        this.gmtCreate = gmtCreate;
-    }
-
-    public Date getGmtCreate() 
-    {
-        return gmtCreate;
-    }
-
-    public void setGmtModified(Date gmtModified) 
-    {
-        this.gmtModified = gmtModified;
-    }
-
-    public Date getGmtModified() 
-    {
-        return gmtModified;
-    }
-
-    @Override
-    public String toString() {
-        return new ToStringBuilder(this,ToStringStyle.MULTI_LINE_STYLE)
-            .append("id", getId())
-            .append("priceMin", getPriceMin())
-            .append("priceMax", getPriceMax())
-            .append("multiplier", getMultiplier())
-            .append("gmtCreate", getGmtCreate())
-            .append("gmtModified", getGmtModified())
-            .toString();
-    }
 }

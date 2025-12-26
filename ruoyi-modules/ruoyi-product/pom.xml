@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project xmlns="http://maven.apache.org/POM/4.0.0"
-         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
     <parent>
         <groupId>com.ruoyi</groupId>
@@ -12,6 +12,11 @@
     <packaging>jar</packaging>
     <name>商品库模块</name>
     <description>云商品库微服务（独立数据库）</description>
+
+    <!-- 添加属性 -->
+    <properties>
+        <lombok.version>1.18.24</lombok.version>
+    </properties>
 
     <dependencies>
         <dependency>
@@ -47,19 +52,19 @@
             <groupId>com.ruoyi</groupId>
             <artifactId>ruoyi-common-datasource</artifactId>
         </dependency>
-        
+
         <!-- RuoYi Common DataScope -->
         <dependency>
             <groupId>com.ruoyi</groupId>
             <artifactId>ruoyi-common-datascope</artifactId>
         </dependency>
-        
+
         <!-- RuoYi Common Log -->
         <dependency>
             <groupId>com.ruoyi</groupId>
             <artifactId>ruoyi-common-log</artifactId>
         </dependency>
-        
+
         <!-- RuoYi Common Swagger -->
         <dependency>
             <groupId>com.ruoyi</groupId>
@@ -111,7 +116,23 @@
             <artifactId>rocketmq-remoting</artifactId>
             <version>5.3.4</version>
         </dependency>
-        
+
+        <dependency>
+            <groupId>org.projectlombok</groupId>
+            <artifactId>lombok</artifactId>
+            <version>${lombok.version}</version>
+            <scope>provided</scope>
+        </dependency>
+
+        <!-- https://mvnrepository.com/artifact/com.baomidou/mybatis-plus-spring-boot3-starter -->
+        <!--先在本模块中适应mp-->
+        <dependency>
+            <groupId>com.baomidou</groupId>
+            <artifactId>mybatis-plus-spring-boot3-starter</artifactId>
+            <version>3.5.15</version>
+        </dependency>
+
+
     </dependencies>
 
     <build>
@@ -138,7 +159,47 @@
                         </goals>
                     </execution>
                 </executions>
+                <!-- 如果需要，可以添加其他配置 -->
+                <configuration>
+                    <excludes>
+                        <exclude>
+                            <groupId>org.projectlombok</groupId>
+                            <artifactId>lombok</artifactId>
+                        </exclude>
+                    </excludes>
+                </configuration>
             </plugin>
+
+            <!-- 关键：覆盖编译器插件配置 -->
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-compiler-plugin</artifactId>
+                <!-- 使用父pom的版本号 -->
+                <configuration>
+                    <!-- 保留父pom的所有配置 -->
+                    <parameters>true</parameters>
+                    <source>${java.version}</source>
+                    <target>${java.version}</target>
+                    <encoding>${project.build.sourceEncoding}</encoding>
+                    <!-- 添加Lombok注解处理器 -->
+                    <annotationProcessorPaths>
+                        <path>
+                            <groupId>org.projectlombok</groupId>
+                            <artifactId>lombok</artifactId>
+                            <version>${lombok.version}</version>
+                        </path>
+                        <!-- 如果需要，可以添加其他注解处理器 -->
+                        <!-- 
+                        <path>
+                            <groupId>org.mapstruct</groupId>
+                            <artifactId>mapstruct-processor</artifactId>
+                            <version>1.5.3.Final</version>
+                        </path>
+                        -->
+                    </annotationProcessorPaths>
+                </configuration>
+            </plugin>
+
         </plugins>
     </build>
 </project>

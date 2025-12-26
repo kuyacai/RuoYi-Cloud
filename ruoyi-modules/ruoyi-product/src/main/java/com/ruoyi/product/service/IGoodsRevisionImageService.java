@@ -1,6 +1,8 @@
 package com.ruoyi.product.service;
 
 import java.util.List;
+
+import com.ruoyi.product.core.mybatisplus.IBaseService;
 import com.ruoyi.product.domain.GoodsRevisionImage;
 
 /**
@@ -9,62 +11,30 @@ import com.ruoyi.product.domain.GoodsRevisionImage;
  * @author Rupert
  * @date 2025-12-13
  */
-public interface IGoodsRevisionImageService 
-{
-    /**
-     * 查询goods 图片
-     * 
-     * @param imageId goods 图片主键
-     * @return goods 图片
-     */
-    public GoodsRevisionImage selectGoodsRevisionImageByImageId(String imageId);
+public interface IGoodsRevisionImageService extends IBaseService<GoodsRevisionImage> {
 
     /**
-     * 查询goods 图片列表
+     * 根据版本ID和来源URL统计图片数量
      * 
-     * @param goodsRevisionImage goods 图片
-     * @return goods 图片集合
+     * @param revisionId 版本ID
+     * @param sourceUrl  来源URL
+     * @return 匹配的记录数
      */
-    public List<GoodsRevisionImage> selectGoodsRevisionImageList(GoodsRevisionImage goodsRevisionImage);
+    int countByRevisionIdAndSourceUrl(String revisionId, String sourceUrl);
 
     /**
-     * 新增goods 图片
+     * 根据版本ID集合批量查询图片快照
      * 
-     * @param goodsRevisionImage goods 图片
-     * @return 结果
+     * @param revisionIds 版本ID列表
+     * @return 图片快照列表
      */
-    public int insertGoodsRevisionImage(GoodsRevisionImage goodsRevisionImage);
+    List<GoodsRevisionImage> listByRevisionIds(List<String> revisionIds);
 
     /**
-     * 修改goods 图片
+     * 根据版本ID查询图片快照列表
      * 
-     * @param goodsRevisionImage goods 图片
-     * @return 结果
+     * @param revisionId 版本ID
+     * @return 该版本下的所有图片
      */
-    public int updateGoodsRevisionImage(GoodsRevisionImage goodsRevisionImage);
-
-    /**
-     * 批量删除goods 图片
-     * 
-     * @param imageIds 需要删除的goods 图片主键集合
-     * @return 结果
-     */
-    public int deleteGoodsRevisionImageByImageIds(String[] imageIds);
-
-    /**
-     * 删除goods 图片信息
-     * 
-     * @param imageId goods 图片主键
-     * @return 结果
-     */
-    public int deleteGoodsRevisionImageByImageId(String imageId);
-
-    /**
-     * 根据 revisionId 和 sourceUrl 判断图片是否存在
-     * 
-     * @param revisionId 商品修订版ID
-     * @param sourceUrl 图片源地址
-     * @return true 存在，false 不存在
-     */
-    public boolean existsByRevisionIdAndSourceUrl(String revisionId, String sourceUrl);
+    List<GoodsRevisionImage> listByRevisionId(String revisionId);
 }

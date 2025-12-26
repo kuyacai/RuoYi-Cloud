@@ -1,107 +1,51 @@
 package com.ruoyi.product.service.impl;
 
+import java.util.ArrayList;
 import java.util.List;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
-import com.ruoyi.product.mapper.GoodsRevisionImageMapper;
+import org.springframework.util.CollectionUtils;
+import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
+import com.ruoyi.product.core.mybatisplus.impl.BaseServiceImpl;
 import com.ruoyi.product.domain.GoodsRevisionImage;
+import com.ruoyi.product.mapper.GoodsRevisionImageMapper;
 import com.ruoyi.product.service.IGoodsRevisionImageService;
 
 /**
- * goods 图片Service业务层处理
- * 
- * @author Rupert
- * @date 2025-12-13
+ * 商品图片快照Service业务层处理
  */
 @Service
-public class GoodsRevisionImageServiceImpl implements IGoodsRevisionImageService 
-{
-    @Autowired
-    private GoodsRevisionImageMapper goodsRevisionImageMapper;
+public class GoodsRevisionImageServiceImpl extends BaseServiceImpl<GoodsRevisionImageMapper, GoodsRevisionImage> implements IGoodsRevisionImageService {
 
     /**
-     * 查询goods 图片
-     * 
-     * @param imageId goods 图片主键
-     * @return goods 图片
+     * 实现原 XML 中的 countByRevisionIdAndSourceUrl 逻辑
+     * 使用 count 替代 select 列表，效率更高
      */
     @Override
-    public GoodsRevisionImage selectGoodsRevisionImageByImageId(String imageId)
-    {
-        return goodsRevisionImageMapper.selectGoodsRevisionImageByImageId(imageId);
+    public int countByRevisionIdAndSourceUrl(String revisionId, String sourceUrl) {
+        Long count = this.count(new LambdaQueryWrapper<GoodsRevisionImage>()
+                .eq(GoodsRevisionImage::getRevisionId, revisionId)
+                .eq(GoodsRevisionImage::getSourceUrl, sourceUrl));
+        return count.intValue();
     }
 
     /**
-     * 查询goods 图片列表
-     * 
-     * @param goodsRevisionImage goods 图片
-     * @return goods 图片
+     * 实现原 XML 中的 selectByRevisionIds 逻辑
      */
     @Override
-    public List<GoodsRevisionImage> selectGoodsRevisionImageList(GoodsRevisionImage goodsRevisionImage)
-    {
-        return goodsRevisionImageMapper.selectGoodsRevisionImageList(goodsRevisionImage);
+    public List<GoodsRevisionImage> listByRevisionIds(List<String> revisionIds) {
+        if (CollectionUtils.isEmpty(revisionIds)) {
+            return new ArrayList<>();
+        }
+        return this.list(new LambdaQueryWrapper<GoodsRevisionImage>()
+                .in(GoodsRevisionImage::getRevisionId, revisionIds));
     }
 
     /**
-     * 新增goods 图片
-     * 
-     * @param goodsRevisionImage goods 图片
-     * @return 结果
+     * 实现原 XML 中的 selectByRevisionId 逻辑
      */
     @Override
-    public int insertGoodsRevisionImage(GoodsRevisionImage goodsRevisionImage)
-    {
-        return goodsRevisionImageMapper.insertGoodsRevisionImage(goodsRevisionImage);
-    }
-
-    /**
-     * 修改goods 图片
-     * 
-     * @param goodsRevisionImage goods 图片
-     * @return 结果
-     */
-    @Override
-    public int updateGoodsRevisionImage(GoodsRevisionImage goodsRevisionImage)
-    {
-        return goodsRevisionImageMapper.updateGoodsRevisionImage(goodsRevisionImage);
-    }
-
-    /**
-     * 批量删除goods 图片
-     * 
-     * @param imageIds 需要删除的goods 图片主键
-     * @return 结果
-     */
-    @Override
-    public int deleteGoodsRevisionImageByImageIds(String[] imageIds)
-    {
-        return goodsRevisionImageMapper.deleteGoodsRevisionImageByImageIds(imageIds);
-    }
-
-    /**
-     * 删除goods 图片信息
-     * 
-     * @param imageId goods 图片主键
-     * @return 结果
-     */
-    @Override
-    public int deleteGoodsRevisionImageByImageId(String imageId)
-    {
-        return goodsRevisionImageMapper.deleteGoodsRevisionImageByImageId(imageId);
-    }
-
-
-    /**
-     * 根据 revisionId 和 sourceUrl 判断图片是否存在
-     * 
-     * @param revisionId 商品修订版ID
-     * @param sourceUrl 图片源地址
-     * @return true 存在，false 不存在
-     */
-    @Override
-    public boolean existsByRevisionIdAndSourceUrl(String revisionId, String sourceUrl) {
-        int count = goodsRevisionImageMapper.countByRevisionIdAndSourceUrl(revisionId, sourceUrl);
-        return count > 0;
+    public List<GoodsRevisionImage> listByRevisionId(String revisionId) {
+        return this.list(new LambdaQueryWrapper<GoodsRevisionImage>()
+                .eq(GoodsRevisionImage::getRevisionId, revisionId));
     }
 }

@@ -1,61 +1,17 @@
 package com.ruoyi.product.mapper;
 
-import java.util.List;
+import com.ruoyi.product.core.mybatisplus.RootMapper;
 import com.ruoyi.product.domain.GoodsRevisionSpu;
+import org.apache.ibatis.annotations.Param;
+import java.util.List;
 
 /**
  * SPU 快照Mapper接口
- * 
- * @author Rupert
- * @date 2025-12-13
  */
-public interface GoodsRevisionSpuMapper 
-{
+public interface GoodsRevisionSpuMapper extends RootMapper<GoodsRevisionSpu> {
     /**
-     * 查询SPU 快照
-     * 
-     * @param revisionId SPU 快照主键
-     * @return SPU 快照
+     * 查询需要标题更新的SPU列表
+     * 对应 GoodsRevisionSpuMapper.xml 中的 selectNeedTitleUpdate
      */
-    public GoodsRevisionSpu selectGoodsRevisionSpuByRevisionId(String revisionId);
-
-    /**
-     * 查询SPU 快照列表
-     * 
-     * @param goodsRevisionSpu SPU 快照
-     * @return SPU 快照集合
-     */
-    public List<GoodsRevisionSpu> selectGoodsRevisionSpuList(GoodsRevisionSpu goodsRevisionSpu);
-
-    /**
-     * 新增SPU 快照
-     * 
-     * @param goodsRevisionSpu SPU 快照
-     * @return 结果
-     */
-    public int insertGoodsRevisionSpu(GoodsRevisionSpu goodsRevisionSpu);
-
-    /**
-     * 修改SPU 快照
-     * 
-     * @param goodsRevisionSpu SPU 快照
-     * @return 结果
-     */
-    public int updateGoodsRevisionSpu(GoodsRevisionSpu goodsRevisionSpu);
-
-    /**
-     * 删除SPU 快照
-     * 
-     * @param revisionId SPU 快照主键
-     * @return 结果
-     */
-    public int deleteGoodsRevisionSpuByRevisionId(String revisionId);
-
-    /**
-     * 批量删除SPU 快照
-     * 
-     * @param revisionIds 需要删除的数据主键集合
-     * @return 结果
-     */
-    public int deleteGoodsRevisionSpuByRevisionIds(String[] revisionIds);
+    List<GoodsRevisionSpu> selectNeedTitleUpdate(@Param("goodsId") String goodsId);
 }

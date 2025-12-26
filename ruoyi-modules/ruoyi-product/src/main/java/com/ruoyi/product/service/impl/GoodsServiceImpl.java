@@ -1,9 +1,12 @@
 package com.ruoyi.product.service.impl;
 
+import java.util.ArrayList;
 import java.util.List;
-import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.util.CollectionUtils;
 import org.springframework.stereotype.Service;
 import com.ruoyi.product.mapper.GoodsMapper;
+import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
+import com.ruoyi.product.core.mybatisplus.impl.BaseServiceImpl;
 import com.ruoyi.product.domain.Goods;
 import com.ruoyi.product.service.IGoodsService;
 
@@ -14,92 +17,87 @@ import com.ruoyi.product.service.IGoodsService;
  * @date 2025-12-13
  */
 @Service
-public class GoodsServiceImpl implements IGoodsService 
-{
-    @Autowired
-    private GoodsMapper goodsMapper;
-
+public class GoodsServiceImpl extends BaseServiceImpl<GoodsMapper, Goods> implements IGoodsService {
     /**
-     * 查询云商品根
+     * 统计来源的商品数
      * 
-     * @param goodsId 云商品根主键
-     * @return 云商品根
+     * @param sourceId
+     * @return
      */
     @Override
-    public Goods selectGoodsByGoodsId(String goodsId)
-    {
-        return goodsMapper.selectGoodsByGoodsId(goodsId);
-    }
-
-    /**
-     * 查询云商品根列表
-     * 
-     * @param goods 云商品根
-     * @return 云商品根
-     */
-    @Override
-    public List<Goods> selectGoodsList(Goods goods)
-    {
-        return goodsMapper.selectGoodsList(goods);
-    }
-
-    /**
-     * 新增云商品根
-     * 
-     * @param goods 云商品根
-     * @return 结果
-     */
-    @Override
-    public int insertGoods(Goods goods)
-    {
-        return goodsMapper.insertGoods(goods);
-    }
-
-    /**
-     * 修改云商品根
-     * 
-     * @param goods 云商品根
-     * @return 结果
-     */
-    @Override
-    public int updateGoods(Goods goods)
-    {
-        return goodsMapper.updateGoods(goods);
-    }
-
-    /**
-     * 批量删除云商品根
-     * 
-     * @param goodsIds 需要删除的云商品根主键
-     * @return 结果
-     */
-    @Override
-    public int deleteGoodsByGoodsIds(String[] goodsIds)
-    {
-        return goodsMapper.deleteGoodsByGoodsIds(goodsIds);
-    }
-
-    /**
-     * 删除云商品根信息
-     * 
-     * @param goodsId 云商品根主键
-     * @return 结果
-     */
-    @Override
-    public int deleteGoodsByGoodsId(String goodsId)
-    {
-        return goodsMapper.deleteGoodsByGoodsId(goodsId);
+    public int countBySourceId(String sourceId) {
+        return (int) this.count(new LambdaQueryWrapper<Goods>()
+                .eq(Goods::getSourceId, sourceId));
     }
 
     @Override
     public boolean existsBySourceId(String sourceId) {
-        int count = goodsMapper.countBySourceId(sourceId);
-        return count > 0;
+        // 方案一：基于已有的 count 方法判断
+        // return this.countBySourceId(sourceId) > 0;
+
+        // 方案二：使用 MyBatis Plus 3.5.x+ 推荐的 exists 方法（性能更优）
+        // 它会生成类似 SELECT 1 FROM goods WHERE source_id = ? LIMIT 1 的 SQL
+        return this.exists(new LambdaQueryWrapper<Goods>()
+                .eq(Goods::getSourceId, sourceId));
     }
 
+    /**
+     * 根据来源查商品列表
+     * 
+     * @param sourceId
+     * @return
+     */
+    @Override
+    public List<Goods> listBySourceId(String sourceId) {
+        return this.list(new LambdaQueryWrapper<Goods>()
+                .eq(Goods::getSourceId, sourceId)
+                .orderByDesc(Goods::getGmtCreate)); // 建议查询列表时也带上默认排序
+    }
+
+    /**
+     * 取最近插入的某个店铺的某个商品id的商品
+     * 
+     * @param shopProductId
+     * @return
+     */
+    @Override
+    public Goods getLatestByShopProductId(String shopProductId) {
+        return this.getOne(new LambdaQueryWrapper<Goods>()
+                .eq(Goods::getShopProductId, shopProductId)
+                .orderByDesc(Goods::getGmtCreate) // 按创建时间倒序
+                .last("limit 1")); // 强制只取数据库层面的第一条，避免查出多条导致报错
+    }
+
+    /**
+     * 根据goods_id批量查询
+     * 
+     * @param goodsIds
+     * @return
+     */
+    @Override
+    public List<Goods> listByBatchIds(List<String> goodsIds) {
+        if (CollectionUtils.isEmpty(goodsIds)) {
+            return new ArrayList<>();
+        }
+        // 直接调用父类的原生方法即可，不需要自己写 SQL
+        return this.listByIds(goodsIds);
+    }
+
+    /**
+     * 实现根据 source_id 查询逻辑
+     * 使用 getOne 配合 LambdaQueryWrapper 确保查询的类型安全
+     */
     @Override
     public Goods selectGoodsBySourceId(String sourceId) {
-        return goodsMapper.selectGoodsBySourceId(sourceId);
+        if (sourceId == null) {
+            return null;
+        }
+        
+        // 使用 LambdaQueryWrapper 匹配 sourceId 字段
+        // 使用 last("LIMIT 1") 确保在数据库查找到第一条记录后立即返回，提高性能
+        return this.getOne(new LambdaQueryWrapper<Goods>()
+                .eq(Goods::getSourceId, sourceId)
+                .last("LIMIT 1"));
     }
-}
 
+}

@@ -7,7 +7,7 @@ import com.ruoyi.common.core.web.domain.AjaxResult;
 import com.ruoyi.common.log.annotation.Log;
 import com.ruoyi.common.log.enums.BusinessType;
 import com.ruoyi.common.security.annotation.RequiresPermissions;
-import com.ruoyi.product.constant.TaskCode;
+import com.ruoyi.product.constant.ItemTaskCode;
 import com.ruoyi.product.service.IImportService;
 import com.ruoyi.product.constant.AsyncTaskCode;
 import com.ruoyi.system.api.domain.SysFile;
@@ -17,7 +17,7 @@ import jakarta.servlet.http.HttpServletResponse;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
-
+import com.ruoyi.product.constant.MQConstant;
 import jakarta.servlet.ServletOutputStream;
 import java.io.IOException;
 import java.util.HashMap;
@@ -43,7 +43,7 @@ public class ImportController extends BaseController {
      * 导入SPU数据
      */
     @RequiresPermissions("product:import:spu")
-    @Log(title = "SPU导入", businessType = BusinessType.IMPORT)
+    @Log(title = AsyncTaskCode.SPU_IMPORT_LABEL, businessType = BusinessType.IMPORT)
     @PostMapping("/spu")
     public AjaxResult importSpu(@RequestParam("file") MultipartFile file,
             @RequestParam(value = "shopId", required = false) String shopId) {
@@ -53,7 +53,8 @@ public class ImportController extends BaseController {
                 logger.info("导入SPU数据，商店ID: {}", shopId);
                 // 可以将shopId传递给service层，或者在这里做一些校验
             }
-            return importService.importSpuData(file, shopId);
+            // return importService.importSpuData(file, shopId);
+            return createImportTask(file, shopId, null, AsyncTaskCode.SPU_IMPORT);
         } catch (Exception e) {
             logger.error("导入SPU数据失败", e);
             return AjaxResult.error("导入失败：" + e.getMessage());
@@ -64,44 +65,101 @@ public class ImportController extends BaseController {
      * 导入SKU数据
      */
     @RequiresPermissions("product:import:sku")
-    @Log(title = "SKU导入", businessType = BusinessType.IMPORT)
+    @Log(title = AsyncTaskCode.SKU_IMPORT_LABEL, businessType = BusinessType.IMPORT)
     @PostMapping("/sku")
     public AjaxResult importSku(@RequestParam("file") MultipartFile file,
             @RequestParam(value = "shopId", required = false) String shopId) {
-        try {
-            if (StringUtils.isNotEmpty(shopId)) {
-                logger.info("导入SKU数据，商店ID: {}", shopId);
-            }
-            // return importService.importSkuData(file, shopId);
-            return createSkuImportTask(file, shopId);
-        } catch (Exception e) {
-            logger.error("导入SKU数据失败", e);
-            return AjaxResult.error("导入失败：" + e.getMessage());
-        }
+        return createImportTask(file, shopId, null, AsyncTaskCode.SKU_IMPORT);
     }
 
-    public AjaxResult createSkuImportTask(MultipartFile file, String shopId) {
-        // 1. 先上传文件到 ruoyi-file
-        R<SysFile> fileRsp = fileServiceClient.uploadFile(file);
-        if (fileRsp.getCode() != 200) {
-            return AjaxResult.error("文件上传失败");
+    @Log(title = AsyncTaskCode.PRICE_IMPORT_LABEL, businessType = BusinessType.IMPORT)
+    @PostMapping("/price")
+    public AjaxResult importPrice(@RequestParam("file") MultipartFile file,
+            @RequestParam(value = "shopId", required = false) String shopId) {
+        return createImportTask(file, shopId, null, AsyncTaskCode.PRICE_IMPORT);
+    }
+
+    @Log(title = AsyncTaskCode.MODIFY_TITLE_IMPORT_LABEL, businessType = BusinessType.IMPORT)
+    @PostMapping("/title")
+    public AjaxResult importTitle(@RequestParam("file") MultipartFile file,
+            @RequestParam(value = "shopId", required = false) String shopId) {
+        return createImportTask(file, shopId, null, AsyncTaskCode.MODIFY_TITLE_IMPORT);
+    }
+
+    @Log(title = AsyncTaskCode.SINGLE_DISCOUNT_IMPORT_LABEL, businessType = BusinessType.IMPORT)
+    @PostMapping("/single_discount")
+    public AjaxResult importSingleDiscount(@RequestParam("file") MultipartFile file,
+            @RequestParam(value = "shopId", required = false) String shopId,
+            @RequestParam(value = "activityId", required = false) String activityId) {
+        return createImportTask(file, shopId, activityId, AsyncTaskCode.SINGLE_DISCOUNT_IMPORT);
+    }
+
+    @Log(title = AsyncTaskCode.PRODUCT_DISCOUNT_IMPORT_LABEL, businessType = BusinessType.IMPORT)
+    @PostMapping("/product-discount")
+    public AjaxResult importProductDiscount(@RequestParam("file") MultipartFile file,
+            @RequestParam(value = "shopId", required = false) String shopId,
+            @RequestParam(value = "activityId", required = false) String activityId) {
+        return createImportTask(file, shopId, activityId, AsyncTaskCode.PRODUCT_DISCOUNT_IMPORT);
+    }
+
+    @Log(title = AsyncTaskCode.NEW_USER_GIFT_IMPORT_LABEL, businessType = BusinessType.IMPORT)
+    @PostMapping("/new-user")
+    public AjaxResult importNewUserGift(@RequestParam("file") MultipartFile file,
+            @RequestParam(value = "shopId", required = false) String shopId,
+            @RequestParam(value = "activityId", required = false) String activityId) {
+        return createImportTask(file, shopId, activityId, AsyncTaskCode.NEW_USER_GIFT_IMPORT);
+    }
+
+    @Log(title = AsyncTaskCode.REPURCHASE_DISCOUNT_IMPORT_LABEL, businessType = BusinessType.IMPORT)
+    @PostMapping("/repurchase")
+    public AjaxResult importRepurchase(@RequestParam("file") MultipartFile file,
+            @RequestParam(value = "shopId", required = false) String shopId,
+            @RequestParam(value = "activityId", required = false) String activityId) {
+        return createImportTask(file, shopId, activityId, AsyncTaskCode.REPURCHASE_DISCOUNT_IMPORT);
+    }
+
+    @Log(title = AsyncTaskCode.PLATFORM_PROMOTION_IMPORT_LABEL, businessType = BusinessType.IMPORT)
+    @PostMapping("/promotion")
+    public AjaxResult importPlatformPromotion(@RequestParam("file") MultipartFile file,
+            @RequestParam(value = "shopId", required = false) String shopId,
+            @RequestParam(value = "activityId", required = false) String activityId) {
+        return createImportTask(file, shopId, activityId, AsyncTaskCode.PLATFORM_PROMOTION_IMPORT);
+    }
+
+    private AjaxResult createImportTask(MultipartFile file, String shopId, String activityId, AsyncTaskCode taskCode) {
+
+        try {
+            if (StringUtils.isNotEmpty(shopId)) {
+                logger.info("{}，商店ID: {}", taskCode.getLabel(), shopId);
+            }
+            // 1. 先上传文件到 ruoyi-file
+            R<SysFile> fileRsp = fileServiceClient.uploadFile(file);
+            if (fileRsp.getCode() != 200) {
+                return AjaxResult.error("文件上传失败");
+            }
+            SysFile sysFile = fileRsp.getData();
+            String fileUrl = sysFile.getUrl();
+            String fileName = file.getOriginalFilename();
+
+            // 2. 创建异步任务
+            Map<String, Object> ext = new HashMap<>();
+            ext.put("fileUrl", fileUrl);
+            ext.put("shopId", shopId);
+            if (StringUtils.isNotEmpty(activityId))
+                ext.put("activityId", activityId);
+
+            String taskId = asyncTaskService.createTask(
+                    taskCode,
+                    shopId,
+                    fileName, // 传入文件名
+                    fileUrl, // 传入文件URL
+                    ext); // 传入扩展参数
+            return AjaxResult.success(taskId);
+        } catch (Exception e) {
+            logger.error(taskCode.getLabel(), e);
+            return AjaxResult.error("导入失败：" + e.getMessage());
         }
-        SysFile sysFile = fileRsp.getData();
-        String fileUrl = sysFile.getUrl();
-        String fileName = file.getOriginalFilename();
 
-        // 2. 创建异步任务
-        Map<String, String> ext = new HashMap<>();
-        ext.put("fileUrl", fileUrl);
-        ext.put("shopId", shopId);
-
-        String taskId = asyncTaskService.createTask(
-                AsyncTaskCode.SKU_IMPORT.getCode(),
-                "SKU批量导入",
-                fileName, // 传入文件名
-                fileUrl, // 传入文件URL
-                ext); // 传入扩展参数
-        return AjaxResult.success(taskId);
     }
 
     /**
@@ -109,22 +167,7 @@ public class ImportController extends BaseController {
      */
     @GetMapping("/template/spu")
     public void downloadSpuTemplate(HttpServletResponse response) {
-        try {
-            byte[] data = importService.getTemplate("spu");
-
-            // 设置响应头
-            setExcelResponseHeader(response, "spu_template.xlsx");
-
-            // 输出文件流
-            ServletOutputStream outputStream = response.getOutputStream();
-            outputStream.write(data);
-            outputStream.flush();
-            outputStream.close();
-
-        } catch (Exception e) {
-            logger.error("下载SPU模板失败", e);
-            setErrorResponse(response, "下载模板失败: " + e.getMessage());
-        }
+        downloadTemplate(response, "spu", "spu_template.xlsx");
     }
 
     /**
@@ -132,11 +175,15 @@ public class ImportController extends BaseController {
      */
     @GetMapping("/template/sku")
     public void downloadSkuTemplate(HttpServletResponse response) {
+        downloadTemplate(response, "sku", "sku_template.xlsx");
+    }
+
+    private void downloadTemplate(HttpServletResponse response, String templateType, String templateName) {
         try {
-            byte[] data = importService.getTemplate("sku");
+            byte[] data = importService.getTemplate(templateType);
 
             // 设置响应头
-            setExcelResponseHeader(response, "sku_template.xlsx");
+            setExcelResponseHeader(response, templateName);
 
             // 输出文件流
             ServletOutputStream outputStream = response.getOutputStream();
@@ -145,7 +192,7 @@ public class ImportController extends BaseController {
             outputStream.close();
 
         } catch (Exception e) {
-            logger.error("下载SKU模板失败", e);
+            logger.error(templateName, e);
             setErrorResponse(response, "下载模板失败: " + e.getMessage());
         }
     }

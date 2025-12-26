@@ -1,6 +1,8 @@
 package com.ruoyi.product.service;
 
 import java.util.List;
+
+import com.ruoyi.product.core.mybatisplus.IBaseService;
 import com.ruoyi.product.domain.GoodsRevision;
 
 /**
@@ -9,69 +11,53 @@ import com.ruoyi.product.domain.GoodsRevision;
  * @author Rupert
  * @date 2025-12-13
  */
-public interface IGoodsRevisionService 
-{
+public interface IGoodsRevisionService extends IBaseService<GoodsRevision> {
     /**
-     * 查询商品版本
+     * 根据商品ID查询已冻结(frozen)的版本
      * 
-     * @param revisionId 商品版本主键
-     * @return 商品版本
+     * @param goodsId 商品ID
+     * @return 冻结状态的版本列表
      */
-    public GoodsRevision selectGoodsRevisionByRevisionId(String revisionId);
+    List<GoodsRevision> listFrozenByGoodsId(String goodsId);
 
     /**
-     * 查询商品版本列表
+     * 根据商品ID查询编辑中(editing)的版本
      * 
-     * @param goodsRevision 商品版本
-     * @return 商品版本集合
+     * @param goodsId 商品ID
+     * @return 编辑中状态的版本列表
      */
-    public List<GoodsRevision> selectGoodsRevisionList(GoodsRevision goodsRevision);
+    List<GoodsRevision> listEditingByGoodsId(String goodsId);
 
     /**
-     * 新增商品版本
+     * 根据商品ID查询审核中(approving)的版本
      * 
-     * @param goodsRevision 商品版本
-     * @return 结果
+     * @param goodsId 商品ID
+     * @return 审核中状态的版本列表
      */
-    public int insertGoodsRevision(GoodsRevision goodsRevision);
+    List<GoodsRevision> listApprovingByGoodsId(String goodsId);
 
     /**
-     * 修改商品版本
+     * 根据版本ID列表批量查询
      * 
-     * @param goodsRevision 商品版本
-     * @return 结果
+     * @param revisionIds 版本ID集合
+     * @return 版本列表
      */
-    public int updateGoodsRevision(GoodsRevision goodsRevision);
+    List<GoodsRevision> listByRevisionIds(List<String> revisionIds);
 
     /**
-     * 批量删除商品版本
+     * 根据商品ID查询所有版本，并按创建时间倒序排列
      * 
-     * @param revisionIds 需要删除的商品版本主键集合
-     * @return 结果
+     * @param goodsId 商品ID
+     * @return 按时间倒序的版本列表
      */
-    public int deleteGoodsRevisionByRevisionIds(String[] revisionIds);
+    List<GoodsRevision> listByGoodsId(String goodsId);
 
     /**
-     * 删除商品版本信息
+     * 根据商品ID和状态列表筛选版本，并按修改时间倒序排列
      * 
-     * @param revisionId 商品版本主键
-     * @return 结果
+     * @param goodsId    商品ID
+     * @param statusList 状态代码列表
+     * @return 符合条件且按修改时间倒序的版本列表
      */
-    public int deleteGoodsRevisionByRevisionId(String revisionId);
-
-    /**
-     * 根据商品ID查询冻结的版本
-     * @param goodsId
-     * @return
-     */
-    public GoodsRevision selectFrozenRevisionByGoodsId(String goodsId);
-
-    /**
-     * 根据商品ID查询编辑中的版本
-     * @param goodsId
-     * @return
-     */
-    public GoodsRevision selectEditingRevisionByGoodsId(String goodsId);
-
-
+    List<GoodsRevision> listByGoodsAndStatus(String goodsId, List<String> statusList);
 }

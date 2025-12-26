@@ -1,7 +1,7 @@
 package com.ruoyi.product.controller;
 
 import java.util.List;
-import java.io.IOException;
+import java.util.Arrays;
 import jakarta.servlet.http.HttpServletResponse;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -12,6 +12,7 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
+import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.ruoyi.common.log.annotation.Log;
 import com.ruoyi.common.log.enums.BusinessType;
 import com.ruoyi.common.security.annotation.RequiresPermissions;
@@ -19,17 +20,17 @@ import com.ruoyi.product.domain.DirectDiscountActivity;
 import com.ruoyi.product.service.IDirectDiscountActivityService;
 import com.ruoyi.common.core.web.controller.BaseController;
 import com.ruoyi.common.core.web.domain.AjaxResult;
+import com.ruoyi.common.core.utils.StringUtils;
 import com.ruoyi.common.core.utils.poi.ExcelUtil;
 import com.ruoyi.common.core.web.page.TableDataInfo;
 
 /**
  * 单品直降活动Controller
- * 
- * @author Rupert
- * @date 2025-12-13
+ * * @author Rupert
+ * @date 2025-12-26
  */
 @RestController
-@RequestMapping("/activity/discount")
+@RequestMapping("/promotion/singlediscountactivity")
 public class DirectDiscountActivityController extends BaseController
 {
     @Autowired
@@ -37,13 +38,18 @@ public class DirectDiscountActivityController extends BaseController
 
     /**
      * 查询单品直降活动列表
+     * 修改点：使用 LambdaQueryWrapper 实现 activityName, shopId, platformActivityId 过滤
      */
     @RequiresPermissions("product:activity:list")
     @GetMapping("/list")
-    public TableDataInfo list(DirectDiscountActivity directDiscountActivity)
+    public TableDataInfo list(DirectDiscountActivity activity)
     {
         startPage();
-        List<DirectDiscountActivity> list = directDiscountActivityService.selectDirectDiscountActivityList(directDiscountActivity);
+        List<DirectDiscountActivity> list = directDiscountActivityService.list(new LambdaQueryWrapper<DirectDiscountActivity>()
+                .like(StringUtils.isNotBlank(activity.getActivityName()), DirectDiscountActivity::getActivityName, activity.getActivityName())
+                .eq(StringUtils.isNotBlank(activity.getShopId()), DirectDiscountActivity::getShopId, activity.getShopId())
+                .eq(StringUtils.isNotBlank(activity.getPlatformActivityId()), DirectDiscountActivity::getPlatformActivityId, activity.getPlatformActivityId())
+                .orderByDesc(DirectDiscountActivity::getGmtCreate)); // 默认按创建时间倒序
         return getDataTable(list);
     }
 
@@ -53,10 +59,14 @@ public class DirectDiscountActivityController extends BaseController
     @RequiresPermissions("product:activity:export")
     @Log(title = "单品直降活动", businessType = BusinessType.EXPORT)
     @PostMapping("/export")
-    public void export(HttpServletResponse response, DirectDiscountActivity directDiscountActivity)
+    public void export(HttpServletResponse response, DirectDiscountActivity activity)
     {
-        List<DirectDiscountActivity> list = directDiscountActivityService.selectDirectDiscountActivityList(directDiscountActivity);
-        ExcelUtil<DirectDiscountActivity> util = new ExcelUtil<DirectDiscountActivity>(DirectDiscountActivity.class);
+        List<DirectDiscountActivity> list = directDiscountActivityService.list(new LambdaQueryWrapper<DirectDiscountActivity>()
+                .like(StringUtils.isNotBlank(activity.getActivityName()), DirectDiscountActivity::getActivityName, activity.getActivityName())
+                .eq(StringUtils.isNotBlank(activity.getShopId()), DirectDiscountActivity::getShopId, activity.getShopId())
+                .eq(StringUtils.isNotBlank(activity.getPlatformActivityId()), DirectDiscountActivity::getPlatformActivityId, activity.getPlatformActivityId()));
+        
+        ExcelUtil<DirectDiscountActivity> util = new ExcelUtil<>(DirectDiscountActivity.class);
         util.exportExcel(response, list, "单品直降活动数据");
     }
 
@@ -67,7 +77,7 @@ public class DirectDiscountActivityController extends BaseController
     @GetMapping(value = "/{activityId}")
     public AjaxResult getInfo(@PathVariable("activityId") String activityId)
     {
-        return success(directDiscountActivityService.selectDirectDiscountActivityByActivityId(activityId));
+        return success(directDiscountActivityService.getById(activityId));
     }
 
     /**
@@ -78,7 +88,7 @@ public class DirectDiscountActivityController extends BaseController
     @PostMapping
     public AjaxResult add(@RequestBody DirectDiscountActivity directDiscountActivity)
     {
-        return toAjax(directDiscountActivityService.insertDirectDiscountActivity(directDiscountActivity));
+        return toAjax(directDiscountActivityService.save(directDiscountActivity));
     }
 
     /**
@@ -89,7 +99,7 @@ public class DirectDiscountActivityController extends BaseController
     @PutMapping
     public AjaxResult edit(@RequestBody DirectDiscountActivity directDiscountActivity)
     {
-        return toAjax(directDiscountActivityService.updateDirectDiscountActivity(directDiscountActivity));
+        return toAjax(directDiscountActivityService.updateById(directDiscountActivity));
     }
 
     /**
@@ -97,9 +107,9 @@ public class DirectDiscountActivityController extends BaseController
      */
     @RequiresPermissions("product:activity:remove")
     @Log(title = "单品直降活动", businessType = BusinessType.DELETE)
-	@DeleteMapping("/{activityIds}")
+    @DeleteMapping("/{activityIds}")
     public AjaxResult remove(@PathVariable String[] activityIds)
     {
-        return toAjax(directDiscountActivityService.deleteDirectDiscountActivityByActivityIds(activityIds));
+        return toAjax(directDiscountActivityService.removeByIds(Arrays.asList(activityIds)));
     }
 }

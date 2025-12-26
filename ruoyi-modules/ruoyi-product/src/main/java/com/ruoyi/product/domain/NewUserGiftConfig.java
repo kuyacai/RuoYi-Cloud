@@ -1,11 +1,13 @@
 package com.ruoyi.product.domain;
 
-import java.util.Date;
-import com.fasterxml.jackson.annotation.JsonFormat;
-import org.apache.commons.lang3.builder.ToStringBuilder;
-import org.apache.commons.lang3.builder.ToStringStyle;
-import com.ruoyi.common.core.annotation.Excel;
-import com.ruoyi.common.core.web.domain.BaseEntity;
+import com.baomidou.mybatisplus.annotation.IdType;
+import com.baomidou.mybatisplus.annotation.TableId;
+import com.baomidou.mybatisplus.annotation.TableName;
+import com.ruoyi.product.core.mybatisplus.ProductBaseEntity;
+
+import lombok.Data;
+import lombok.EqualsAndHashCode;
+import lombok.ToString;
 
 /**
  * 新用户礼包配置对象 new_user_gift_config
@@ -13,192 +15,32 @@ import com.ruoyi.common.core.web.domain.BaseEntity;
  * @author Rupert
  * @date 2025-12-13
  */
-public class NewUserGiftConfig extends BaseEntity
-{
+@Data
+@EqualsAndHashCode(callSuper = true)
+@ToString(callSuper = true)
+@TableName(value = "new_user_gift_config", autoResultMap = true)
+public class NewUserGiftConfig extends ProductBaseEntity {
     private static final long serialVersionUID = 1L;
 
-    /** $column.columnComment */
+    @TableId(value = "id", type = IdType.INPUT)
     private String id;
 
-    /** $column.columnComment */
-    @Excel(name = "${comment}", readConverterExp = "$column.readConverterExp()")
     private String configName;
 
-    /** $column.columnComment */
-    @Excel(name = "${comment}", readConverterExp = "$column.readConverterExp()")
-    private Long priceMin;
+    private Integer priceMin;
 
-    /** $column.columnComment */
-    @Excel(name = "${comment}", readConverterExp = "$column.readConverterExp()")
-    private Long priceMax;
+    private Integer priceMax;
 
-    /** $column.columnComment */
-    @Excel(name = "${comment}", readConverterExp = "$column.readConverterExp()")
-    private Long avgAmount;
+    private Integer avgAmount;
 
-    /** $column.columnComment */
-    @Excel(name = "${comment}", readConverterExp = "$column.readConverterExp()")
-    private Long maxGiftAmount;
+    private Integer maxGiftAmount;
 
-    /** $column.columnComment */
-    @Excel(name = "${comment}", readConverterExp = "$column.readConverterExp()")
-    private Long referenceAmountLow;
+    private Integer referenceAmountLow;
 
-    /** $column.columnComment */
-    @Excel(name = "${comment}", readConverterExp = "$column.readConverterExp()")
-    private Long referenceAmountHigh;
+    private Integer referenceAmountHigh;
 
-    /** $column.columnComment */
-    @Excel(name = "${comment}", readConverterExp = "$column.readConverterExp()")
-    private Long discountRate;
+    private Integer discountRate;
 
-    /** $column.columnComment */
-    @Excel(name = "${comment}", readConverterExp = "$column.readConverterExp()")
     private String configStatus;
 
-    /** $column.columnComment */
-    @Excel(name = "${comment}", readConverterExp = "$column.readConverterExp()")
-    private Date gmtCreate;
-
-    /** $column.columnComment */
-    @Excel(name = "${comment}", readConverterExp = "$column.readConverterExp()")
-    private Date gmtModified;
-
-    public void setId(String id) 
-    {
-        this.id = id;
-    }
-
-    public String getId() 
-    {
-        return id;
-    }
-
-    public void setConfigName(String configName) 
-    {
-        this.configName = configName;
-    }
-
-    public String getConfigName() 
-    {
-        return configName;
-    }
-
-    public void setPriceMin(Long priceMin) 
-    {
-        this.priceMin = priceMin;
-    }
-
-    public Long getPriceMin() 
-    {
-        return priceMin;
-    }
-
-    public void setPriceMax(Long priceMax) 
-    {
-        this.priceMax = priceMax;
-    }
-
-    public Long getPriceMax() 
-    {
-        return priceMax;
-    }
-
-    public void setAvgAmount(Long avgAmount) 
-    {
-        this.avgAmount = avgAmount;
-    }
-
-    public Long getAvgAmount() 
-    {
-        return avgAmount;
-    }
-
-    public void setMaxGiftAmount(Long maxGiftAmount) 
-    {
-        this.maxGiftAmount = maxGiftAmount;
-    }
-
-    public Long getMaxGiftAmount() 
-    {
-        return maxGiftAmount;
-    }
-
-    public void setReferenceAmountLow(Long referenceAmountLow) 
-    {
-        this.referenceAmountLow = referenceAmountLow;
-    }
-
-    public Long getReferenceAmountLow() 
-    {
-        return referenceAmountLow;
-    }
-
-    public void setReferenceAmountHigh(Long referenceAmountHigh) 
-    {
-        this.referenceAmountHigh = referenceAmountHigh;
-    }
-
-    public Long getReferenceAmountHigh() 
-    {
-        return referenceAmountHigh;
-    }
-
-    public void setDiscountRate(Long discountRate) 
-    {
-        this.discountRate = discountRate;
-    }
-
-    public Long getDiscountRate() 
-    {
-        return discountRate;
-    }
-
-    public void setConfigStatus(String configStatus) 
-    {
-        this.configStatus = configStatus;
-    }
-
-    public String getConfigStatus() 
-    {
-        return configStatus;
-    }
-
-    public void setGmtCreate(Date gmtCreate) 
-    {
-        this.gmtCreate = gmtCreate;
-    }
-
-    public Date getGmtCreate() 
-    {
-        return gmtCreate;
-    }
-
-    public void setGmtModified(Date gmtModified) 
-    {
-        this.gmtModified = gmtModified;
-    }
-
-    public Date getGmtModified() 
-    {
-        return gmtModified;
-    }
-
-    @Override
-    public String toString() {
-        return new ToStringBuilder(this,ToStringStyle.MULTI_LINE_STYLE)
-            .append("id", getId())
-            .append("configName", getConfigName())
-            .append("priceMin", getPriceMin())
-            .append("priceMax", getPriceMax())
-            .append("avgAmount", getAvgAmount())
-            .append("maxGiftAmount", getMaxGiftAmount())
-            .append("referenceAmountLow", getReferenceAmountLow())
-            .append("referenceAmountHigh", getReferenceAmountHigh())
-            .append("discountRate", getDiscountRate())
-            .append("configStatus", getConfigStatus())
-            .append("gmtCreate", getGmtCreate())
-            .append("gmtModified", getGmtModified())
-            .toString();
-    }
 }

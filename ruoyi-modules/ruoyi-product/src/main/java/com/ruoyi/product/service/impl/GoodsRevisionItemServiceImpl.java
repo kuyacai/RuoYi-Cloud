@@ -1,12 +1,19 @@
 package com.ruoyi.product.service.impl;
 
+import java.util.ArrayList;
 import java.util.List;
+
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import com.ruoyi.product.mapper.GoodsRevisionItemMapper;
+import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
+import com.ruoyi.product.core.mybatisplus.impl.BaseServiceImpl;
 import com.ruoyi.product.domain.GoodsRevisionItem;
+import com.ruoyi.product.domain.GoodsRevisionSpu;
 import com.ruoyi.product.service.IGoodsRevisionItemService;
 import org.springframework.util.CollectionUtils;
+
 /**
  * SKU 快照Service业务层处理
  * 
@@ -14,99 +21,72 @@ import org.springframework.util.CollectionUtils;
  * @date 2025-12-13
  */
 @Service
-public class GoodsRevisionItemServiceImpl implements IGoodsRevisionItemService 
-{
-    @Autowired
-    private GoodsRevisionItemMapper goodsRevisionItemMapper;
-
+public class GoodsRevisionItemServiceImpl extends BaseServiceImpl<GoodsRevisionItemMapper, GoodsRevisionItem>
+        implements IGoodsRevisionItemService {
     /**
-     * 查询SKU 快照
-     * 
-     * @param itemId SKU 快照主键
-     * @return SKU 快照
+     * 检查唯一性
+     * 修改点：使用 count 方法代替查询整个 List，性能更高
      */
-    @Override
-    public GoodsRevisionItem selectGoodsRevisionItemByItemId(String itemId)
-    {
-        return goodsRevisionItemMapper.selectGoodsRevisionItemByItemId(itemId);
-    }
-
-    /**
-     * 查询SKU 快照列表
-     * 
-     * @param goodsRevisionItem SKU 快照
-     * @return SKU 快照
-     */
-    @Override
-    public List<GoodsRevisionItem> selectGoodsRevisionItemList(GoodsRevisionItem goodsRevisionItem)
-    {
-        return goodsRevisionItemMapper.selectGoodsRevisionItemList(goodsRevisionItem);
-    }
-
-    /**
-     * 新增SKU 快照
-     * 
-     * @param goodsRevisionItem SKU 快照
-     * @return 结果
-     */
-    @Override
-    public int insertGoodsRevisionItem(GoodsRevisionItem goodsRevisionItem)
-    {
-        return goodsRevisionItemMapper.insertGoodsRevisionItem(goodsRevisionItem);
-    }
-
-    /**
-     * 修改SKU 快照
-     * 
-     * @param goodsRevisionItem SKU 快照
-     * @return 结果
-     */
-    @Override
-    public int updateGoodsRevisionItem(GoodsRevisionItem goodsRevisionItem)
-    {
-        return goodsRevisionItemMapper.updateGoodsRevisionItem(goodsRevisionItem);
-    }
-
-    /**
-     * 批量删除SKU 快照
-     * 
-     * @param itemIds 需要删除的SKU 快照主键
-     * @return 结果
-     */
-    @Override
-    public int deleteGoodsRevisionItemByItemIds(String[] itemIds)
-    {
-        return goodsRevisionItemMapper.deleteGoodsRevisionItemByItemIds(itemIds);
-    }
-
-    /**
-     * 删除SKU 快照信息
-     * 
-     * @param itemId SKU 快照主键
-     * @return 结果
-     */
-    @Override
-    public int deleteGoodsRevisionItemByItemId(String itemId)
-    {
-        return goodsRevisionItemMapper.deleteGoodsRevisionItemByItemId(itemId);
-    }
-
     @Override
     public boolean checkUnique(GoodsRevisionItem goodsRevisionItem) {
-        List<GoodsRevisionItem> list = goodsRevisionItemMapper.selectGoodsRevisionItemList(goodsRevisionItem);
-        return CollectionUtils.isEmpty(list);
+        // 使用 LambdaQueryWrapper 动态构建条件
+        Long count = this.count(new LambdaQueryWrapper<GoodsRevisionItem>()
+                .eq(StringUtils.isNotBlank(goodsRevisionItem.getRevisionId()), GoodsRevisionItem::getRevisionId,
+                        goodsRevisionItem.getRevisionId())
+                .eq(StringUtils.isNotBlank(goodsRevisionItem.getShopId()), GoodsRevisionItem::getShopId,
+                        goodsRevisionItem.getShopId())
+                .eq(StringUtils.isNotBlank(goodsRevisionItem.getShopProductId()), GoodsRevisionItem::getShopProductId,
+                        goodsRevisionItem.getShopProductId())
+                .eq(StringUtils.isNotBlank(goodsRevisionItem.getShopSkuId()), GoodsRevisionItem::getShopSkuId,
+                        goodsRevisionItem.getShopSkuId())
+                .eq(StringUtils.isNotBlank(goodsRevisionItem.getSkuCode()), GoodsRevisionItem::getSkuCode,
+                        goodsRevisionItem.getSkuCode())
+        // 可以根据需要继续链式添加其他属性的判断
+        );
+        return count == 0;
+    }
+
+    /**
+     * 判断是否已被导入
+     * 修改点：直接构建精确查询条件，无需创建完整的实体对象
+     */
+    @Override
+    public boolean isBeenImported(String revisionId, String shopId, String shopProductId, String shopSkuId) {
+        Long count = this.count(new LambdaQueryWrapper<GoodsRevisionItem>()
+                .eq(GoodsRevisionItem::getRevisionId, revisionId)
+                .eq(GoodsRevisionItem::getShopId, shopId)
+                .eq(GoodsRevisionItem::getShopProductId, shopProductId)
+                .eq(GoodsRevisionItem::getShopSkuId, shopSkuId));
+
+        return count > 0;
+    }
+
+    /**
+     * 实现原 XML 中的 selectByRevisionIds 逻辑
+     * 批量查询版本关联的 SKU
+     */
+    @Override
+    public List<GoodsRevisionItem> listByRevisionIds(List<String> revisionIds) {
+        if (CollectionUtils.isEmpty(revisionIds)) {
+            return new ArrayList<>();
+        }
+        return this.list(new LambdaQueryWrapper<GoodsRevisionItem>()
+                .in(GoodsRevisionItem::getRevisionId, revisionIds));
+    }
+
+    /**
+     * 实现原 XML 中的 selectByRevisionId 逻辑
+     * 查询单个版本下的所有 SKU
+     */
+    @Override
+    public List<GoodsRevisionItem> listByRevisionId(String revisionId) {
+        return this.list(new LambdaQueryWrapper<GoodsRevisionItem>()
+                .eq(GoodsRevisionItem::getRevisionId, revisionId));
     }
 
     @Override
-    public boolean isBeenImported(String revisionId, String shopId, String shopProductId, String shopSkuId) {
-        GoodsRevisionItem goodsRevisionItem = new GoodsRevisionItem();
-        goodsRevisionItem.setRevisionId(revisionId);
-        goodsRevisionItem.setShopId(shopId);
-        goodsRevisionItem.setShopProductId(shopProductId);
-        goodsRevisionItem.setShopSkuId(shopSkuId);
-        //List<GoodsRevisionItem> list = goodsRevisionItemMapper.selectGoodsRevisionItemList(goodsRevisionItem);
-        return !checkUnique(goodsRevisionItem);
+    public List<GoodsRevisionItem> selectSkusNeedPriceUpdate(String goodsId) {
+        return baseMapper.selectSkusNeedPriceUpdate(goodsId);
     }
-
 
 }

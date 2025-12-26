@@ -39,180 +39,31 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
         <result property="barcode"    column="barcode"    />
         <result property="gmtCreate"    column="gmt_create"    />
         <result property="gmtModified"    column="gmt_modified"    />
+
+        <!-- 新增的关联字段映射 -->
+        <result property="taskId" column="task_id"/>
+        <result property="taskCode" column="task_code"/>
+        <result property="taskStatus" column="task_status"/>
     </resultMap>
 
-    <sql id="selectGoodsRevisionItemVo">
-        select item_id, revision_id, shop_id, shop_product_id, shop_sku_id, sku_code, seller_sku, spec1, spec1_note, spec2, spec2_note, spec3_or_lead_time, spec3_note, in_stock_qty, full_prepay_qty, ship_3d_qty, ship_4d_qty, ship_5d_qty, ship_7d_qty, ship_10d_qty, ship_15d_qty, ship_20d_qty, ship_25d_qty, ship_30d_qty, ship_35d_qty, ship_45d_qty, orignial_price, market_price, lowest_price, highest_price, sku_status, barcode, gmt_create, gmt_modified from goods_revision_item
-    </sql>
-
-    <select id="selectGoodsRevisionItemList" parameterType="GoodsRevisionItem" resultMap="GoodsRevisionItemResult">
-        <include refid="selectGoodsRevisionItemVo"/>
-        <where>  
-            <if test="revisionId != null  and revisionId != ''"> and revision_id = #{revisionId}</if>
-            <if test="shopId != null  and shopId != ''"> and shop_id = #{shopId}</if>
-            <if test="shopProductId != null  and shopProductId != ''"> and shop_product_id = #{shopProductId}</if>
-            <if test="shopSkuId != null  and shopSkuId != ''"> and shop_sku_id = #{shopSkuId}</if>
-            <if test="skuCode != null  and skuCode != ''"> and sku_code = #{skuCode}</if>
-            <if test="sellerSku != null  and sellerSku != ''"> and seller_sku = #{sellerSku}</if>
-            <if test="spec1 != null  and spec1 != ''"> and spec1 = #{spec1}</if>
-            <if test="spec1Note != null  and spec1Note != ''"> and spec1_note = #{spec1Note}</if>
-            <if test="spec2 != null  and spec2 != ''"> and spec2 = #{spec2}</if>
-            <if test="spec2Note != null  and spec2Note != ''"> and spec2_note = #{spec2Note}</if>
-            <if test="spec3OrLeadTime != null  and spec3OrLeadTime != ''"> and spec3_or_lead_time = #{spec3OrLeadTime}</if>
-            <if test="spec3Note != null  and spec3Note != ''"> and spec3_note = #{spec3Note}</if>
-            <if test="inStockQty != null "> and in_stock_qty = #{inStockQty}</if>
-            <if test="fullPrepayQty != null "> and full_prepay_qty = #{fullPrepayQty}</if>
-            <if test="ship3dQty != null "> and ship_3d_qty = #{ship3dQty}</if>
-            <if test="ship4dQty != null "> and ship_4d_qty = #{ship4dQty}</if>
-            <if test="ship5dQty != null "> and ship_5d_qty = #{ship5dQty}</if>
-            <if test="ship7dQty != null "> and ship_7d_qty = #{ship7dQty}</if>
-            <if test="ship10dQty != null "> and ship_10d_qty = #{ship10dQty}</if>
-            <if test="ship15dQty != null "> and ship_15d_qty = #{ship15dQty}</if>
-            <if test="ship20dQty != null "> and ship_20d_qty = #{ship20dQty}</if>
-            <if test="ship25dQty != null "> and ship_25d_qty = #{ship25dQty}</if>
-            <if test="ship30dQty != null "> and ship_30d_qty = #{ship30dQty}</if>
-            <if test="ship35dQty != null "> and ship_35d_qty = #{ship35dQty}</if>
-            <if test="ship45dQty != null "> and ship_45d_qty = #{ship45dQty}</if>
-            <if test="orignialPrice != null "> and orignial_price = #{orignialPrice}</if>
-            <if test="marketPrice != null "> and market_price = #{marketPrice}</if>
-            <if test="lowestPrice != null "> and lowest_price = #{lowestPrice}</if>
-            <if test="highestPrice != null "> and highest_price = #{highestPrice}</if>
-            <if test="skuStatus != null  and skuStatus != ''"> and sku_status = #{skuStatus}</if>
-            <if test="barcode != null  and barcode != ''"> and barcode = #{barcode}</if>
-            <if test="gmtCreate != null "> and gmt_create = #{gmtCreate}</if>
-            <if test="gmtModified != null "> and gmt_modified = #{gmtModified}</if>
-        </where>
-    </select>
     
-    <select id="selectGoodsRevisionItemByItemId" parameterType="String" resultMap="GoodsRevisionItemResult">
-        <include refid="selectGoodsRevisionItemVo"/>
-        where item_id = #{itemId}
+    <select id="selectSkusNeedPriceUpdate" parameterType="String" resultMap="GoodsRevisionItemResult">
+        SELECT 
+            gri.*,
+            it.task_id,
+            it.task_code,
+            it.task_status
+        FROM goods_revision_item gri
+        INNER JOIN goods_revision gr ON gri.revision_id = gr.revision_id
+        LEFT JOIN item_task it ON gr.revision_id = it.biz_id 
+            AND it.task_status = 'pending' 
+            AND it.task_code = 'edit_price'
+        WHERE gr.goods_id = #{goodsId}
+            AND gr.rev_status = 'editing'
+            AND gri.sku_status != 'deleted'
+            AND it.task_id IS NOT NULL
+        ORDER BY gri.orignial_price ASC
     </select>
 
-    <insert id="insertGoodsRevisionItem" parameterType="GoodsRevisionItem">
-        insert into goods_revision_item
-        <trim prefix="(" suffix=")" suffixOverrides=",">
-            <if test="itemId != null">item_id,</if>
-            <if test="revisionId != null and revisionId != ''">revision_id,</if>
-            <if test="shopId != null and shopId != ''">shop_id,</if>
-            <if test="shopProductId != null and shopProductId != ''">shop_product_id,</if>
-            <if test="shopSkuId != null and shopSkuId != ''">shop_sku_id,</if>
-            <if test="skuCode != null and skuCode != ''">sku_code,</if>
-            <if test="sellerSku != null and sellerSku != ''">seller_sku,</if>
-            <if test="spec1 != null and spec1 != ''">spec1,</if>
-            <if test="spec1Note != null and spec1Note != ''">spec1_note,</if>
-            <if test="spec2 != null and spec2 != ''">spec2,</if>
-            <if test="spec2Note != null and spec2Note != ''">spec2_note,</if>
-            <if test="spec3OrLeadTime != null and spec3OrLeadTime != ''">spec3_or_lead_time,</if>
-            <if test="spec3Note != null and spec3Note != ''">spec3_note,</if>
-            <if test="inStockQty != null">in_stock_qty,</if>
-            <if test="fullPrepayQty != null">full_prepay_qty,</if>
-            <if test="ship3dQty != null">ship_3d_qty,</if>
-            <if test="ship4dQty != null">ship_4d_qty,</if>
-            <if test="ship5dQty != null">ship_5d_qty,</if>
-            <if test="ship7dQty != null">ship_7d_qty,</if>
-            <if test="ship10dQty != null">ship_10d_qty,</if>
-            <if test="ship15dQty != null">ship_15d_qty,</if>
-            <if test="ship20dQty != null">ship_20d_qty,</if>
-            <if test="ship25dQty != null">ship_25d_qty,</if>
-            <if test="ship30dQty != null">ship_30d_qty,</if>
-            <if test="ship35dQty != null">ship_35d_qty,</if>
-            <if test="ship45dQty != null">ship_45d_qty,</if>
-            <if test="orignialPrice != null">orignial_price,</if>
-            <if test="marketPrice != null">market_price,</if>
-            <if test="lowestPrice != null">lowest_price,</if>
-            <if test="highestPrice != null">highest_price,</if>
-            <if test="skuStatus != null">sku_status,</if>
-            <if test="barcode != null">barcode,</if>
-            <if test="gmtCreate != null">gmt_create,</if>
-            <if test="gmtModified != null">gmt_modified,</if>
-         </trim>
-        <trim prefix="values (" suffix=")" suffixOverrides=",">
-            <if test="itemId != null">#{itemId},</if>
-            <if test="revisionId != null and revisionId != ''">#{revisionId},</if>
-            <if test="shopId != null and shopId != ''">#{shopId},</if>
-            <if test="shopProductId != null and shopProductId != ''">#{shopProductId},</if>
-            <if test="shopSkuId != null and shopSkuId != ''">#{shopSkuId},</if>
-            <if test="skuCode != null and skuCode != ''">#{skuCode},</if>
-            <if test="sellerSku != null and sellerSku != ''">#{sellerSku},</if>
-            <if test="spec1 != null and spec1 != ''">#{spec1},</if>
-            <if test="spec1Note != null and spec1Note != ''">#{spec1Note},</if>
-            <if test="spec2 != null and spec2 != ''">#{spec2},</if>
-            <if test="spec2Note != null and spec2Note != ''">#{spec2Note},</if>
-            <if test="spec3OrLeadTime != null and spec3OrLeadTime != ''">#{spec3OrLeadTime},</if>
-            <if test="spec3Note != null and spec3Note != ''">#{spec3Note},</if>
-            <if test="inStockQty != null">#{inStockQty},</if>
-            <if test="fullPrepayQty != null">#{fullPrepayQty},</if>
-            <if test="ship3dQty != null">#{ship3dQty},</if>
-            <if test="ship4dQty != null">#{ship4dQty},</if>
-            <if test="ship5dQty != null">#{ship5dQty},</if>
-            <if test="ship7dQty != null">#{ship7dQty},</if>
-            <if test="ship10dQty != null">#{ship10dQty},</if>
-            <if test="ship15dQty != null">#{ship15dQty},</if>
-            <if test="ship20dQty != null">#{ship20dQty},</if>
-            <if test="ship25dQty != null">#{ship25dQty},</if>
-            <if test="ship30dQty != null">#{ship30dQty},</if>
-            <if test="ship35dQty != null">#{ship35dQty},</if>
-            <if test="ship45dQty != null">#{ship45dQty},</if>
-            <if test="orignialPrice != null">#{orignialPrice},</if>
-            <if test="marketPrice != null">#{marketPrice},</if>
-            <if test="lowestPrice != null">#{lowestPrice},</if>
-            <if test="highestPrice != null">#{highestPrice},</if>
-            <if test="skuStatus != null">#{skuStatus},</if>
-            <if test="barcode != null">#{barcode},</if>
-            <if test="gmtCreate != null">#{gmtCreate},</if>
-            <if test="gmtModified != null">#{gmtModified},</if>
-         </trim>
-    </insert>
-
-    <update id="updateGoodsRevisionItem" parameterType="GoodsRevisionItem">
-        update goods_revision_item
-        <trim prefix="SET" suffixOverrides=",">
-            <if test="revisionId != null and revisionId != ''">revision_id = #{revisionId},</if>
-            <if test="shopId != null and shopId != ''">shop_id = #{shopId},</if>
-            <if test="shopProductId != null and shopProductId != ''">shop_product_id = #{shopProductId},</if>
-            <if test="shopSkuId != null and shopSkuId != ''">shop_sku_id = #{shopSkuId},</if>
-            <if test="skuCode != null and skuCode != ''">sku_code = #{skuCode},</if>
-            <if test="sellerSku != null and sellerSku != ''">seller_sku = #{sellerSku},</if>
-            <if test="spec1 != null and spec1 != ''">spec1 = #{spec1},</if>
-            <if test="spec1Note != null and spec1Note != ''">spec1_note = #{spec1Note},</if>
-            <if test="spec2 != null and spec2 != ''">spec2 = #{spec2},</if>
-            <if test="spec2Note != null and spec2Note != ''">spec2_note = #{spec2Note},</if>
-            <if test="spec3OrLeadTime != null and spec3OrLeadTime != ''">spec3_or_lead_time = #{spec3OrLeadTime},</if>
-            <if test="spec3Note != null and spec3Note != ''">spec3_note = #{spec3Note},</if>
-            <if test="inStockQty != null">in_stock_qty = #{inStockQty},</if>
-            <if test="fullPrepayQty != null">full_prepay_qty = #{fullPrepayQty},</if>
-            <if test="ship3dQty != null">ship_3d_qty = #{ship3dQty},</if>
-            <if test="ship4dQty != null">ship_4d_qty = #{ship4dQty},</if>
-            <if test="ship5dQty != null">ship_5d_qty = #{ship5dQty},</if>
-            <if test="ship7dQty != null">ship_7d_qty = #{ship7dQty},</if>
-            <if test="ship10dQty != null">ship_10d_qty = #{ship10dQty},</if>
-            <if test="ship15dQty != null">ship_15d_qty = #{ship15dQty},</if>
-            <if test="ship20dQty != null">ship_20d_qty = #{ship20dQty},</if>
-            <if test="ship25dQty != null">ship_25d_qty = #{ship25dQty},</if>
-            <if test="ship30dQty != null">ship_30d_qty = #{ship30dQty},</if>
-            <if test="ship35dQty != null">ship_35d_qty = #{ship35dQty},</if>
-            <if test="ship45dQty != null">ship_45d_qty = #{ship45dQty},</if>
-            <if test="orignialPrice != null">orignial_price = #{orignialPrice},</if>
-            <if test="marketPrice != null">market_price = #{marketPrice},</if>
-            <if test="lowestPrice != null">lowest_price = #{lowestPrice},</if>
-            <if test="highestPrice != null">highest_price = #{highestPrice},</if>
-            <if test="skuStatus != null">sku_status = #{skuStatus},</if>
-            <if test="barcode != null">barcode = #{barcode},</if>
-            <if test="gmtCreate != null">gmt_create = #{gmtCreate},</if>
-            <if test="gmtModified != null">gmt_modified = #{gmtModified},</if>
-        </trim>
-        where item_id = #{itemId}
-    </update>
-
-    <delete id="deleteGoodsRevisionItemByItemId" parameterType="String">
-        delete from goods_revision_item where item_id = #{itemId}
-    </delete>
-
-    <delete id="deleteGoodsRevisionItemByItemIds" parameterType="String">
-        delete from goods_revision_item where item_id in 
-        <foreach item="itemId" collection="array" open="(" separator="," close=")">
-            #{itemId}
-        </foreach>
-    </delete>
+    
 </mapper>

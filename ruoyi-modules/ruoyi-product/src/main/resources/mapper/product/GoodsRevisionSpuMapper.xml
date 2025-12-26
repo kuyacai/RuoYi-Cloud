@@ -22,112 +22,27 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
         <result property="presaleShipTime"    column="presale_ship_time"    />
         <result property="gmtCreate"    column="gmt_create"    />
         <result property="gmtModified"    column="gmt_modified"    />
+        <!-- 新增的关联字段映射 -->
+        <result property="taskId" column="task_id"/>
+        <result property="taskCode" column="task_code"/>
+        <result property="taskStatus" column="task_status"/>
     </resultMap>
 
-    <sql id="selectGoodsRevisionSpuVo">
-        select revision_id, title, guide_short_title, recommendation, freight_template, attributes, size_chart_template_name, size_chart_size_titles, sales, copy_status, copy_error_reason, review_status, shipping_mode, in_stock_ship_time, presale_ship_time, gmt_create, gmt_modified from goods_revision_spu
-    </sql>
-
-    <select id="selectGoodsRevisionSpuList" parameterType="GoodsRevisionSpu" resultMap="GoodsRevisionSpuResult">
-        <include refid="selectGoodsRevisionSpuVo"/>
-        <where>  
-            <if test="title != null  and title != ''"> and title = #{title}</if>
-            <if test="guideShortTitle != null  and guideShortTitle != ''"> and guide_short_title = #{guideShortTitle}</if>
-            <if test="recommendation != null  and recommendation != ''"> and recommendation = #{recommendation}</if>
-            <if test="freightTemplate != null  and freightTemplate != ''"> and freight_template = #{freightTemplate}</if>
-            <if test="attributes != null  and attributes != ''"> and attributes = #{attributes}</if>
-            <if test="sizeChartTemplateName != null  and sizeChartTemplateName != ''"> and size_chart_template_name like concat('%', #{sizeChartTemplateName}, '%')</if>
-            <if test="sizeChartSizeTitles != null  and sizeChartSizeTitles != ''"> and size_chart_size_titles = #{sizeChartSizeTitles}</if>
-            <if test="sales != null "> and sales = #{sales}</if>
-            <if test="copyStatus != null  and copyStatus != ''"> and copy_status = #{copyStatus}</if>
-            <if test="copyErrorReason != null  and copyErrorReason != ''"> and copy_error_reason = #{copyErrorReason}</if>
-            <if test="reviewStatus != null  and reviewStatus != ''"> and review_status = #{reviewStatus}</if>
-            <if test="shippingMode != null  and shippingMode != ''"> and shipping_mode = #{shippingMode}</if>
-            <if test="inStockShipTime != null  and inStockShipTime != ''"> and in_stock_ship_time = #{inStockShipTime}</if>
-            <if test="presaleShipTime != null  and presaleShipTime != ''"> and presale_ship_time = #{presaleShipTime}</if>
-            <if test="gmtCreate != null "> and gmt_create = #{gmtCreate}</if>
-            <if test="gmtModified != null "> and gmt_modified = #{gmtModified}</if>
-        </where>
-    </select>
-    
-    <select id="selectGoodsRevisionSpuByRevisionId" parameterType="String" resultMap="GoodsRevisionSpuResult">
-        <include refid="selectGoodsRevisionSpuVo"/>
-        where revision_id = #{revisionId}
+    <select id="selectNeedTitleUpdate" parameterType="String" resultMap="GoodsRevisionSpuResult">
+        SELECT 
+            gri.*,
+            it.task_id,
+            it.task_code,
+            it.task_status
+        FROM goods_revision_spu gri
+        INNER JOIN goods_revision gr ON gri.revision_id = gr.revision_id
+        LEFT JOIN item_task it ON gr.revision_id = it.biz_id 
+            AND it.task_status = 'pending' 
+            AND it.task_code = 'edit_title'
+        WHERE gr.goods_id = #{goodsId}
+            AND gr.rev_status = 'editing'
+            AND it.task_id IS NOT NULL
+        ORDER BY gri.gmt_modified DESC
     </select>
 
-    <insert id="insertGoodsRevisionSpu" parameterType="GoodsRevisionSpu">
-        insert into goods_revision_spu
-        <trim prefix="(" suffix=")" suffixOverrides=",">
-            <if test="revisionId != null">revision_id,</if>
-            <if test="title != null">title,</if>
-            <if test="guideShortTitle != null">guide_short_title,</if>
-            <if test="recommendation != null">recommendation,</if>
-            <if test="freightTemplate != null">freight_template,</if>
-            <if test="attributes != null">attributes,</if>
-            <if test="sizeChartTemplateName != null">size_chart_template_name,</if>
-            <if test="sizeChartSizeTitles != null">size_chart_size_titles,</if>
-            <if test="sales != null">sales,</if>
-            <if test="copyStatus != null">copy_status,</if>
-            <if test="copyErrorReason != null">copy_error_reason,</if>
-            <if test="reviewStatus != null">review_status,</if>
-            <if test="shippingMode != null">shipping_mode,</if>
-            <if test="inStockShipTime != null">in_stock_ship_time,</if>
-            <if test="presaleShipTime != null">presale_ship_time,</if>
-            <if test="gmtCreate != null">gmt_create,</if>
-            <if test="gmtModified != null">gmt_modified,</if>
-         </trim>
-        <trim prefix="values (" suffix=")" suffixOverrides=",">
-            <if test="revisionId != null">#{revisionId},</if>
-            <if test="title != null">#{title},</if>
-            <if test="guideShortTitle != null">#{guideShortTitle},</if>
-            <if test="recommendation != null">#{recommendation},</if>
-            <if test="freightTemplate != null">#{freightTemplate},</if>
-            <if test="attributes != null">#{attributes},</if>
-            <if test="sizeChartTemplateName != null">#{sizeChartTemplateName},</if>
-            <if test="sizeChartSizeTitles != null">#{sizeChartSizeTitles},</if>
-            <if test="sales != null">#{sales},</if>
-            <if test="copyStatus != null">#{copyStatus},</if>
-            <if test="copyErrorReason != null">#{copyErrorReason},</if>
-            <if test="reviewStatus != null">#{reviewStatus},</if>
-            <if test="shippingMode != null">#{shippingMode},</if>
-            <if test="inStockShipTime != null">#{inStockShipTime},</if>
-            <if test="presaleShipTime != null">#{presaleShipTime},</if>
-            <if test="gmtCreate != null">#{gmtCreate},</if>
-            <if test="gmtModified != null">#{gmtModified},</if>
-         </trim>
-    </insert>
-
-    <update id="updateGoodsRevisionSpu" parameterType="GoodsRevisionSpu">
-        update goods_revision_spu
-        <trim prefix="SET" suffixOverrides=",">
-            <if test="title != null">title = #{title},</if>
-            <if test="guideShortTitle != null">guide_short_title = #{guideShortTitle},</if>
-            <if test="recommendation != null">recommendation = #{recommendation},</if>
-            <if test="freightTemplate != null">freight_template = #{freightTemplate},</if>
-            <if test="attributes != null">attributes = #{attributes},</if>
-            <if test="sizeChartTemplateName != null">size_chart_template_name = #{sizeChartTemplateName},</if>
-            <if test="sizeChartSizeTitles != null">size_chart_size_titles = #{sizeChartSizeTitles},</if>
-            <if test="sales != null">sales = #{sales},</if>
-            <if test="copyStatus != null">copy_status = #{copyStatus},</if>
-            <if test="copyErrorReason != null">copy_error_reason = #{copyErrorReason},</if>
-            <if test="reviewStatus != null">review_status = #{reviewStatus},</if>
-            <if test="shippingMode != null">shipping_mode = #{shippingMode},</if>
-            <if test="inStockShipTime != null">in_stock_ship_time = #{inStockShipTime},</if>
-            <if test="presaleShipTime != null">presale_ship_time = #{presaleShipTime},</if>
-            <if test="gmtCreate != null">gmt_create = #{gmtCreate},</if>
-            <if test="gmtModified != null">gmt_modified = #{gmtModified},</if>
-        </trim>
-        where revision_id = #{revisionId}
-    </update>
-
-    <delete id="deleteGoodsRevisionSpuByRevisionId" parameterType="String">
-        delete from goods_revision_spu where revision_id = #{revisionId}
-    </delete>
-
-    <delete id="deleteGoodsRevisionSpuByRevisionIds" parameterType="String">
-        delete from goods_revision_spu where revision_id in 
-        <foreach item="revisionId" collection="array" open="(" separator="," close=")">
-            #{revisionId}
-        </foreach>
-    </delete>
 </mapper>

@@ -117,3 +117,7 @@ run/
 *.sh
 sql/ry_product_bak.sql
 sql/shop.csv
+effective-pom.xml
+
+# 临时文档
+doc/

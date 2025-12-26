@@ -32,7 +32,6 @@ CREATE TABLE IF NOT EXISTS goods_revision (
     goods_id            CHAR(32) NOT NULL COMMENT '商品ID',
     rev_status          VARCHAR(32) COMMENT '版本状态',
     revision_type       VARCHAR(32) COMMENT '版本类型',
-    is_current          TINYINT(1) NOT NULL DEFAULT 0 COMMENT '是否当前版本',
     gmt_create          DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3) COMMENT '创建时间',
     gmt_modified        DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3) ON UPDATE CURRENT_TIMESTAMP(3) COMMENT '修改时间'
 ) ENGINE = InnoDB COMMENT ='商品版本';
@@ -46,6 +45,8 @@ CREATE TABLE IF NOT EXISTS goods_revision_spu (
     revision_id                 CHAR(32) PRIMARY KEY DEFAULT (REPLACE(UUID(), '-', '')) COMMENT '版本ID',
     title                       VARCHAR(255) COMMENT '商品标题',
     guide_short_title           VARCHAR(255) COMMENT '导购短标题',
+    new_title                   VARCHAR(255) COMMENT '商品新标题',
+    new_guide_short_title       VARCHAR(255) COMMENT '导购新短标题',
     recommendation              TEXT COMMENT '推荐语',
     freight_template            VARCHAR(128) COMMENT '运费模板',
     attributes                  TEXT COMMENT '属性',
@@ -56,6 +57,8 @@ CREATE TABLE IF NOT EXISTS goods_revision_spu (
     copy_error_reason           TEXT COMMENT '复制失败原因',
     review_status               VARCHAR(20) COMMENT '审核状态',
     shipping_mode               VARCHAR(200) COMMENT '发货模式',
+    search_keywords             TEXT COMMENT '搜索关键词',
+    video_script                TEXT COMMENT '视频脚本',
     in_stock_ship_time          VARCHAR(32) COMMENT '现货发货时间',
     presale_ship_time           VARCHAR(32) COMMENT '预售发货时间',
     gmt_create                  DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3) COMMENT '创建时间',
@@ -172,15 +175,29 @@ CREATE TABLE IF NOT EXISTS item_task (
     gmt_modified                DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3) ON UPDATE CURRENT_TIMESTAMP(3) COMMENT '修改时间'
 ) ENGINE = InnoDB COMMENT ='任务实例表';
 
+-- 任务计数器表（保持与业务解耦）
+CREATE TABLE IF NOT EXISTS task_counter (
+    biz_id                      VARCHAR(64) PRIMARY KEY COMMENT '业务ID',
+    total_tasks                 INT NOT NULL DEFAULT 0 COMMENT '总任务数',
+    completed_tasks             INT NOT NULL DEFAULT 0 COMMENT '已完成任务数',
+    last_check_time             DATETIME(3) DEFAULT CURRENT_TIMESTAMP(3) COMMENT '最后检查时间',
+    notified_status             VARCHAR(20) DEFAULT 'pending' COMMENT '通知状态: pending/notified',
+    notified_time               DATETIME(3) NULL COMMENT '通知时间',
+    retry_count                 INT DEFAULT 0 COMMENT '重试次数',
+    gmt_create                  DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3) COMMENT '创建时间',
+    gmt_modified                DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3) ON UPDATE CURRENT_TIMESTAMP(3) COMMENT '修改时间',
+    INDEX idx_check_time (last_check_time)
+) ENGINE = InnoDB COMMENT ='任务计数器表';
+
 -- 价格参考表
 CREATE TABLE IF NOT EXISTS price_reference (
     id                          CHAR(32) PRIMARY KEY DEFAULT (REPLACE(UUID(), '-', '')) COMMENT 'ID',
     original_price              BIGINT COMMENT '原价',
     multiplier                  BIGINT COMMENT '倍数',
     original_marked_price       BIGINT COMMENT '原始标价',
-    effective_marked_price      BIGINT COMMENT '有效标价',
+    effective_marked_price      BIGINT COMMENT '生效标价',
     reference_shipping_fee      BIGINT COMMENT '参考运费',
-    actual_discount_amount      BIGINT COMMENT '实际折扣金额',
+    actual_discount_amount      BIGINT COMMENT '实际立减金额',
     gmt_create                  DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3) COMMENT '创建时间',
     gmt_modified                DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3) ON UPDATE CURRENT_TIMESTAMP(3) COMMENT '修改时间'
 ) ENGINE = InnoDB COMMENT ='价格参考表';
@@ -445,19 +462,23 @@ CREATE TABLE IF NOT EXISTS `platform_promotion_product` (
 ) ENGINE = InnoDB COMMENT = '平台促销活动商品表';
 
 CREATE TABLE IF NOT EXISTS `async_task` (
-  `task_id`          varchar(32)  NOT NULL PRIMARY KEY COMMENT 'ID',
-  `task_code`        varchar(50)  NOT NULL COMMENT '任务编码',
-  `task_name`        varchar(100) DEFAULT NULL COMMENT '任务名称',
-  `file_name`        varchar(255) DEFAULT NULL COMMENT '文件名',
-  `total`            int          DEFAULT 0 COMMENT '总数',
-  `success`          int          DEFAULT 0 COMMENT '成功数',
-  `skip`             int          DEFAULT 0 COMMENT '跳过数',
-  `failure`          int          DEFAULT 0 COMMENT '失败数',
-  `fail_file_url`    varchar(255) DEFAULT NULL COMMENT '失败文件URL',
-  `task_status`      varchar(20)  DEFAULT 'init' COMMENT '任务状态',
-  `create_by`        varchar(64)  DEFAULT NULL COMMENT '创建人',
-  `create_time`      datetime     DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
-  `finish_time`      datetime     DEFAULT NULL COMMENT '完成时间',
+  `task_id`             varchar(32)  NOT NULL PRIMARY KEY COMMENT 'ID',
+  `task_code`           varchar(50)  NOT NULL COMMENT '任务编码',
+  `task_name`           varchar(100) DEFAULT NULL COMMENT '任务名称',
+  `file_name`           varchar(255) DEFAULT NULL COMMENT '文件名',
+  `shop_id`             varchar(255) DEFAULT NULL COMMENT '店铺ID',
+  `imported_file_url`   TEXT         DEFAULT NULL COMMENT '导入文件链接',
+  `total`               int          DEFAULT 0 COMMENT '总数',
+  `success`             int          DEFAULT 0 COMMENT '成功数',
+  `skip`                int          DEFAULT 0 COMMENT '跳过数',
+  `failure`             int          DEFAULT 0 COMMENT '失败数',
+  `fail_file_url`       varchar(255) DEFAULT NULL COMMENT '失败文件URL',
+  `exported_file_url`   TEXT         DEFAULT NULL COMMENT '导出文件链接',
+  `task_status`         varchar(20)  DEFAULT 'init' COMMENT '任务状态',
+  `finish_time`         datetime     DEFAULT NULL COMMENT '完成时间',
+  `params_map`          TEXT         DEFAULT NULL COMMENT '附加参数',
+  `gmt_create`          DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3) COMMENT '创建时间',
+  `gmt_modified`        DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3) ON UPDATE CURRENT_TIMESTAMP(3), 
   INDEX idx_code_status (task_code, task_status),
-  INDEX idx_create_time (create_time)
+  INDEX idx_create_time (gmt_create)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='异步任务表';
