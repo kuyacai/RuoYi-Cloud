@@ -31,7 +31,7 @@ public class DirectDiscountActivity extends ProductBaseEntity {
     private String activityName;
 
     private String shopId;
-
+    // 目前仅支持立减
     private String discountType;
 
     @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")

@@ -10,45 +10,38 @@ import org.apache.rocketmq.spring.annotation.ConsumeMode;
 import org.apache.rocketmq.spring.annotation.MessageModel;
 import org.apache.rocketmq.spring.annotation.RocketMQMessageListener;
 import org.apache.rocketmq.spring.annotation.SelectorType;
-import org.apache.rocketmq.spring.core.RocketMQListener;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
-import com.ruoyi.product.utils.EnhancedExcelUtil;
-import com.ruoyi.common.core.utils.poi.ExcelUtil;
 import com.ruoyi.product.constant.AsyncTaskCode;
 import com.ruoyi.product.constant.MQConstant;
-import com.ruoyi.product.domain.dto.SimpleProduct;
 import com.ruoyi.product.domain.dto.ItemProcessResult;
+import com.ruoyi.product.domain.dto.SimpleProduct;
 import com.ruoyi.product.mq.consumer.base.AbstractImportConsumer;
-import com.ruoyi.product.mq.dto.AsyncTaskMsg;
 import com.ruoyi.product.service.impl.PriceImportService;
+import com.ruoyi.product.utils.EnhancedExcelUtil;
 
 import lombok.extern.slf4j.Slf4j;
 
+// @formatter:off
 @Component
 @RocketMQMessageListener(
     topic = MQConstant.AsyncTaskProductTopic, 
     selectorType = SelectorType.TAG, 
     selectorExpression = AsyncTaskCode.MODIFY_IMAGES_IMPORT_CODE, 
-    consumerGroup = MQConstant.ASYNC_TASK_MODIFY_IMAGE_GROUP,
-    consumeMode = ConsumeMode.ORDERLY,
-    messageModel = MessageModel.CLUSTERING,
-    consumeTimeout = 15,
+    consumerGroup = MQConstant.ASYNC_TASK_MODIFY_IMAGE_GROUP, 
+    consumeMode = ConsumeMode.ORDERLY, 
+    messageModel = MessageModel.CLUSTERING, 
+    consumeTimeout = 15, 
     maxReconsumeTimes = 3
 )
 @Slf4j
-public class ModifyImagesTaskConsumer extends AbstractImportConsumer<SimpleProduct> 
-                                     implements RocketMQListener<AsyncTaskMsg> {
-    
+// @formatter:on
+public class ModifyImagesTaskConsumer extends AbstractImportConsumer<SimpleProduct> {
+
     @Autowired
     private PriceImportService priceImportService;
-    
-    @Override
-    public void onMessage(AsyncTaskMsg msg) {
-        handleMessage(msg);
-    }
-    
+
     @Override
     protected List<SimpleProduct> parseExcelFile(File file) throws IOException {
         try (InputStream is = new FileInputStream(file)) {
@@ -56,12 +49,12 @@ public class ModifyImagesTaskConsumer extends AbstractImportConsumer<SimpleProdu
             return util.importExcel(is, 0);
         }
     }
-    
+
     @Override
     protected ItemProcessResult processSingleItem(SimpleProduct price, String shopId) {
         return priceImportService.processSingleSpuPrice(price, shopId);
     }
-    
+
     @Override
     protected String formatErrorMessage(SimpleProduct sp, String status, String reason) {
         String msg = String.format("商品ID:%s, 状态:%s, 原因:%s",

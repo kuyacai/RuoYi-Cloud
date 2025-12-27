@@ -2,9 +2,11 @@ package com.ruoyi.product.service.impl;
 
 import org.springframework.stereotype.Service;
 
-import com.ruoyi.product.mapper.PlatformPromotionConfigMapper;
+import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.ruoyi.product.core.mybatisplus.impl.BaseServiceImpl;
 import com.ruoyi.product.domain.PlatformPromotionConfig;
+import com.ruoyi.product.enums.ConfigStatus;
+import com.ruoyi.product.mapper.PlatformPromotionConfigMapper;
 import com.ruoyi.product.service.IPlatformPromotionConfigService;
 
 /**
@@ -14,7 +16,17 @@ import com.ruoyi.product.service.IPlatformPromotionConfigService;
  * @date 2025-12-13
  */
 @Service
-public class PlatformPromotionConfigServiceImpl extends BaseServiceImpl<PlatformPromotionConfigMapper, PlatformPromotionConfig> implements IPlatformPromotionConfigService 
-{
-    
+public class PlatformPromotionConfigServiceImpl
+        extends BaseServiceImpl<PlatformPromotionConfigMapper, PlatformPromotionConfig>
+        implements IPlatformPromotionConfigService {
+    @Override
+    public PlatformPromotionConfig matchConfigByPrice(Integer markedPrice) {
+        if (markedPrice == null)
+            return null;
+        return this.getOne(new LambdaQueryWrapper<PlatformPromotionConfig>()
+                .le(PlatformPromotionConfig::getPriceMin, markedPrice)
+                .gt(PlatformPromotionConfig::getPriceMax, markedPrice)
+                .eq(PlatformPromotionConfig::getDiscountStatus, ConfigStatus.ENABLE.getCode())
+                .last("LIMIT 1"));
+    }
 }

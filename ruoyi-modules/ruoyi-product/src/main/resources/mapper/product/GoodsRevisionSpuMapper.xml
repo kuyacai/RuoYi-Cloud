@@ -1,48 +1,36 @@
-<?xml version="1.0" encoding="UTF-8" ?>
-<!DOCTYPE mapper
-PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
-"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
 <mapper namespace="com.ruoyi.product.mapper.GoodsRevisionSpuMapper">
-    
-    <resultMap type="GoodsRevisionSpu" id="GoodsRevisionSpuResult">
-        <result property="revisionId"    column="revision_id"    />
-        <result property="title"    column="title"    />
-        <result property="guideShortTitle"    column="guide_short_title"    />
-        <result property="recommendation"    column="recommendation"    />
-        <result property="freightTemplate"    column="freight_template"    />
-        <result property="attributes"    column="attributes"    />
-        <result property="sizeChartTemplateName"    column="size_chart_template_name"    />
-        <result property="sizeChartSizeTitles"    column="size_chart_size_titles"    />
-        <result property="sales"    column="sales"    />
-        <result property="copyStatus"    column="copy_status"    />
-        <result property="copyErrorReason"    column="copy_error_reason"    />
-        <result property="reviewStatus"    column="review_status"    />
-        <result property="shippingMode"    column="shipping_mode"    />
-        <result property="inStockShipTime"    column="in_stock_ship_time"    />
-        <result property="presaleShipTime"    column="presale_ship_time"    />
-        <result property="gmtCreate"    column="gmt_create"    />
-        <result property="gmtModified"    column="gmt_modified"    />
+
+    <resultMap type="com.ruoyi.product.domain.GoodsRevisionSpu" id="GoodsRevisionSpuResult">
+        <result property="revisionId" column="revision_id" />
+        <result property="title" column="title" />
+        <result property="guideShortTitle" column="guide_short_title" />
+        <result property="recommendation" column="recommendation" />
+        <result property="freightTemplate" column="freight_template" />
+        <result property="attributes" column="attributes" />
+        <result property="sizeChartTemplateName" column="size_chart_template_name" />
+        <result property="sizeChartSizeTitles" column="size_chart_size_titles" />
+        <result property="sales" column="sales" />
+        <result property="copyStatus" column="copy_status" />
+        <result property="copyErrorReason" column="copy_error_reason" />
+        <result property="reviewStatus" column="review_status" />
+        <result property="shippingMode" column="shipping_mode" />
+        <result property="inStockShipTime" column="in_stock_ship_time" />
+        <result property="presaleShipTime" column="presale_ship_time" />
+        <result property="gmtCreate" column="gmt_create" />
+        <result property="gmtModified" column="gmt_modified" />
         <!-- 新增的关联字段映射 -->
-        <result property="taskId" column="task_id"/>
-        <result property="taskCode" column="task_code"/>
-        <result property="taskStatus" column="task_status"/>
+        <result property="taskId" column="task_id" />
+        <result property="taskCode" column="task_code" />
+        <result property="taskStatus" column="task_status" />
     </resultMap>
 
     <select id="selectNeedTitleUpdate" parameterType="String" resultMap="GoodsRevisionSpuResult">
-        SELECT 
-            gri.*,
-            it.task_id,
-            it.task_code,
-            it.task_status
-        FROM goods_revision_spu gri
-        INNER JOIN goods_revision gr ON gri.revision_id = gr.revision_id
-        LEFT JOIN item_task it ON gr.revision_id = it.biz_id 
-            AND it.task_status = 'pending' 
-            AND it.task_code = 'edit_title'
-        WHERE gr.goods_id = #{goodsId}
-            AND gr.rev_status = 'editing'
-            AND it.task_id IS NOT NULL
-        ORDER BY gri.gmt_modified DESC
-    </select>
+        SELECT gri.*, it.task_id, it.task_code, it.task_status FROM goods_revision_spu gri INNER
+        JOIN goods_revision gr ON gri.revision_id = gr.revision_id LEFT JOIN item_task it ON
+        gr.revision_id = it.biz_id AND it.task_status = 'pending' AND it.task_code = 'edit_title'
+        WHERE gr.goods_id = #{goodsId} AND gr.rev_status = 'editing' AND it.task_id IS NOT NULL
+        ORDER BY gri.gmt_modified DESC </select>
 
 </mapper>

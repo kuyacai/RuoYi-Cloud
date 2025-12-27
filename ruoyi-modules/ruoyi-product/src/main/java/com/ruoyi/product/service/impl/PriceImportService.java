@@ -8,7 +8,6 @@ import org.springframework.transaction.TransactionDefinition;
 import org.springframework.transaction.TransactionStatus;
 import org.springframework.transaction.support.DefaultTransactionDefinition;
 
-import com.ruoyi.common.core.utils.DateUtils;
 import com.ruoyi.common.core.utils.StringUtils;
 import com.ruoyi.product.constant.ItemTaskStatus;
 import com.ruoyi.product.domain.Goods;
@@ -16,6 +15,7 @@ import com.ruoyi.product.domain.GoodsRevisionItem;
 import com.ruoyi.product.domain.ItemTask;
 import com.ruoyi.product.domain.PriceReference;
 import com.ruoyi.product.domain.dto.ItemProcessResult;
+import com.ruoyi.product.domain.dto.SimpleProduct;
 import com.ruoyi.product.service.IGoodsRevisionItemService;
 import com.ruoyi.product.service.IGoodsService;
 import com.ruoyi.product.service.IItemTaskService;
@@ -23,8 +23,6 @@ import com.ruoyi.product.service.IPriceReferenceService;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-
-import com.ruoyi.product.domain.dto.SimpleProduct;
 
 /**
  * 计算SKU市场标价服务

@@ -3,7 +3,6 @@ package com.ruoyi.product.domain.dto;
 import com.ruoyi.common.core.annotation.Excel;
 import com.ruoyi.common.core.annotation.Excel.Type;
 
-import lombok.Builder;
 import lombok.Data;
 
 import java.io.Serializable;

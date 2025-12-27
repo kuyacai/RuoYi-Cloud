@@ -5,8 +5,8 @@ import java.io.Serializable;
 import com.ruoyi.common.core.annotation.Excel;
 import com.ruoyi.common.core.annotation.Excel.Type;
 
-import lombok.Builder;
-import lombok.Data;
+//import lombok.Builder;
+//mport lombok.Data;
 
 //@Data
 //@Builder

@@ -1,34 +1,22 @@
 package com.ruoyi.product.service.impl;
 
-import com.ruoyi.common.core.utils.StringUtils;
-import com.ruoyi.common.core.utils.file.CharsetDetectUtil;
-import com.ruoyi.common.core.utils.file.FileUtils;
-import com.ruoyi.product.utils.EnhancedExcelUtil;
-import com.ruoyi.common.core.utils.uuid.UUID;
-import com.ruoyi.common.core.web.domain.AjaxResult;
-import com.ruoyi.product.constant.ImageType;
-import com.ruoyi.product.constant.RevStatus;
-import com.ruoyi.product.constant.RevisionType;
-import com.ruoyi.product.constant.ItemTaskCode;
-import com.ruoyi.product.constant.ItemTaskStatus;
-import com.ruoyi.product.domain.Goods;
-import com.ruoyi.product.domain.GoodsRevision;
-import com.ruoyi.product.domain.GoodsRevisionImage;
-import com.ruoyi.product.domain.GoodsRevisionSpu;
-import com.ruoyi.product.domain.ItemTask;
-import com.ruoyi.product.domain.dto.ItemProcessResult;
-import com.ruoyi.product.domain.dto.MiaoShouSKU;
-import com.ruoyi.product.domain.dto.MiaoShouSPU;
-import com.ruoyi.product.service.IGoodsRevisionImageService;
-import com.ruoyi.product.service.IGoodsRevisionSpuService;
-import com.ruoyi.product.service.IGoodsService;
-import com.ruoyi.product.service.IItemTaskService;
-
-import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
-
-import com.ruoyi.product.service.IGoodsRevisionService;
+import java.io.BufferedInputStream;
+import java.io.BufferedReader;
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
 import java.lang.reflect.Method;
+import java.nio.charset.Charset;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
+
 import org.apache.poi.ss.usermodel.Row;
 import org.apache.poi.ss.usermodel.Sheet;
 import org.apache.poi.ss.usermodel.Workbook;
@@ -40,19 +28,35 @@ import org.springframework.transaction.TransactionStatus;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.transaction.support.DefaultTransactionDefinition;
-import org.springframework.web.multipart.MultipartFile;
 import org.springframework.util.CollectionUtils;
+import org.springframework.web.multipart.MultipartFile;
 
-import java.io.BufferedInputStream;
-import java.io.BufferedReader;
-import java.io.ByteArrayInputStream;
-import java.io.ByteArrayOutputStream;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.InputStreamReader;
-import java.nio.charset.Charset;
-import java.util.*;
-import java.util.stream.Collectors;
+import com.ruoyi.common.core.utils.StringUtils;
+import com.ruoyi.common.core.utils.file.CharsetDetectUtil;
+import com.ruoyi.common.core.utils.file.FileUtils;
+import com.ruoyi.common.core.utils.uuid.UUID;
+import com.ruoyi.common.core.web.domain.AjaxResult;
+import com.ruoyi.product.constant.ImageType;
+import com.ruoyi.product.constant.ItemTaskCode;
+import com.ruoyi.product.constant.ItemTaskStatus;
+import com.ruoyi.product.constant.RevStatus;
+import com.ruoyi.product.constant.RevisionType;
+import com.ruoyi.product.domain.Goods;
+import com.ruoyi.product.domain.GoodsRevision;
+import com.ruoyi.product.domain.GoodsRevisionImage;
+import com.ruoyi.product.domain.GoodsRevisionSpu;
+import com.ruoyi.product.domain.ItemTask;
+import com.ruoyi.product.domain.dto.ItemProcessResult;
+import com.ruoyi.product.domain.dto.MiaoShouSPU;
+import com.ruoyi.product.service.IGoodsRevisionImageService;
+import com.ruoyi.product.service.IGoodsRevisionService;
+import com.ruoyi.product.service.IGoodsRevisionSpuService;
+import com.ruoyi.product.service.IGoodsService;
+import com.ruoyi.product.service.IItemTaskService;
+import com.ruoyi.product.utils.EnhancedExcelUtil;
+
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 
 /**
  * SPU导入服务
@@ -95,74 +99,78 @@ public class SpuImportService {
         }
     }
 
-    
     public ItemProcessResult processSingleSpu(MiaoShouSPU spu, String shopId) {
         /* 1. 单 SPU 事务 */
-            DefaultTransactionDefinition def = new DefaultTransactionDefinition();
-            def.setPropagationBehavior(TransactionDefinition.PROPAGATION_REQUIRES_NEW);
-            TransactionStatus status = transactionManager.getTransaction(def);
-            try {
-                /* 2. 基础校验 */
-                if (!validateSPUData(spu)) {
-                    transactionManager.rollback(status);
-                    return ItemProcessResult.fail("商品ID: " + spu.getProductId() +"数据校验失败");
-                }
-
-                /* 3. 重复性检查（sourceId 维度） */
-                if (goodsService.existsBySourceId(spu.getSourceId())) {
-                    transactionManager.commit(status); // 不算失败，直接跳过
-                    return ItemProcessResult.skip("商品ID: " + spu.getProductId() +"已经存在");
-                }
-
-                /* 4. 构建 goods */
-                String goodsId = UUID.fastUUID().toString(true); // true = 去掉横杠; // hutool 工具，无 "-" 可选
-                Goods goods = buildGoods(spu, goodsId, shopId);
-                goodsService.save(goods);
-
-                /* 5. 构建 V1/V2 版本 */
-                String v1Id = UUID.fastUUID().toString(true); // true = 去掉横杠;
-                String v2Id = UUID.fastUUID().toString(true); // true = 去掉横杠;
-                GoodsRevision v1 = buildRevision(v1Id, goodsId, RevStatus.FROZEN);
-                GoodsRevision v2 = buildRevision(v2Id, goodsId, RevStatus.EDITING);
-                goodsRevisionService.save(v1);
-                goodsRevisionService.save(v2);
-
-                /* 6. 版本对应的 SPU 数据（V1=V2=原始数据） */
-                GoodsRevisionSpu spuV1 = buildRevisionSpu(v1Id, spu);
-                GoodsRevisionSpu spuV2 = buildRevisionSpu(v2Id, spu);
-                goodsRevisionSpuService.save(spuV1);
-                goodsRevisionSpuService.save(spuV2);
-
-                /* 7. 图片：主图1:1 / 3:4 / 详情图 全部批量插入 */
-                saveRevisionImages(v1Id, goodsId, listMainImages(spu), ImageType.MAIN);
-                saveRevisionImages(v1Id, goodsId, listMain34Images(spu), ImageType.MAIN34);
-                saveRevisionImages(v1Id, goodsId, listDetailImages(spu.getDetailImageUrls()), ImageType.DETAIL);
-
-                /* 8. 创建待处理任务记录 */
-                // 修改标题
-                ItemTask task_title = buildItemTask(ItemTaskCode.EDIT_TITLE.getCode(), v2Id, ItemTaskStatus.PENDING.getCode());
-                boolean a =itemTaskService.insertItemTask(task_title);
-                log.debug(v2Id);
-                log.debug("插入任务结构:"+a);
-                // 修改图片
-                ItemTask task_img = buildItemTask(ItemTaskCode.EDIT_IMAGE.getCode(), v2Id, ItemTaskStatus.PENDING.getCode());
-                itemTaskService.insertItemTask(task_img);
-                // 修改价格
-                ItemTask task_price = buildItemTask(ItemTaskCode.EDIT_PRICE.getCode(), v2Id, ItemTaskStatus.PENDING.getCode());
-                itemTaskService.insertItemTask(task_price);
-                // 修改视频
-                ItemTask task_video = buildItemTask(ItemTaskCode.EDIT_VIDEO.getCode(), v2Id, ItemTaskStatus.PENDING.getCode());
-                itemTaskService.insertItemTask(task_video);
-
-                /* 8. 成功提交 */
-                transactionManager.commit(status);
-                return ItemProcessResult.success();
-            } catch (Exception e) {
-                log.error("SPU 导入异常: {}", spu.getProductId(), e);
+        DefaultTransactionDefinition def = new DefaultTransactionDefinition();
+        def.setPropagationBehavior(TransactionDefinition.PROPAGATION_REQUIRES_NEW);
+        TransactionStatus status = transactionManager.getTransaction(def);
+        try {
+            /* 2. 基础校验 */
+            if (!validateSPUData(spu)) {
                 transactionManager.rollback(status);
-                return ItemProcessResult.fail(e.getMessage());
+                return ItemProcessResult.fail("商品ID: " + spu.getProductId() + "数据校验失败");
             }
+
+            /* 3. 重复性检查（sourceId 维度） */
+            if (goodsService.existsBySourceId(spu.getSourceId())) {
+                transactionManager.commit(status); // 不算失败，直接跳过
+                return ItemProcessResult.skip("商品ID: " + spu.getProductId() + "已经存在");
+            }
+
+            /* 4. 构建 goods */
+            String goodsId = UUID.fastUUID().toString(true); // true = 去掉横杠; // hutool 工具，无 "-" 可选
+            Goods goods = buildGoods(spu, goodsId, shopId);
+            goodsService.save(goods);
+
+            /* 5. 构建 V1/V2 版本 */
+            String v1Id = UUID.fastUUID().toString(true); // true = 去掉横杠;
+            String v2Id = UUID.fastUUID().toString(true); // true = 去掉横杠;
+            GoodsRevision v1 = buildRevision(v1Id, goodsId, RevStatus.FROZEN);
+            GoodsRevision v2 = buildRevision(v2Id, goodsId, RevStatus.EDITING);
+            goodsRevisionService.save(v1);
+            goodsRevisionService.save(v2);
+
+            /* 6. 版本对应的 SPU 数据（V1=V2=原始数据） */
+            GoodsRevisionSpu spuV1 = buildRevisionSpu(v1Id, spu);
+            GoodsRevisionSpu spuV2 = buildRevisionSpu(v2Id, spu);
+            goodsRevisionSpuService.save(spuV1);
+            goodsRevisionSpuService.save(spuV2);
+
+            /* 7. 图片：主图1:1 / 3:4 / 详情图 全部批量插入 */
+            saveRevisionImages(v1Id, goodsId, listMainImages(spu), ImageType.MAIN);
+            saveRevisionImages(v1Id, goodsId, listMain34Images(spu), ImageType.MAIN34);
+            saveRevisionImages(v1Id, goodsId, listDetailImages(spu.getDetailImageUrls()), ImageType.DETAIL);
+
+            /* 8. 创建待处理任务记录 */
+            // 修改标题
+            ItemTask task_title = buildItemTask(ItemTaskCode.EDIT_TITLE.getCode(), v2Id,
+                    ItemTaskStatus.PENDING.getCode());
+            boolean a = itemTaskService.insertItemTask(task_title);
+            log.debug(v2Id);
+            log.debug("插入任务结构:" + a);
+            // 修改图片
+            ItemTask task_img = buildItemTask(ItemTaskCode.EDIT_IMAGE.getCode(), v2Id,
+                    ItemTaskStatus.PENDING.getCode());
+            itemTaskService.insertItemTask(task_img);
+            // 修改价格
+            ItemTask task_price = buildItemTask(ItemTaskCode.EDIT_PRICE.getCode(), v2Id,
+                    ItemTaskStatus.PENDING.getCode());
+            itemTaskService.insertItemTask(task_price);
+            // 修改视频
+            ItemTask task_video = buildItemTask(ItemTaskCode.EDIT_VIDEO.getCode(), v2Id,
+                    ItemTaskStatus.PENDING.getCode());
+            itemTaskService.insertItemTask(task_video);
+
+            /* 8. 成功提交 */
+            transactionManager.commit(status);
+            return ItemProcessResult.success();
+        } catch (Exception e) {
+            log.error("SPU 导入异常: {}", spu.getProductId(), e);
+            transactionManager.rollback(status);
+            return ItemProcessResult.fail(e.getMessage());
+        }
     }
+
     /**
      * 导入CSV数据
      */
@@ -340,7 +348,6 @@ public class SpuImportService {
             img.setSelfUrl(null);
             img.setLocalUri(null);
             img.setPosition(pos++);
-            img.setGmtCreate(new Date());
             goodsRevisionImageService.save(img);
         }
     }
@@ -362,8 +369,6 @@ public class SpuImportService {
             g.setShopId(shopId); // 全局变量
         }
         g.setGoodsStatus(spu.getStatus());
-        g.setGmtCreate(new Date());
-        g.setGmtModified(new Date());
         return g;
     }
 
@@ -374,8 +379,6 @@ public class SpuImportService {
         r.setGoodsId(goodsId);
         r.setRevStatus(status.getCode());
         r.setRevisionType(RevisionType.MANUAL.getCode());
-        r.setGmtCreate(new Date());
-        r.setGmtModified(new Date());
         return r;
     }
 
@@ -396,8 +399,6 @@ public class SpuImportService {
         s.setShippingMode(spu.getShippingMode());
         s.setInStockShipTime(spu.getInStockShipTime());
         s.setPresaleShipTime(spu.getPresaleShipTime());
-        s.setGmtCreate(new Date());
-        s.setGmtModified(new Date());
         return s;
     }
 
@@ -407,8 +408,6 @@ public class SpuImportService {
         task.setTaskCode(taskCode);
         task.setBizId(bizId);
         task.setTaskStatus(taskStatus);
-        task.setGmtCreate(new Date());
-        task.setGmtModified(new Date());
         return task;
     }
 }

@@ -38,6 +38,8 @@ public class ProductDiscountActivity extends ProductBaseEntity {
 
     private String shopId;
 
+    private String configId;
+
     @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")
     private Date startTime;
 

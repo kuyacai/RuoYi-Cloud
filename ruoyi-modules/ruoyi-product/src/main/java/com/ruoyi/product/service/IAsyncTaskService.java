@@ -1,6 +1,5 @@
 package com.ruoyi.product.service;
 
-import java.util.List;
 import java.util.Map;
 
 import com.ruoyi.product.constant.AsyncTaskCode;

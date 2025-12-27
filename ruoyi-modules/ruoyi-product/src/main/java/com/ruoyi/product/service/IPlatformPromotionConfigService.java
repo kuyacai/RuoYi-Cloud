@@ -9,7 +9,9 @@ import com.ruoyi.product.domain.PlatformPromotionConfig;
  * @author Rupert
  * @date 2025-12-13
  */
-public interface IPlatformPromotionConfigService  extends IBaseService<PlatformPromotionConfig>
-{
-   
+public interface IPlatformPromotionConfigService extends IBaseService<PlatformPromotionConfig> {
+    /**
+     * 根据标价匹配配置：priceMin <= price < priceMax
+     */
+    PlatformPromotionConfig matchConfigByPrice(Integer markedPrice);
 }

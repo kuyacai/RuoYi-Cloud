@@ -13,18 +13,20 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
-import lombok.extern.slf4j.Slf4j;
+import org.apache.rocketmq.spring.core.RocketMQListener;
 import org.springframework.beans.factory.annotation.Autowired;
 
+import com.ruoyi.common.core.utils.StringUtils;
+import com.ruoyi.product.constant.AsyncTaskStatus;
+import com.ruoyi.product.domain.AsyncTask;
+import com.ruoyi.product.domain.dto.ItemProcessResult;
+import com.ruoyi.product.exception.TaskCancelException;
 import com.ruoyi.product.mq.dto.AsyncTaskMsg;
 import com.ruoyi.product.service.IAsyncTaskService;
 import com.ruoyi.product.utils.ProductFileUtils;
 import com.ruoyi.product.utils.UrlEncodeUtil;
-import com.ruoyi.common.core.utils.StringUtils;
-import com.ruoyi.common.core.utils.DateUtils;
-import com.ruoyi.product.constant.AsyncTaskStatus;
-import com.ruoyi.product.domain.AsyncTask;
-import com.ruoyi.product.domain.dto.ItemProcessResult;
+
+import lombok.extern.slf4j.Slf4j;
 
 /**
  * 异步任务导入消费基类
@@ -32,12 +34,65 @@ import com.ruoyi.product.domain.dto.ItemProcessResult;
  * @param <T> 处理的DTO类型
  */
 @Slf4j
-public abstract class AbstractImportConsumer<T> {
+public abstract class AbstractImportConsumer<T> implements RocketMQListener<AsyncTaskMsg> {
 
     protected static final int BATCH_UPDATE_SIZE = 50; // 每处理50条更新一次数据库
 
     @Autowired
     protected IAsyncTaskService asyncTaskService;
+
+    protected AsyncTaskMsg currentMsg;
+
+    protected String getActivityId() {
+        if (currentMsg != null && currentMsg.getExt() != null) {
+            return String.valueOf(currentMsg.getExt().get("activityId"));
+        }
+        return null;
+    }
+
+    @Override
+    public final void onMessage(AsyncTaskMsg msg) {
+        this.currentMsg = msg; // 统一赋值
+        try {
+            handleMessage(msg);
+        } catch (TaskCancelException e) {
+            log.warn("任务 [{}] 已被取消，停止消费并确认消息成功", e.getTaskId());
+            // 任务取消属于业务预期中断，应返回成功，避免 MQ 不断重试
+        } catch (Exception e) {
+            log.error("消费任务发生未知异常，TaskId: {}", msg.getTaskId(), e);
+            // 这里可以根据业务决定：
+            // 1. 抛出异常让 MQ 重试（慎用，会阻塞顺序队列）
+            // 2. 捕获并 finish 任务，返回成功（推荐用于文件导入场景）
+            asyncTaskService.finish(msg.getTaskId(), null, AsyncTaskStatus.DONE.getCode());
+        }
+    }
+
+    /**
+     * 去重钩子：子类通过覆盖此方法返回去重 Key
+     * 子类若需去重，可返回如 sku.getProductId() 或 productId + "_" + skuId
+     */
+    protected String getUniqueKey(T item) {
+        return null;
+    }
+
+    /**
+     * 过滤重复数据
+     */
+    private List<T> filterDuplicateItems(List<T> itemList) {
+        List<T> filteredList = new ArrayList<>();
+        java.util.Set<String> seenKeys = new java.util.HashSet<>();
+
+        for (T item : itemList) {
+            String key = getUniqueKey(item);
+            // 如果子类没实现去重逻辑，或者 key 还没出现过
+            if (key == null || seenKeys.add(key)) {
+                filteredList.add(item);
+            } else {
+                log.debug("发现重复数据，已过滤: key={}", key);
+            }
+        }
+        return filteredList;
+    }
 
     /**
      * 处理消息的模板方法
@@ -67,7 +122,7 @@ public abstract class AbstractImportConsumer<T> {
         String failFileUrl = null;
         try {
             // 2. 下载文件
-            log.info("开始下载文件: {}", fileUrl);
+            log.debug("开始下载文件: {}", fileUrl);
             tempFile = downloadToTemp(fileUrl);
             if (tempFile == null) {
                 log.error("获取文件失败。fileUrl:{}", fileUrl);
@@ -81,9 +136,12 @@ public abstract class AbstractImportConsumer<T> {
             }
 
             // 3. 解析Excel文件（抽象方法，子类实现）
-            log.info("开始处理导入任务: taskId={}, file={}", taskId, tempFile.getAbsolutePath());
+            log.debug("开始处理导入任务: taskId={}, file={}", taskId, tempFile.getAbsolutePath());
             List<T> itemList = parseExcelFile(tempFile);
-            log.info("解析到 {} 条数据", itemList.size());
+            log.debug("解析到 {} 条数据", itemList.size());
+            // 过滤重复数据
+            itemList = filterDuplicateItems(itemList);
+            log.debug("去重后剩余 {} 条数据", itemList.size());
 
             // 更新任务为进行中，并设置总数
             AsyncTask doingTask = new AsyncTask();
@@ -106,12 +164,19 @@ public abstract class AbstractImportConsumer<T> {
 
             // 重新获取一次最新进度用于日志打印（可选）
             AsyncTask finalTask = asyncTaskService.getById(taskId);
-            log.info("导入任务完成: taskId={}, 总计={}, 成功={}, 跳过={}, 失败={}",
+            log.debug("导入任务完成: taskId={}, 总计={}, 成功={}, 跳过={}, 失败={}",
                     taskId, itemList.size(), finalTask.getSuccess(), finalTask.getSkip(), finalTask.getFailure());
 
+        } catch (TaskCancelException e) {
+            log.warn("检测到任务已被手动取消，停止处理。taskId: {}", e.getTaskId());
+            // 任务取消时不需要调用 finish(DONE)，因为状态已经是 CANCELLED
+            // 这里可以执行一些特定的清理工作
         } catch (IOException e) {
             log.error("处理导入任务失败: taskId={}", taskId, e);
             asyncTaskService.finish(taskId, null, AsyncTaskStatus.DONE.getCode());
+        } catch (Exception e) { // 建议捕获 Exception 保证健壮性
+            log.error("处理导入任务过程中发生系统异常: taskId={}", taskId, e);
+            asyncTaskService.finish(taskId, null, AsyncTaskStatus.DONE.getCode()); //
         } finally {
             // 7. 清理临时文件
             if (tempFile != null && tempFile.exists()) {
@@ -131,8 +196,18 @@ public abstract class AbstractImportConsumer<T> {
         int failCount = 0;
 
         for (int i = 0; i < items.size(); i++) {
-            T item = items.get(i);
 
+            // 1. 每处理一批数据前，检查任务是否被取消
+            if (i % BATCH_UPDATE_SIZE == 0) {
+                AsyncTask currentStatus = asyncTaskService.getById(taskId);
+                // 假设 AsyncTaskStatus.CANCELLED 是您定义的取消状态码
+                // 检查状态是否为 CANCELLED (请确认你的常量类中有此状态)
+                if (currentStatus != null
+                        && AsyncTaskStatus.CANCELLED.getCode().equals(currentStatus.getTaskStatus())) {
+                    throw new TaskCancelException(taskId); // 抛出异常直接中断整个循环
+                }
+            }
+            T item = items.get(i);
             ItemProcessResult result = processSingleItem(item, shopId);
 
             // 根据处理结果更新进度
@@ -150,7 +225,7 @@ public abstract class AbstractImportConsumer<T> {
             if ((i + 1) % BATCH_UPDATE_SIZE == 0 || (i + 1) == items.size()) {
                 asyncTaskService.updateProgress(taskId, successCount, skipCount, failCount);
 
-                log.info("进度批量同步成功: {}/{}", i + 1, items.size());
+                log.debug("进度批量同步成功: {}/{}", i + 1, items.size());
 
                 // 同步后清空本地计数器，以便下次重新累加增量
                 successCount = 0;
@@ -247,7 +322,7 @@ public abstract class AbstractImportConsumer<T> {
 
             outputStream.flush();
 
-            log.info("✅ 文件下载成功: {} -> {} ({} bytes)",
+            log.debug("✅ 文件下载成功: {} -> {} ({} bytes)",
                     fileName, tempFile.getAbsolutePath(), totalRead);
 
             // 7. 验证文件

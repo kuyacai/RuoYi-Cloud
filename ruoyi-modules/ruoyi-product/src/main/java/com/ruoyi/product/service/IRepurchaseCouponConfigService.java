@@ -9,7 +9,9 @@ import com.ruoyi.product.domain.RepurchaseCouponConfig;
  * @author Rupert
  * @date 2025-12-13
  */
-public interface IRepurchaseCouponConfigService  extends IBaseService<RepurchaseCouponConfig>
-{
-   
+public interface IRepurchaseCouponConfigService extends IBaseService<RepurchaseCouponConfig> {
+    /**
+     * 根据标价匹配配置：priceMin <= price < priceMax
+     */
+    RepurchaseCouponConfig matchConfigByPrice(Integer markedPrice);
 }

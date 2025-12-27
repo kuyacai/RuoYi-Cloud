@@ -6,7 +6,6 @@ import org.apache.ibatis.annotations.Param;
 
 import com.ruoyi.product.core.mybatisplus.IBaseService;
 import com.ruoyi.product.domain.GoodsRevisionItem;
-import com.ruoyi.product.domain.GoodsRevisionSpu;
 
 /**
  * SKU 快照Service接口

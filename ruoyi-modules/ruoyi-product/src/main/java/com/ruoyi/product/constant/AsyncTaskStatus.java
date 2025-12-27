@@ -3,8 +3,9 @@ package com.ruoyi.product.constant;
 public enum AsyncTaskStatus {
 
     INIT("init", "新建任务"),
-    DOING("doing","进行中"),
-    DONE("done","已完成");
+    DOING("doing", "进行中"),
+    CANCELLED("cancelled", "已取消"),
+    DONE("done", "已完成");
 
     private final String code;
     private final String label;

@@ -1,34 +1,22 @@
 package com.ruoyi.product.service.impl;
 
-import com.ruoyi.common.core.utils.StringUtils;
-import com.ruoyi.common.core.utils.file.CharsetDetectUtil;
-import com.ruoyi.common.core.utils.file.FileUtils;
-import com.ruoyi.common.core.utils.poi.ExcelUtil;
-import com.ruoyi.common.core.utils.uuid.UUID;
-import com.ruoyi.common.core.web.domain.AjaxResult;
-import com.ruoyi.product.constant.ImageType;
-import com.ruoyi.product.constant.RevStatus;
-import com.ruoyi.product.constant.RevisionType;
-import com.ruoyi.product.constant.ItemTaskCode;
-import com.ruoyi.product.constant.ItemTaskStatus;
-import com.ruoyi.product.domain.Goods;
-import com.ruoyi.product.domain.GoodsRevision;
-import com.ruoyi.product.domain.GoodsRevisionImage;
-import com.ruoyi.product.domain.GoodsRevisionItem;
-import com.ruoyi.product.domain.dto.ItemProcessResult;
-import com.ruoyi.product.domain.dto.MiaoShouSKU;
-import com.ruoyi.product.domain.ItemTask;
-import com.ruoyi.product.service.IGoodsRevisionImageService;
-import com.ruoyi.product.service.IGoodsRevisionItemService;
-import com.ruoyi.product.service.IGoodsService;
-import com.ruoyi.product.service.IItemTaskService;
-
-import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
-
-import com.ruoyi.product.service.IGoodsRevisionService;
+import java.io.BufferedInputStream;
+import java.io.BufferedReader;
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
 import java.lang.reflect.Method;
 import java.math.BigDecimal;
+import java.nio.charset.Charset;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
 
 import org.apache.poi.ss.usermodel.Row;
 import org.apache.poi.ss.usermodel.Sheet;
@@ -41,19 +29,35 @@ import org.springframework.transaction.TransactionStatus;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.transaction.support.DefaultTransactionDefinition;
-import org.springframework.web.multipart.MultipartFile;
 import org.springframework.util.CollectionUtils;
+import org.springframework.web.multipart.MultipartFile;
 
-import java.io.BufferedInputStream;
-import java.io.BufferedReader;
-import java.io.ByteArrayInputStream;
-import java.io.ByteArrayOutputStream;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.InputStreamReader;
-import java.nio.charset.Charset;
-import java.util.*;
-import java.util.stream.Collectors;
+import com.ruoyi.common.core.utils.StringUtils;
+import com.ruoyi.common.core.utils.file.CharsetDetectUtil;
+import com.ruoyi.common.core.utils.file.FileUtils;
+import com.ruoyi.common.core.utils.poi.ExcelUtil;
+import com.ruoyi.common.core.utils.uuid.UUID;
+import com.ruoyi.common.core.web.domain.AjaxResult;
+import com.ruoyi.product.constant.ImageType;
+import com.ruoyi.product.constant.ItemTaskCode;
+import com.ruoyi.product.constant.ItemTaskStatus;
+import com.ruoyi.product.constant.RevStatus;
+import com.ruoyi.product.constant.RevisionType;
+import com.ruoyi.product.domain.Goods;
+import com.ruoyi.product.domain.GoodsRevision;
+import com.ruoyi.product.domain.GoodsRevisionImage;
+import com.ruoyi.product.domain.GoodsRevisionItem;
+import com.ruoyi.product.domain.ItemTask;
+import com.ruoyi.product.domain.dto.ItemProcessResult;
+import com.ruoyi.product.domain.dto.MiaoShouSKU;
+import com.ruoyi.product.service.IGoodsRevisionImageService;
+import com.ruoyi.product.service.IGoodsRevisionItemService;
+import com.ruoyi.product.service.IGoodsRevisionService;
+import com.ruoyi.product.service.IGoodsService;
+import com.ruoyi.product.service.IItemTaskService;
+
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 
 /**
  * SPU导入服务
@@ -252,7 +256,7 @@ public class SkuImportService {
         // 同 revision + url 唯一即认为已存在
         int img_counter = goodsRevisionImageService
                 .countByRevisionIdAndSourceUrl(revisionId, url);
-        if (img_counter>0) {
+        if (img_counter > 0) {
             return;
         }
         GoodsRevisionImage img = new GoodsRevisionImage();
@@ -265,7 +269,6 @@ public class SkuImportService {
         img.setSelfUrl(null);
         img.setLocalUri(null);
         img.setPosition(position);
-        img.setGmtCreate(new Date());
         goodsRevisionImageService.save(img);
     }
 
@@ -312,8 +315,6 @@ public class SkuImportService {
 
         item.setSkuStatus(sku.getSkuStatus());
         item.setBarcode(sku.getBarcode());
-        item.setGmtCreate(new Date());
-        item.setGmtModified(new Date());
         return item;
     }
 
@@ -474,7 +475,6 @@ public class SkuImportService {
             img.setSelfUrl(null);
             img.setLocalUri(null);
             img.setPosition(pos++);
-            img.setGmtCreate(new Date());
             goodsRevisionImageService.save(img);
         }
     }
@@ -486,8 +486,6 @@ public class SkuImportService {
         r.setGoodsId(goodsId);
         r.setRevStatus(status.getCode());
         r.setRevisionType(RevisionType.MANUAL.getCode());
-        r.setGmtCreate(new Date());
-        r.setGmtModified(new Date());
         return r;
     }
 
@@ -497,8 +495,6 @@ public class SkuImportService {
         task.setTaskCode(taskCode);
         task.setBizId(bizId);
         task.setTaskStatus(taskStatus);
-        task.setGmtCreate(new Date());
-        task.setGmtModified(new Date());
         return task;
     }
 }
