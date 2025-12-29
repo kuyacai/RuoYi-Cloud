@@ -3,26 +3,29 @@ package com.ruoyi.product.service.impl;
 import java.util.HashMap;
 import java.util.Map;
 
-import com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper;
-import com.ruoyi.common.core.utils.DateUtils;
-import com.ruoyi.common.core.utils.StringUtils;
-
-import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 import org.apache.rocketmq.client.producer.SendCallback;
 import org.apache.rocketmq.client.producer.SendResult;
 import org.apache.rocketmq.spring.core.RocketMQTemplate;
-import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
-import com.ruoyi.product.mapper.AsyncTaskMapper;
-import com.ruoyi.product.mq.dto.AsyncTaskMsg;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
+import com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper;
+import com.ruoyi.common.core.utils.DateUtils;
+import com.ruoyi.common.core.utils.SpringUtils;
+import com.ruoyi.common.core.utils.StringUtils;
+import com.ruoyi.common.core.utils.uuid.UUID;
+import com.ruoyi.product.constant.AsyncTaskCode;
 import com.ruoyi.product.constant.AsyncTaskStatus;
 import com.ruoyi.product.constant.MQConstant;
 import com.ruoyi.product.core.mybatisplus.impl.BaseServiceImpl;
-import com.ruoyi.product.constant.AsyncTaskCode;
 import com.ruoyi.product.domain.AsyncTask;
+import com.ruoyi.product.mapper.AsyncTaskMapper;
+import com.ruoyi.product.mq.dto.AsyncTaskMsg;
 import com.ruoyi.product.service.IAsyncTaskService;
-import com.ruoyi.common.core.utils.uuid.UUID;
+import com.ruoyi.product.service.excel.ExcelDataHandler;
+
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 
 /**
  * 异步任务Service业务层处理
@@ -46,32 +49,32 @@ public class AsyncTaskServiceImpl extends BaseServiceImpl<AsyncTaskMapper, Async
         task.setTaskId(taskId);
         task.setTaskCode(taskCode.getCode());
         task.setTaskName(taskCode.getLabel());
-        if(StringUtils.isNotEmpty(fileName)){
+        if (StringUtils.isNotEmpty(fileName)) {
             task.setFileName(fileName);
         }
-        if(StringUtils.isNotEmpty(fileUrl)){
+        if (StringUtils.isNotEmpty(fileUrl)) {
             task.setImportedFileUrl(fileUrl);
         }
-        if (ext!=null)
+        if (ext != null)
             task.setParamsMap(ext);
-        
+
         task.setTaskStatus(AsyncTaskStatus.INIT.getCode());
-        //task.setGmtCreate(DateUtils.getNowDate());
-        
+        // task.setGmtCreate(DateUtils.getNowDate());
+
         // 直接使用继承自 BaseServiceImpl 的 save 方法
         this.save(task);
 
         // 保存文件到 minio/oss
-        //String fileUrl = ProductFileUtils.upload(file, taskId);
+        // String fileUrl = ProductFileUtils.upload(file, taskId);
         if (ext == null)
             ext = new HashMap<>();
-        if(StringUtils.isNotEmpty(fileUrl)){
-           ext.put("fileUrl", fileUrl);
+        if (StringUtils.isNotEmpty(fileUrl)) {
+            ext.put("fileUrl", fileUrl);
         }
-        if(StringUtils.isNotEmpty(shopID)){
-            ext.put("shopId",shopID);
+        if (StringUtils.isNotEmpty(shopID)) {
+            ext.put("shopId", shopID);
         }
-        String destination = MQConstant.AsyncTaskProductTopic+":"+taskCode.getCode();  // topic:tag 格式
+        String destination = MQConstant.AsyncTaskProductTopic + ":" + taskCode.getCode(); // topic:tag 格式
         mqTemplate.asyncSend(destination,
                 new AsyncTaskMsg(taskId, taskCode.getCode(), ext),
                 new SendCallback() {
@@ -114,6 +117,17 @@ public class AsyncTaskServiceImpl extends BaseServiceImpl<AsyncTaskMapper, Async
     public void retry(String taskId) {
         // TODO Auto-generated method stub
         throw new UnsupportedOperationException("Unimplemented method 'retry'");
+    }
+
+    // 在 Controller 或具体的业务 Service 中调用
+    public String submitExportTask(AsyncTaskCode taskCode, String shopId, Map<String, Object> params) {
+        // 1. 校验参数
+        ExcelDataHandler<?> handler = SpringUtils.getBean(taskCode.getCode() + "Handler");
+        handler.validateParams(params);
+
+        // 2. 复用你现有的 createTask 方法
+        // 它会自动生成 taskId, 保存数据库, 并发送 RocketMQ 消息
+        return createTask(taskCode, shopId, null, null, params);
     }
 
 }

@@ -1,32 +1,48 @@
 package com.ruoyi.product.controller;
 
+import java.io.IOException;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.multipart.MultipartFile;
+
 import com.ruoyi.common.core.domain.R;
+import com.ruoyi.common.core.exception.ServiceException;
+import com.ruoyi.common.core.utils.SpringUtils;
 import com.ruoyi.common.core.utils.StringUtils;
 import com.ruoyi.common.core.web.controller.BaseController;
 import com.ruoyi.common.core.web.domain.AjaxResult;
 import com.ruoyi.common.log.annotation.Log;
 import com.ruoyi.common.log.enums.BusinessType;
 import com.ruoyi.common.security.annotation.RequiresPermissions;
-import com.ruoyi.product.service.IImportService;
 import com.ruoyi.product.constant.AsyncTaskCode;
-import com.ruoyi.system.api.domain.SysFile;
+import com.ruoyi.product.core.annotation.ExcelBusiness;
+import com.ruoyi.product.core.excel.ExcelDtoRegistry;
 import com.ruoyi.product.feign.FileServiceClient;
 import com.ruoyi.product.service.IAsyncTaskService;
-import jakarta.servlet.http.HttpServletResponse;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.web.bind.annotation.*;
-import org.springframework.web.multipart.MultipartFile;
+import com.ruoyi.product.service.IImportService;
+import com.ruoyi.product.service.excel.ExcelDataHandler;
+import com.ruoyi.product.utils.EnhancedExcelUtil;
+import com.ruoyi.system.api.domain.SysFile;
+
 import jakarta.servlet.ServletOutputStream;
-import java.io.IOException;
-import java.util.HashMap;
-import java.util.Map;
+import jakarta.servlet.http.HttpServletResponse;
 
 /**
  * 数据导入控制器
  */
 @RestController
 @RequestMapping("/import")
-public class ImportController extends BaseController {
+public class CommonExcelController extends BaseController {
 
     @Autowired
     private IImportService importService;
@@ -36,6 +52,9 @@ public class ImportController extends BaseController {
 
     @Autowired
     private IAsyncTaskService asyncTaskService;
+
+    @Autowired
+    private ExcelDtoRegistry registry;
 
     /**
      * 导入SPU数据
@@ -258,5 +277,42 @@ public class ImportController extends BaseController {
             logger.error("获取导入类型失败", e);
             return AjaxResult.error("获取导入类型失败: " + e.getMessage());
         }
+    }
+
+    /**
+     * 通用模板下载
+     * URL 示例: /excel/common/template/product
+     */
+    @GetMapping("/template/{businessKey}")
+    public void downloadTemplate(@PathVariable String businessKey, HttpServletResponse response) {
+        Class<?> clazz = registry.getDtoClass(businessKey);
+        if (clazz == null) {
+            throw new ServiceException("未找到对应的业务导出配置：" + businessKey);
+        }
+
+        ExcelBusiness meta = clazz.getAnnotation(ExcelBusiness.class);
+        EnhancedExcelUtil<?> util = new EnhancedExcelUtil<>(clazz);
+        // 使用注解中定义的模板名
+        util.importTemplateExcel(response, meta.templateName());
+    }
+
+    @PostMapping("/export/{businessKey}")
+    public void export(@PathVariable String businessKey,
+            @RequestBody Map<String, Object> params,
+            HttpServletResponse response) {
+
+        // 1. 从注册中心获取 DTO 类型
+        Class<?> clazz = registry.getDtoClass(businessKey);
+        ExcelBusiness meta = clazz.getAnnotation(ExcelBusiness.class);
+
+        // 2. 从 Spring 容器中动态获取对应的 Handler Bean
+        ExcelDataHandler<?> handler = SpringUtils.getBean(meta.handlerBean());
+
+        // 3. 获取数据
+        List<?> data = handler.getExportData(params);
+
+        // 4. 执行导出（使用你重写的 EnhancedExcelUtil）
+        EnhancedExcelUtil util = new EnhancedExcelUtil(clazz);
+        util.exportExcel(response, data, meta.exportName());
     }
 }

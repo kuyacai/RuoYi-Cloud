@@ -1,13 +1,16 @@
 package com.ruoyi.product.service.handler.impl;
 
+import java.util.List;
+import java.util.stream.Collectors;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 import com.ruoyi.product.domain.GoodsRevisionItem;
 import com.ruoyi.product.domain.ProductDiscountActivity;
-import com.ruoyi.product.domain.ProductDiscountConfig;
 import com.ruoyi.product.domain.ProductDiscountProduct;
 import com.ruoyi.product.domain.dto.ItemProcessResult;
+import com.ruoyi.product.enums.ActivityProductStatus;
 import com.ruoyi.product.service.IProductDiscountActivityService;
 import com.ruoyi.product.service.IProductDiscountConfigService;
 import com.ruoyi.product.service.IProductDiscountProductService;
@@ -17,15 +20,19 @@ import com.ruoyi.product.service.handler.AbstractActivityHandler;
 public class ProductDiscountHandler extends AbstractActivityHandler {
 
     @Autowired
-    private IProductDiscountProductService resultService;
+    private IProductDiscountProductService productService;
     @Autowired
     private IProductDiscountConfigService configService;
     @Autowired
     private IProductDiscountActivityService activityService;
 
     @Override
+    protected boolean isSkuLevelActivity() {
+        return false;
+    }
+
+    @Override
     protected Object matchConfig(GoodsRevisionItem sku) {
-        // 根据最低标价匹配配置区间 [priceMin <= price < priceMax]
         return configService.matchConfigByPrice(sku.getMarketPrice());
     }
 
@@ -35,15 +42,44 @@ public class ProductDiscountHandler extends AbstractActivityHandler {
     }
 
     @Override
-    protected ItemProcessResult saveResult(GoodsRevisionItem sku, Object activity, Object config) {
-        ProductDiscountActivity act = (ProductDiscountActivity) activity;
-        ProductDiscountConfig cfg = (ProductDiscountConfig) config;
+    protected List<Object> findActiveRecordsBySpu(String shopProductId, String shopId) {
+        return productService.lambdaQuery()
+                .eq(ProductDiscountProduct::getShopProductId, shopProductId)
+                .eq(ProductDiscountProduct::getShopId, shopId)
+                .eq(ProductDiscountProduct::getItemStatus, ActivityProductStatus.ACTIVE)
+                .list().stream().map(e -> (Object) e).collect(Collectors.toList());
+    }
 
-        ProductDiscountProduct res = new ProductDiscountProduct();
-        // res.setGoodsId(sku.getGoodsId());
-        // res.setActivityId(act.getId());
-        // res.setConfigId(cfg.getId());
+    @Override
+    protected Object findExistingRecord(String shopProductId, String shopSkuId, String shopId) {
+        return productService.lambdaQuery()
+                .eq(ProductDiscountProduct::getShopProductId, shopProductId)
+                .eq(ProductDiscountProduct::getShopId, shopId)
+                .one();
+    }
 
-        return resultService.save(res) ? ItemProcessResult.success() : ItemProcessResult.fail("结果保存失败");
+    @Override
+    protected String getActivityIdFromRecord(Object record) {
+        return ((ProductDiscountProduct) record).getActivityId();
+    }
+
+    @Override
+    protected ItemProcessResult saveResult(GoodsRevisionItem sku, Object activity, Object config,
+            Object existingRecord) {
+        ProductDiscountProduct res = (existingRecord != null)
+                ? (ProductDiscountProduct) existingRecord
+                : new ProductDiscountProduct();
+
+        res.setShopProductId(sku.getShopProductId());
+        res.setShopId(sku.getShopId());
+        res.setActivityId(((ProductDiscountActivity) activity).getActivityId());
+
+        if (config != null) {
+            res.setItemStatus(ActivityProductStatus.ACTIVE);
+        } else {
+            res.setItemStatus(ActivityProductStatus.REMOVED);
+        }
+
+        return productService.saveOrUpdate(res) ? ItemProcessResult.success() : ItemProcessResult.fail("保存失败");
     }
 }

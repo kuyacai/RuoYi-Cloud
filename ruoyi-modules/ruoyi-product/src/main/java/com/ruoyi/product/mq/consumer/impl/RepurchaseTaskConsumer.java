@@ -10,13 +10,15 @@ import org.apache.rocketmq.spring.annotation.ConsumeMode;
 import org.apache.rocketmq.spring.annotation.MessageModel;
 import org.apache.rocketmq.spring.annotation.RocketMQMessageListener;
 import org.apache.rocketmq.spring.annotation.SelectorType;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 import com.ruoyi.product.constant.AsyncTaskCode;
 import com.ruoyi.product.constant.MQConstant;
 import com.ruoyi.product.domain.dto.ItemProcessResult;
 import com.ruoyi.product.domain.dto.SimpleProduct;
-import com.ruoyi.product.mq.consumer.base.AbstractImportConsumer;
+import com.ruoyi.product.mq.consumer.base.AbstractActivityDiscountConsumer;
+import com.ruoyi.product.service.IActivityDiscountService;
 import com.ruoyi.product.utils.EnhancedExcelUtil;
 
 import lombok.extern.slf4j.Slf4j;
@@ -66,7 +68,10 @@ import lombok.extern.slf4j.Slf4j;
 )
 @Slf4j
 // @formatter:on
-public class RepurchaseTaskConsumer extends AbstractImportConsumer<SimpleProduct> {
+public class RepurchaseTaskConsumer extends AbstractActivityDiscountConsumer<SimpleProduct> {
+
+    @Autowired
+    private IActivityDiscountService activityDiscountService;
 
     /**
      * 实现重复数据过滤逻辑
@@ -86,9 +91,16 @@ public class RepurchaseTaskConsumer extends AbstractImportConsumer<SimpleProduct
     }
 
     @Override
-    protected ItemProcessResult processSingleItem(SimpleProduct price, String shopId) {
-        // TODO 待实现
-        return ItemProcessResult.success();
+    protected ItemProcessResult processSingleItem(SimpleProduct item, String shopId) {
+        String activityId = getActivityId();
+
+        // 调用通用 Service，传入活动类型 NEW_USER_GIFT
+        // Service 会根据此类型定位到 NEW_USER_GIFT_HANDLER 执行线性核算
+        return activityDiscountService.processActivityDiscount(
+                item.getProductId(),
+                shopId,
+                activityId,
+                getActivityType());
     }
 
     @Override
@@ -98,4 +110,20 @@ public class RepurchaseTaskConsumer extends AbstractImportConsumer<SimpleProduct
         log.info(msg);
         return msg;
     }
+
+    @Override
+    protected String getActivityType() {
+        return "REPURCHASE_DISCOUNT";
+    }
+
+    @Override
+    protected IActivityDiscountService getDiscountService() {
+        return this.activityDiscountService;
+    }
+
+    @Override
+    protected String getProductIdFromDto(SimpleProduct item) {
+        return item.getProductId();
+    }
+
 }

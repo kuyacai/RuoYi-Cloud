@@ -7,6 +7,8 @@ import com.baomidou.mybatisplus.annotation.TableId;
 import com.baomidou.mybatisplus.annotation.TableName;
 import com.fasterxml.jackson.annotation.JsonFormat;
 import com.ruoyi.product.core.mybatisplus.ProductBaseEntity;
+import com.ruoyi.product.enums.ActivityProductStatus;
+import com.ruoyi.product.enums.SyncStatus;
 
 import lombok.Data;
 import lombok.EqualsAndHashCode;
@@ -33,6 +35,8 @@ public class DirectDiscountProduct extends ProductBaseEntity {
     private String shopProductId;
 
     private String shopSkuId;
+
+    private String shopId;
     // 一口价
     private Integer fixedPrice;
     // 立减金额
@@ -43,7 +47,7 @@ public class DirectDiscountProduct extends ProductBaseEntity {
     // 默认限制2
     private Integer userLimit;
     // 对应商品sku状态(active/removed)
-    private String itemStatus;
+    private ActivityProductStatus itemStatus;
 
     @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")
     private Date addedTime;
@@ -51,7 +55,7 @@ public class DirectDiscountProduct extends ProductBaseEntity {
     @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")
     private Date removedTime;
 
-    private String platformSyncStatus;
+    private SyncStatus platformSyncStatus;
 
     private String platformErrorMsg;
 

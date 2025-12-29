@@ -1,34 +1,41 @@
 package com.ruoyi.product.utils;
 
-import com.ruoyi.common.core.utils.poi.ExcelUtil;
-import org.apache.commons.lang3.StringUtils;
-import org.apache.poi.ss.usermodel.*;
-
 import java.math.BigDecimal;
 import java.text.DecimalFormat;
+import java.util.List;
+
+import org.apache.commons.lang3.StringUtils;
+import org.apache.poi.ss.usermodel.Cell;
+import org.apache.poi.ss.usermodel.CellType;
+import org.apache.poi.ss.usermodel.DateUtil;
+import org.apache.poi.ss.usermodel.Row;
+import org.apache.poi.ss.usermodel.Workbook;
+
+import com.ruoyi.common.core.annotation.Excel.Type;
+import com.ruoyi.common.core.utils.poi.ExcelUtil;
 
 /**
  * 修复Excel导入问题的工具类
  */
 public class EnhancedExcelUtil<T> extends ExcelUtil<T> {
-    
+
     private boolean cleanStrings = true;
     private boolean preserveAllWhitespace = false;
-    
+
     public EnhancedExcelUtil(Class<T> clazz) {
         super(clazz);
     }
-    
+
     public EnhancedExcelUtil<T> setCleanStrings(boolean cleanStrings) {
         this.cleanStrings = cleanStrings;
         return this;
     }
-    
+
     public EnhancedExcelUtil<T> setPreserveAllWhitespace(boolean preserveAllWhitespace) {
         this.preserveAllWhitespace = preserveAllWhitespace;
         return this;
     }
-    
+
     /**
      * 重写获取单元格值的方法
      */
@@ -39,48 +46,48 @@ public class EnhancedExcelUtil<T> extends ExcelUtil<T> {
             if (cell == null) {
                 return null;
             }
-            
+
             // 处理数字类型的大数字（防止精度丢失）
             if (cell.getCellType() == CellType.NUMERIC || cell.getCellType() == CellType.FORMULA) {
                 return handleNumericCell(cell);
             }
-            
+
             // 调用父类方法获取值
             Object value = super.getCellValue(row, column);
-            
+
             // 如果是字符串且需要清理
             if (value instanceof String && cleanStrings && !preserveAllWhitespace) {
                 return cleanString((String) value);
             }
-            
+
             return value;
-            
+
         } catch (Exception e) {
             // 发生异常时返回空字符串
             return "";
         }
     }
-    
+
     /**
      * 处理数字单元格，解决大数字精度问题
      */
     private Object handleNumericCell(Cell cell) {
         double numericValue = cell.getNumericCellValue();
-        
+
         // 检查是否是日期
         if (DateUtil.isCellDateFormatted(cell)) {
             return DateUtil.getJavaDate(numericValue);
         }
-        
+
         // 检查是否是整数
         boolean isInteger = numericValue == Math.floor(numericValue) && !Double.isInfinite(numericValue);
-        
+
         if (isInteger) {
             // 对于大整数，使用BigDecimal保持精度
             if (numericValue > 1E15) {
                 BigDecimal bd = BigDecimal.valueOf(numericValue);
                 String stringValue = bd.toPlainString();
-                
+
                 // 如果需要清理字符串
                 if (cleanStrings && !preserveAllWhitespace) {
                     return cleanString(stringValue);
@@ -90,7 +97,7 @@ public class EnhancedExcelUtil<T> extends ExcelUtil<T> {
                 // 小整数正常格式化
                 DecimalFormat df = new DecimalFormat("0");
                 String stringValue = df.format(numericValue);
-                
+
                 if (cleanStrings && !preserveAllWhitespace) {
                     return cleanString(stringValue);
                 }
@@ -101,7 +108,7 @@ public class EnhancedExcelUtil<T> extends ExcelUtil<T> {
             return BigDecimal.valueOf(numericValue);
         }
     }
-    
+
     /**
      * 清理字符串
      * - 移除首尾空白
@@ -112,16 +119,28 @@ public class EnhancedExcelUtil<T> extends ExcelUtil<T> {
         if (StringUtils.isEmpty(input)) {
             return input;
         }
-        
+
         // 1. 去除首尾空白
         String cleaned = input.trim();
-        
+
         // 2. 移除所有空白字符（空格、制表符、换行符等）
         cleaned = cleaned.replaceAll("\\s+", "");
-        
+
         // 3. 移除控制字符（ASCII 0-31, 127）
         cleaned = cleaned.replaceAll("[\\u0000-\\u001F\\u007F]", "");
-        
+
         return cleaned;
+    }
+
+    public Workbook exportExcelToWorkbook(List<T> list, String sheetName) {
+        // 1. 调用父类 init 方法初始化表头字段映射
+        // 参数：数据列表, 工作表名, 标题(null), 导出类型
+        this.init(list, sheetName, null, Type.EXPORT);
+
+        // 2. 调用父类 writeSheet 方法将数据写入内部的 this.wb
+        this.writeSheet();
+
+        // 3. 直接返回父类中定义的 protected 成员变量 wb
+        return this.wb;
     }
 }

@@ -4,6 +4,8 @@ import com.baomidou.mybatisplus.annotation.IdType;
 import com.baomidou.mybatisplus.annotation.TableId;
 import com.baomidou.mybatisplus.annotation.TableName;
 import com.ruoyi.product.core.mybatisplus.ProductBaseEntity;
+import com.ruoyi.product.enums.ConfigStatus;
+import com.ruoyi.product.enums.DiscountType;
 
 import lombok.Data;
 import lombok.EqualsAndHashCode;
@@ -22,8 +24,8 @@ import lombok.ToString;
 public class RepurchaseCouponConfig extends ProductBaseEntity {
     private static final long serialVersionUID = 1L;
 
-    @TableId(value = "id", type = IdType.INPUT)
-    private String id;
+    @TableId(value = "config_id", type = IdType.INPUT)
+    private String configId;
 
     private String configName;
 
@@ -41,9 +43,9 @@ public class RepurchaseCouponConfig extends ProductBaseEntity {
 
     private Integer priority;
 
-    private String discountStatus;
+    private ConfigStatus configStatus;
 
-    private String discountType;
+    private DiscountType discountType;
 
     private Integer recommendedQuantity;
 

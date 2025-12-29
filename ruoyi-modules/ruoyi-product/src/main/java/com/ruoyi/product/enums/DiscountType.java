@@ -1,6 +1,7 @@
 package com.ruoyi.product.enums;
 
-
+import com.baomidou.mybatisplus.annotation.IEnum;
+import com.fasterxml.jackson.annotation.JsonFormat;
 /**
  * 优惠类型
  */
@@ -8,7 +9,8 @@ import com.ruoyi.common.core.enums.BaseEnum;
 import com.ruoyi.common.core.enums.ExposeEnum;
 
 @ExposeEnum(group = "product", description = "优惠类型")
-public enum DiscountType implements BaseEnum{
+@JsonFormat(shape = JsonFormat.Shape.OBJECT)
+public enum DiscountType implements BaseEnum, IEnum<String> {
 
     FIXED_PRICE("fixed_price", "一口价"),
     DIRECT_DEDUCTION("direct_deduction", "立减"),
@@ -22,12 +24,19 @@ public enum DiscountType implements BaseEnum{
         this.label = label;
     }
 
+    @Override
     public String getCode() {
         return code;
     }
 
+    @Override
     public String getLabel() {
-        return label;
+        return this.label;
+    }
+
+    @Override
+    public String getValue() {
+        return this.code; // MyBatis Plus 数据库存储值
     }
 
     public static DiscountType of(String code) {

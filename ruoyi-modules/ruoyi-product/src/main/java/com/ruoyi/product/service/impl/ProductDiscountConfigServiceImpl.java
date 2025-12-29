@@ -25,7 +25,7 @@ public class ProductDiscountConfigServiceImpl extends
         return this.getOne(new LambdaQueryWrapper<ProductDiscountConfig>()
                 .le(ProductDiscountConfig::getPriceMin, markedPrice)
                 .gt(ProductDiscountConfig::getPriceMax, markedPrice)
-                .eq(ProductDiscountConfig::getDiscountStatus, ConfigStatus.ENABLE.getCode())
+                .eq(ProductDiscountConfig::getConfigStatus, ConfigStatus.ENABLE)
                 .last("LIMIT 1"));
     }
 }

@@ -1,14 +1,17 @@
 package com.ruoyi.product.service.handler.impl;
 
+import java.util.List;
+import java.util.stream.Collectors;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
-import com.ruoyi.common.core.utils.DateUtils;
-import com.ruoyi.common.core.utils.uuid.UUID;
+import com.ruoyi.product.domain.DirectDiscountActivity;
 import com.ruoyi.product.domain.DirectDiscountProduct;
 import com.ruoyi.product.domain.GoodsRevisionItem;
 import com.ruoyi.product.domain.PriceReference;
 import com.ruoyi.product.domain.dto.ItemProcessResult;
+import com.ruoyi.product.enums.ActivityProductStatus;
 import com.ruoyi.product.service.IDirectDiscountActivityService;
 import com.ruoyi.product.service.IDirectDiscountProductService;
 import com.ruoyi.product.service.IPriceReferenceService;
@@ -20,18 +23,17 @@ public class SingleDiscountHandler extends AbstractActivityHandler {
     @Autowired
     private IPriceReferenceService priceReferenceService;
     @Autowired
-    private IDirectDiscountProductService directDiscountProductService;
+    private IDirectDiscountProductService productService;
     @Autowired
-    private IDirectDiscountActivityService directDiscountActivityService;
+    private IDirectDiscountActivityService activityService;
 
     @Override
     protected boolean isSkuLevelActivity() {
-        return true; // 开启 SKU 维度遍历模式
+        return true; // 开启 SKU 维度核算
     }
 
     @Override
     protected Object matchConfig(GoodsRevisionItem sku) {
-        // 逻辑：将 SKU 标价与 price_reference 匹配
         return priceReferenceService.lambdaQuery()
                 .eq(PriceReference::getEffectiveMarkedPrice, sku.getMarketPrice())
                 .one();
@@ -39,25 +41,53 @@ public class SingleDiscountHandler extends AbstractActivityHandler {
 
     @Override
     protected Object linkActivity(String shopId, Object config, String activityId) {
-        // 单品直降可能直接根据 shopId 获取当前生效的活动
-        // 或者从 config (PriceReference) 中获取配置
-        return directDiscountActivityService.getById(activityId);
+        return activityService.getById(activityId);
     }
 
     @Override
-    protected ItemProcessResult saveResult(GoodsRevisionItem sku, Object activity, Object config) {
-        PriceReference ref = (PriceReference) config;
+    protected List<Object> findActiveRecordsBySpu(String shopProductId, String shopId) {
+        return productService.lambdaQuery()
+                .eq(DirectDiscountProduct::getShopProductId, shopProductId)
+                .eq(DirectDiscountProduct::getShopId, shopId)
+                .eq(DirectDiscountProduct::getItemStatus, ActivityProductStatus.ACTIVE)
+                .list().stream().map(e -> (Object) e).collect(Collectors.toList());
+    }
 
-        DirectDiscountProduct product = new DirectDiscountProduct();
-        product.setId(UUID.fastUUID().toString(true));
+    @Override
+    protected Object findExistingRecord(String shopProductId, String shopSkuId, String shopId) {
+        return productService.lambdaQuery()
+                .eq(DirectDiscountProduct::getShopProductId, shopProductId)
+                .eq(DirectDiscountProduct::getShopSkuId, shopSkuId)
+                .eq(DirectDiscountProduct::getShopId, shopId)
+                .one();
+    }
+
+    @Override
+    protected String getActivityIdFromRecord(Object record) {
+        return ((DirectDiscountProduct) record).getActivityId();
+    }
+
+    @Override
+    protected ItemProcessResult saveResult(GoodsRevisionItem sku, Object activity, Object config,
+            Object existingRecord) {
+        DirectDiscountProduct product = (existingRecord != null)
+                ? (DirectDiscountProduct) existingRecord
+                : new DirectDiscountProduct();
+
         product.setShopProductId(sku.getShopProductId());
         product.setShopSkuId(sku.getShopSkuId());
-        product.setDeductionAmount(ref.getActualDiscountAmount());
-        product.setUserLimit(2);
-        product.setItemStatus("active");
-        product.setAddedTime(DateUtils.getNowDate());
+        product.setShopId(sku.getShopId());
+        product.setActivityId(((DirectDiscountActivity) activity).getActivityId());
 
-        directDiscountProductService.save(product);
-        return ItemProcessResult.success();
+        if (config != null) {
+            PriceReference ref = (PriceReference) config;
+            product.setDeductionAmount(ref.getActualDiscountAmount());
+            product.setItemStatus(ActivityProductStatus.ACTIVE);
+        } else {
+            product.setDeductionAmount(0); // 不符合配置，优惠清零
+            product.setItemStatus(ActivityProductStatus.REMOVED);
+        }
+
+        return productService.saveOrUpdate(product) ? ItemProcessResult.success() : ItemProcessResult.fail("保存失败");
     }
 }

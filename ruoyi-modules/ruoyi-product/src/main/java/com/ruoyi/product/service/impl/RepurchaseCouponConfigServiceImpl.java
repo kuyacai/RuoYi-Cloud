@@ -26,7 +26,7 @@ public class RepurchaseCouponConfigServiceImpl
         return this.getOne(new LambdaQueryWrapper<RepurchaseCouponConfig>()
                 .le(RepurchaseCouponConfig::getPriceMin, markedPrice)
                 .gt(RepurchaseCouponConfig::getPriceMax, markedPrice)
-                .eq(RepurchaseCouponConfig::getDiscountStatus, ConfigStatus.ENABLE.getCode())
+                .eq(RepurchaseCouponConfig::getConfigStatus, ConfigStatus.ENABLE)
                 .last("LIMIT 1"));
     }
 }

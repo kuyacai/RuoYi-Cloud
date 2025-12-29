@@ -221,6 +221,7 @@ CREATE TABLE IF NOT EXISTS direct_discount (
     deduction_amount            BIGINT COMMENT '抵扣金额',
     discount_rate               BIGINT COMMENT '折扣率',
     actual_discount_amount      BIGINT COMMENT '实际折扣金额',
+    config_status               VARCHAR(20) COMMENT '折扣状态',
     gmt_create                  DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3) COMMENT '创建时间',
     gmt_modified                DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3) ON UPDATE CURRENT_TIMESTAMP(3) COMMENT '修改时间'
 ) ENGINE = InnoDB COMMENT ='单品直降配置表';
@@ -246,7 +247,8 @@ CREATE TABLE IF NOT EXISTS direct_discount_activity (
 CREATE TABLE IF NOT EXISTS direct_discount_product (
     id                          CHAR(32) PRIMARY KEY DEFAULT (REPLACE(UUID(), '-', '')) COMMENT 'ID',
     activity_id                 CHAR(32) NOT NULL COMMENT '活动ID',
-    shop_product_id             VARCHAR(64) NOT NULL COMMENT '店铺商品ID',  
+    shop_product_id             VARCHAR(64) NOT NULL COMMENT '店铺商品ID',
+    shop_id                     VARCHAR(64) NOT NULL COMMENT '店铺ID',    
     shop_sku_id                 VARCHAR(64) NOT NULL COMMENT '店铺SKU ID',
     fixed_price                 BIGINT COMMENT '一口价金额（分）',                
     deduction_amount            BIGINT COMMENT '立减金额（分）',              
@@ -263,7 +265,7 @@ CREATE TABLE IF NOT EXISTS direct_discount_product (
 
 -- 新用户礼包 ------
 CREATE TABLE IF NOT EXISTS new_user_gift_config (
-    id                          CHAR(32) PRIMARY KEY DEFAULT (REPLACE(UUID(), '-', '')) COMMENT 'ID',
+    config_id                   CHAR(32) PRIMARY KEY DEFAULT (REPLACE(UUID(), '-', '')) COMMENT 'ID',
     config_name                 VARCHAR(64) COMMENT '配置名称',
     price_min                   BIGINT COMMENT '最低价格',
     price_max                   BIGINT COMMENT '最高价格',
@@ -298,6 +300,7 @@ CREATE TABLE IF NOT EXISTS new_user_gift_product (
     id                          CHAR(32) PRIMARY KEY DEFAULT (REPLACE(UUID(), '-', '')) COMMENT 'ID',
     activity_id                 CHAR(32) NOT NULL COMMENT '活动ID',
     shop_product_id             VARCHAR(64) NOT NULL COMMENT '店铺商品ID',
+    shop_id                     VARCHAR(64) NOT NULL COMMENT '店铺ID',
     avg_amount                  BIGINT COMMENT '平均金额',
     max_gift_amount             BIGINT COMMENT '最大礼包金额',
     item_status                 VARCHAR(20) DEFAULT 'active' COMMENT '商品状态(active/removed)',  
@@ -311,7 +314,7 @@ CREATE TABLE IF NOT EXISTS new_user_gift_product (
 
 -- 通用商品优惠券配置 ------
 CREATE TABLE IF NOT EXISTS product_discount_config (
-    id                          CHAR(32) PRIMARY KEY DEFAULT (REPLACE(UUID(), '-', '')) COMMENT 'ID',
+    config_id                   CHAR(32) PRIMARY KEY DEFAULT (REPLACE(UUID(), '-', '')) COMMENT 'ID',
     config_name                 VARCHAR(100) COMMENT '配置名称',
     price_min                   BIGINT COMMENT '最低价格',
     price_max                   BIGINT COMMENT '最高价格',
@@ -320,7 +323,8 @@ CREATE TABLE IF NOT EXISTS product_discount_config (
     discount_rate               BIGINT COMMENT '折扣率',
     discount_strength           BIGINT COMMENT '折扣强度',
     priority                    INTEGER COMMENT '优先级',
-    discount_status             VARCHAR(20) COMMENT '折扣状态',
+    recommended_quantity        INTEGER COMMENT '推荐数量',
+    config_status               VARCHAR(20) COMMENT '折扣状态',
     discount_type               VARCHAR(20) COMMENT '折扣类型',
     gmt_create                  DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3) COMMENT '创建时间',
     gmt_modified                DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3) ON UPDATE CURRENT_TIMESTAMP(3) COMMENT '修改时间'
@@ -347,6 +351,7 @@ CREATE TABLE IF NOT EXISTS product_discount_product (
     id                          CHAR(32) PRIMARY KEY DEFAULT (REPLACE(UUID(), '-', '')) COMMENT 'ID',
     activity_id                 CHAR(32) NOT NULL COMMENT '活动ID',
     shop_product_id             VARCHAR(64) NOT NULL COMMENT '店铺商品ID',
+    shop_id                     VARCHAR(64) NOT NULL COMMENT '店铺ID',  
     item_status                 VARCHAR(20) DEFAULT 'active' COMMENT '商品状态(active/removed)',  
     added_time                  DATETIME(3) COMMENT '添加时间',
     removed_time                DATETIME(3) COMMENT '移除时间',
@@ -358,7 +363,7 @@ CREATE TABLE IF NOT EXISTS product_discount_product (
 
 -- 复购券配置
 CREATE TABLE IF NOT EXISTS repurchase_coupon_config (
-    id                          CHAR(32) PRIMARY KEY DEFAULT (REPLACE(UUID(), '-', '')) COMMENT 'ID',
+    config_id                   CHAR(32) PRIMARY KEY DEFAULT (REPLACE(UUID(), '-', '')) COMMENT 'ID',
     config_name                 VARCHAR(100) COMMENT '配置名称',
     price_min                   BIGINT COMMENT '最低价格',
     price_max                   BIGINT COMMENT '最高价格',
@@ -367,7 +372,7 @@ CREATE TABLE IF NOT EXISTS repurchase_coupon_config (
     discount_rate               BIGINT COMMENT '折扣率',
     discount_strength           BIGINT COMMENT '折扣强度',
     priority                    INTEGER COMMENT '优先级',
-    discount_status             VARCHAR(20) COMMENT '折扣状态',
+    config_status               VARCHAR(20) COMMENT '折扣状态',
     discount_type               VARCHAR(20) COMMENT '折扣类型',
     recommended_quantity        INTEGER COMMENT '推荐数量',
     gmt_create                  DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3) COMMENT '创建时间',
@@ -396,7 +401,8 @@ CREATE TABLE IF NOT EXISTS repurchase_coupon_activity (
 CREATE TABLE IF NOT EXISTS `repurchase_coupon_product` (
     id                          CHAR(32) PRIMARY KEY DEFAULT (REPLACE(UUID(), '-', '')) COMMENT 'ID',
     activity_id                 CHAR(32) NOT NULL COMMENT '活动ID',
-    shop_product_id             VARCHAR(64) NOT NULL COMMENT '店铺商品ID',  
+    shop_product_id             VARCHAR(64) NOT NULL COMMENT '店铺商品ID',
+    shop_id                     VARCHAR(64) NOT NULL COMMENT '店铺ID',    
     item_status                 VARCHAR(20) DEFAULT 'active' COMMENT '商品状态(active/removed)',  
     added_time                  DATETIME(3) COMMENT '添加时间',
     removed_time                DATETIME(3) COMMENT '移除时间',
@@ -408,7 +414,8 @@ CREATE TABLE IF NOT EXISTS `repurchase_coupon_product` (
 
 -- 平台促销配置
 CREATE TABLE IF NOT EXISTS `platform_promotion_config` (
-    id                          CHAR(32) PRIMARY KEY DEFAULT (REPLACE(UUID(), '-', '')) COMMENT 'ID',
+    config_id                   CHAR(32) PRIMARY KEY DEFAULT (REPLACE(UUID(), '-', '')) COMMENT 'ID',
+    config_name                 VARCHAR(64) NOT NULL COMMENT '配置名称', 
     price_min                   BIGINT COMMENT '最低价格',
     price_max                   BIGINT COMMENT '最高价格',
     threshold_amount            BIGINT COMMENT '门槛金额',
@@ -416,9 +423,7 @@ CREATE TABLE IF NOT EXISTS `platform_promotion_config` (
     discount_rate               BIGINT COMMENT '折扣率',
     discount_strength           BIGINT COMMENT '折扣强度',
     priority                    INTEGER COMMENT '优先级',
-    config_id                   CHAR(32) NOT NULL COMMENT '配置ID',
-    config_name                 VARCHAR(64) NOT NULL COMMENT '配置名称',  
-    discount_status             VARCHAR(20) COMMENT '折扣状态',
+    config_status               VARCHAR(20) COMMENT '折扣状态',
     discount_type               VARCHAR(20) COMMENT '折扣类型',
     recommended_quantity        INTEGER COMMENT '推荐数量',
     gmt_create                  DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3) COMMENT '创建时间',
@@ -452,6 +457,7 @@ CREATE TABLE IF NOT EXISTS `platform_promotion_product` (
     id                          CHAR(32) PRIMARY KEY DEFAULT (REPLACE(UUID(), '-', '')) COMMENT 'ID',
     activity_id                 CHAR(32) NOT NULL COMMENT '活动ID',
     shop_product_id             VARCHAR(64) NOT NULL COMMENT '店铺商品ID',  
+    shop_id                     VARCHAR(64) NOT NULL COMMENT '店铺ID',  
     item_status                 VARCHAR(20) DEFAULT 'active' COMMENT '商品状态(active/removed)',  
     added_time                  DATETIME(3) COMMENT '添加时间',
     removed_time                DATETIME(3) COMMENT '移除时间',

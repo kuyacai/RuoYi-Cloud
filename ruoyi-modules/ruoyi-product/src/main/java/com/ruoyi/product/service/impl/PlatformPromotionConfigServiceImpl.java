@@ -26,7 +26,7 @@ public class PlatformPromotionConfigServiceImpl
         return this.getOne(new LambdaQueryWrapper<PlatformPromotionConfig>()
                 .le(PlatformPromotionConfig::getPriceMin, markedPrice)
                 .gt(PlatformPromotionConfig::getPriceMax, markedPrice)
-                .eq(PlatformPromotionConfig::getDiscountStatus, ConfigStatus.ENABLE.getCode())
+                .eq(PlatformPromotionConfig::getConfigStatus, ConfigStatus.ENABLE.getCode())
                 .last("LIMIT 1"));
     }
 }

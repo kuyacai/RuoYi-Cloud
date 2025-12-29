@@ -16,160 +16,138 @@ import com.ruoyi.product.service.IGoodsService;
 import lombok.extern.slf4j.Slf4j;
 
 /**
- * 活动核算逻辑抽象处理器
- * 采用模板方法模式定义线性核算节点
+ * 活动核算逻辑抽象处理器 (重构版)
+ * 核心逻辑：SPU 级准入校验 + SKU 级差异化执行
  */
 @Slf4j
 public abstract class AbstractActivityHandler {
 
     @Autowired
     protected IGoodsService goodsService;
-
     @Autowired
     protected IGoodsRevisionService revisionService;
-
     @Autowired
     protected IGoodsRevisionItemService itemService;
 
-    /**
-     * 核心模板方法：定义线性的节点处理流程
-     * * @param productId 外部商品ID
-     * 
-     * @param shopId     店铺ID
-     * @param activityId 活动ID (由Consumer从消息扩展参数提取)
-     * @return 处理结果
-     */
     public final ItemProcessResult handle(String productId, String shopId, String activityId) {
         try {
-            // 1. 定位商品
-            Goods goods = getGoods(productId, shopId);
-            if (goods == null) {
+            // 1. 定位商品及版本
+            Goods goods = goodsService.getLatestByShopProductId(productId);
+            if (goods == null)
                 return ItemProcessResult.fail("商品不存在");
-            }
 
-            // 2. 获取版本
             String revisionId = getRevisionId(goods.getGoodsId());
-            if (revisionId == null) {
+            if (revisionId == null)
                 return ItemProcessResult.fail("找不到有效商品版本");
+
+            // 2. 【核心】SPU 级冲突检查：禁止一个 SPU 的 SKU 分散在多个同类活动中
+            ItemProcessResult conflictResult = checkSpuConflict(productId, shopId, activityId);
+            if (!conflictResult.isSuccess()) {
+                return conflictResult;
             }
 
-            // 3. 执行核算逻辑（根据模式选择）
+            // 3. 执行差异化核算
             if (isSkuLevelActivity()) {
-                // SKU 维度：遍历该版本下所有 SKU 进行核算
                 return handleSkuLevelActivity(revisionId, shopId, activityId);
             } else {
-                // SPU 维度：找到基准 SKU（如最低价）进行核算
                 return handleSpuLevelActivity(revisionId, shopId, activityId);
             }
 
         } catch (Exception e) {
-            log.error("活动核算节点执行异常: productId={}", productId, e);
+            log.error("核算异常: productId={}", productId, e);
             return ItemProcessResult.fail("系统异常: " + e.getMessage());
         }
     }
 
     /**
-     * SPU 维度核算逻辑 (新人礼金、通用券等)
+     * SPU 冲突检查逻辑
      */
-    private ItemProcessResult handleSpuLevelActivity(String revisionId, String shopId, String activityId) {
+    private ItemProcessResult checkSpuConflict(String shopProductId, String shopId, String activityId) {
+        List<Object> activeRecords = findActiveRecordsBySpu(shopProductId, shopId);
+        for (Object record : activeRecords) {
+            String currentActivityId = getActivityIdFromRecord(record);
+            if (!activityId.equals(currentActivityId)) {
+                return ItemProcessResult.fail("冲突：该商品已有 SKU 在活动[" + currentActivityId + "]中处于启用状态");
+            }
+        }
+        return ItemProcessResult.success();
+    }
+
+    /**
+     * SPU 维度逻辑：以基准 SKU 进行核算
+     */
+    protected ItemProcessResult handleSpuLevelActivity(String revisionId, String shopId, String activityId) {
         GoodsRevisionItem targetSku = getTargetSku(revisionId);
         if (targetSku == null)
-            return ItemProcessResult.fail("版本下无SKU明细");
+            return ItemProcessResult.fail("无 SKU 明细");
 
         Object config = matchConfig(targetSku);
         if (config == null)
             return ItemProcessResult.skip("标价不在配置区间内");
 
         Object activity = linkActivity(shopId, config, activityId);
-        if (activity == null)
-            return ItemProcessResult.fail("未找到关联活动");
+        Object existing = findExistingRecord(targetSku.getShopProductId(), null, shopId);
 
-        return saveResult(targetSku, activity, config);
+        return saveResult(targetSku, activity, config, existing);
     }
 
     /**
-     * SKU 维度核算逻辑 (单品直降专用)
+     * SKU 维度逻辑：遍历核算，不满足配置的设为 REMOVED
      */
-    private ItemProcessResult handleSkuLevelActivity(String revisionId, String shopId, String activityId) {
-        // 检索该版本下所有 SKU 明细
+    protected ItemProcessResult handleSkuLevelActivity(String revisionId, String shopId, String activityId) {
         List<GoodsRevisionItem> allSkus = itemService.listByRevisionId(revisionId);
-        if (allSkus == null || allSkus.isEmpty())
-            return ItemProcessResult.fail("版本下无SKU明细");
+        int successCount = 0;
 
-        int processedCount = 0;
         for (GoodsRevisionItem sku : allSkus) {
-            Object config = matchConfig(sku); // 匹配 price_reference 等配置
-            if (config != null) {
-                Object activity = linkActivity(shopId, config, activityId);
-                if (activity != null) {
-                    saveResult(sku, activity, config);
-                    processedCount++;
-                }
-            }
+            Object config = matchConfig(sku);
+            Object activity = linkActivity(shopId, config, activityId);
+            Object existing = findExistingRecord(sku.getShopProductId(), sku.getShopSkuId(), shopId);
+
+            // 即使 config 为 null，也要调用 saveResult 内部将其状态设为 REMOVED
+            saveResult(sku, activity, config, existing);
+            if (config != null)
+                successCount++;
         }
 
-        return processedCount > 0
-                ? ItemProcessResult.success()
-                : ItemProcessResult.skip("该商品所有SKU标价均无法匹配优惠配置");
+        return successCount > 0 ? ItemProcessResult.success() : ItemProcessResult.skip("所有 SKU 均不符合配置");
     }
 
-    // ==================== 默认节点实现（子类可重写） ====================
+    // ==================== 抽象节点 ====================
+
+    protected abstract boolean isSkuLevelActivity();
+
+    protected abstract Object matchConfig(GoodsRevisionItem sku);
+
+    protected abstract Object linkActivity(String shopId, Object config, String activityId);
+
+    /** 查找 SPU 下所有 ACTIVE 状态的记录 */
+    protected abstract List<Object> findActiveRecordsBySpu(String shopProductId, String shopId);
+
+    /** 查找特定唯一键的记录 (用于更新) */
+    protected abstract Object findExistingRecord(String shopProductId, String shopSkuId, String shopId);
+
+    protected abstract String getActivityIdFromRecord(Object record);
 
     /**
-     * 根据商品ID定位 Goods 实体
+     * 保存结果
+     * 
+     * @param config 若为 null，子类应在实现中将 status 设为 REMOVED
      */
-    protected Goods getGoods(String productId, String shopId) {
-        // shopId 暂时不使用。
-        return goodsService.getLatestByShopProductId(productId);
-    }
+    protected abstract ItemProcessResult saveResult(GoodsRevisionItem sku, Object activity, Object config,
+            Object existingRecord);
 
-    /**
-     * 获取最新版本 ID
-     */
+    // ==================== 工具方法 ====================
+
     protected String getRevisionId(String goodsId) {
-        // 使用标准的 lambdaQuery() 方法
         GoodsRevision revision = revisionService.lambdaQuery()
                 .eq(GoodsRevision::getGoodsId, goodsId)
-                .orderByDesc(GoodsRevision::getGmtCreate)
-                .last("LIMIT 1")
-                .one();
+                .orderByDesc(GoodsRevision::getGmtCreate).last("LIMIT 1").one();
         return revision != null ? revision.getRevisionId() : null;
     }
 
-    /**
-     * 默认寻找标价最低的 SKU 节点
-     */
     protected GoodsRevisionItem getTargetSku(String revisionId) {
         List<GoodsRevisionItem> items = itemService.listByRevisionId(revisionId);
-        if (items == null || items.isEmpty()) {
-            return null;
-        }
-        // 按标价升序排列，取第一个
-        return items.stream()
-                .min(Comparator.comparing(GoodsRevisionItem::getMarketPrice))
-                .orElse(null);
+        return items == null ? null
+                : items.stream().min(Comparator.comparing(GoodsRevisionItem::getMarketPrice)).orElse(null);
     }
-
-    // ==================== 必须实现的差异化节点 ====================
-    /**
-     * 区分核算维度的钩子，子类若是单品直降则返回 true
-     */
-    protected boolean isSkuLevelActivity() {
-        return false;
-    }
-
-    /**
-     * 节点：匹配配置（如 platform_promotion_config）
-     */
-    protected abstract Object matchConfig(GoodsRevisionItem sku);
-
-    /**
-     * 节点：关联活动实例（如 platform_promotion_activity）
-     */
-    protected abstract Object linkActivity(String shopId, Object config, String activityId);
-
-    /**
-     * 节点：持久化结果到活动商品表
-     */
-    protected abstract ItemProcessResult saveResult(GoodsRevisionItem sku, Object activity, Object config);
 }

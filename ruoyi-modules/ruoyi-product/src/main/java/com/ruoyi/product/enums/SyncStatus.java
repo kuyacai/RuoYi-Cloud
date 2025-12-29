@@ -2,24 +2,27 @@ package com.ruoyi.product.enums;
 
 import com.baomidou.mybatisplus.annotation.IEnum;
 import com.fasterxml.jackson.annotation.JsonFormat;
-/**
- * 优惠状态
- */
 import com.ruoyi.common.core.enums.BaseEnum;
 import com.ruoyi.common.core.enums.ExposeEnum;
 
-@ExposeEnum(group = "product", description = "优惠活动状态")
+/**
+ * 某个活动下的商品的是否已同步到抖店等平台状态枚举。
+ * * 规范说明：
+ * 1. 采用语义化的英文字符串作为 Code，便于数据库直观排查。
+ * 2. 状态采用形容词形式（ACTIVE）而非过去分词（ACTIVATED）。
+ * 3. 实现 IEnum 接口是 MyBatis Plus 推荐的扫描方式
+ */
+@ExposeEnum(group = "product", description = "是否已同步到抖店状态") // 供 EnumScanner 扫描
 @JsonFormat(shape = JsonFormat.Shape.OBJECT)
-public enum DiscountStatus implements BaseEnum, IEnum<String> {
+public enum SyncStatus implements BaseEnum, IEnum<String> {
 
-    DRAFT("draft", "草稿"),
-    ACTIVE("active", "进行中"),
-    ENDED("ended", "已结束");
+    YES("yes", "已同步"),
+    NO("no", "未同步");
 
     private final String code;
     private final String label;
 
-    DiscountStatus(String code, String label) {
+    SyncStatus(String code, String label) {
         this.code = code;
         this.label = label;
     }
@@ -39,9 +42,9 @@ public enum DiscountStatus implements BaseEnum, IEnum<String> {
         return this.code; // MyBatis Plus 数据库存储值
     }
 
-    public static DiscountStatus of(String code) {
-        for (DiscountStatus e : values()) {
-            if (e.code.equals(code)) {
+    public static SyncStatus of(String code) {
+        for (SyncStatus e : values()) {
+            if (e.code.equalsIgnoreCase(code)) {
                 return e;
             }
         }

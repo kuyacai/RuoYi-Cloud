@@ -1,9 +1,18 @@
 package com.ruoyi.product.enums;
 
+import com.baomidou.mybatisplus.annotation.IEnum;
+import com.fasterxml.jackson.annotation.JsonFormat;
+import com.ruoyi.common.core.enums.BaseEnum;
+import com.ruoyi.common.core.enums.ExposeEnum;
+
 /**
- * 活动配置状态枚举
+ * 折扣配置状态枚举
+ * 例如new_user_gift_config、product_discount_config等表的config_status的值。
  */
-public enum ConfigStatus {
+
+@ExposeEnum(group = "product", description = "折扣配置状态") // 供 EnumScanner 扫描
+@JsonFormat(shape = JsonFormat.Shape.OBJECT)
+public enum ConfigStatus implements BaseEnum, IEnum<String> {
 
     ENABLE("enable", "启用"),
     DISABLED("disabled", "停用"),
@@ -17,12 +26,19 @@ public enum ConfigStatus {
         this.label = label;
     }
 
+    @Override
     public String getCode() {
         return code;
     }
 
+    @Override
     public String getLabel() {
-        return label;
+        return this.label;
+    }
+
+    @Override
+    public String getValue() {
+        return this.code;
     }
 
     public static ConfigStatus of(String code) {

@@ -10,13 +10,15 @@ import org.apache.rocketmq.spring.annotation.ConsumeMode;
 import org.apache.rocketmq.spring.annotation.MessageModel;
 import org.apache.rocketmq.spring.annotation.RocketMQMessageListener;
 import org.apache.rocketmq.spring.annotation.SelectorType;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 import com.ruoyi.product.constant.AsyncTaskCode;
 import com.ruoyi.product.constant.MQConstant;
 import com.ruoyi.product.domain.dto.ItemProcessResult;
 import com.ruoyi.product.domain.dto.SimpleProduct;
-import com.ruoyi.product.mq.consumer.base.AbstractImportConsumer;
+import com.ruoyi.product.mq.consumer.base.AbstractActivityDiscountConsumer;
+import com.ruoyi.product.service.IActivityDiscountService;
 import com.ruoyi.product.utils.EnhancedExcelUtil;
 
 import lombok.extern.slf4j.Slf4j;
@@ -63,15 +65,19 @@ import lombok.extern.slf4j.Slf4j;
 )
 @Slf4j
 // @formatter:on
-public class SingleDiscountTaskConsumer extends AbstractImportConsumer<SimpleProduct> {
+public class SingleDiscountTaskConsumer extends AbstractActivityDiscountConsumer<SimpleProduct> {
+
+    @Autowired
+    private IActivityDiscountService activityDiscountService;
 
     /**
      * 实现重复数据过滤逻辑
-     * 根据 商品ID + SKU ID 进行去重
+     * 根据 商品ID 进行去重
+     * 尽管单品直降是针对sku级别，但是在后续处理的时候，会根据product id 获取该spu的所有sku，并处理。
      */
     @Override
     protected String getUniqueKey(SimpleProduct sp) {
-        return sp.getProductId() + "_" + sp.getSkuId();
+        return sp.getProductId();
     }
 
     @Override
@@ -83,9 +89,16 @@ public class SingleDiscountTaskConsumer extends AbstractImportConsumer<SimplePro
     }
 
     @Override
-    protected ItemProcessResult processSingleItem(SimpleProduct price, String shopId) {
-        // TODO 待实现
-        return ItemProcessResult.success();
+    protected ItemProcessResult processSingleItem(SimpleProduct item, String shopId) {
+        String activityId = getActivityId();
+
+        // 调用通用 Service，传入活动类型 SINGLE_DISCOUNT
+        // Service 会根据此类型定位到 SINGLE_DISCOUNT_HANDLER 执行线性核算
+        return activityDiscountService.processActivityDiscount(
+                item.getProductId(),
+                shopId,
+                activityId,
+                getActivityType());
     }
 
     @Override
@@ -95,4 +108,20 @@ public class SingleDiscountTaskConsumer extends AbstractImportConsumer<SimplePro
         log.info(msg);
         return msg;
     }
+
+    @Override
+    protected String getActivityType() {
+        return "SINGLE_DISCOUNT";
+    }
+
+    @Override
+    protected IActivityDiscountService getDiscountService() {
+        return this.activityDiscountService;
+    }
+
+    @Override
+    protected String getProductIdFromDto(SimpleProduct item) {
+        return item.getProductId();
+    }
+
 }

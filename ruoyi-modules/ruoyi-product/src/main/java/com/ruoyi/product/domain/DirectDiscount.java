@@ -19,8 +19,7 @@ import lombok.ToString;
 @EqualsAndHashCode(callSuper = true)
 @ToString(callSuper = true)
 @TableName(value = "direct_discount", autoResultMap = true)
-public class DirectDiscount extends ProductBaseEntity
-{
+public class DirectDiscount extends ProductBaseEntity {
     private static final long serialVersionUID = 1L;
 
     @TableId(value = "id", type = IdType.INPUT)
@@ -37,5 +36,7 @@ public class DirectDiscount extends ProductBaseEntity
     private Integer discountRate;
 
     private Integer actualDiscountAmount;
+
+    private String configStatus;
 
 }

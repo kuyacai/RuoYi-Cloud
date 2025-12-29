@@ -7,6 +7,8 @@ import com.baomidou.mybatisplus.annotation.TableId;
 import com.baomidou.mybatisplus.annotation.TableName;
 import com.fasterxml.jackson.annotation.JsonFormat;
 import com.ruoyi.product.core.mybatisplus.ProductBaseEntity;
+import com.ruoyi.product.enums.ActivityProductStatus;
+import com.ruoyi.product.enums.SyncStatus;
 
 import lombok.Data;
 import lombok.EqualsAndHashCode;
@@ -32,11 +34,13 @@ public class NewUserGiftProduct extends ProductBaseEntity {
 
     private String shopProductId;
 
+    private String shopId;
+
     private Integer avgAmount;
 
     private Integer maxGiftAmount;
 
-    private String itemStatus;
+    private ActivityProductStatus itemStatus;
 
     @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")
     private Date addedTime;
@@ -44,7 +48,7 @@ public class NewUserGiftProduct extends ProductBaseEntity {
     @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")
     private Date removedTime;
 
-    private String platformSyncStatus;
+    private SyncStatus platformSyncStatus;
 
     private String platformErrorMsg;
 

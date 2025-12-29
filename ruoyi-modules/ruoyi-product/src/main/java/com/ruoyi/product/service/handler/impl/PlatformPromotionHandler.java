@@ -1,5 +1,8 @@
 package com.ruoyi.product.service.handler.impl;
 
+import java.util.List;
+import java.util.stream.Collectors;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
@@ -7,6 +10,7 @@ import com.ruoyi.product.domain.GoodsRevisionItem;
 import com.ruoyi.product.domain.PlatformPromotionActivity;
 import com.ruoyi.product.domain.PlatformPromotionProduct;
 import com.ruoyi.product.domain.dto.ItemProcessResult;
+import com.ruoyi.product.enums.ActivityProductStatus;
 import com.ruoyi.product.service.IPlatformPromotionActivityService;
 import com.ruoyi.product.service.IPlatformPromotionConfigService;
 import com.ruoyi.product.service.IPlatformPromotionProductService;
@@ -16,11 +20,16 @@ import com.ruoyi.product.service.handler.AbstractActivityHandler;
 public class PlatformPromotionHandler extends AbstractActivityHandler {
 
     @Autowired
-    private IPlatformPromotionProductService resultService;
+    private IPlatformPromotionProductService productService;
     @Autowired
     private IPlatformPromotionActivityService activityService;
     @Autowired
     private IPlatformPromotionConfigService configService;
+
+    @Override
+    protected boolean isSkuLevelActivity() {
+        return false;
+    }
 
     @Override
     protected Object matchConfig(GoodsRevisionItem sku) {
@@ -33,14 +42,45 @@ public class PlatformPromotionHandler extends AbstractActivityHandler {
     }
 
     @Override
-    protected ItemProcessResult saveResult(GoodsRevisionItem sku, Object activity, Object config) {
-        PlatformPromotionActivity act = (PlatformPromotionActivity) activity;
+    protected List<Object> findActiveRecordsBySpu(String shopProductId, String shopId) {
+        return productService.lambdaQuery()
+                .eq(PlatformPromotionProduct::getShopProductId, shopProductId)
+                .eq(PlatformPromotionProduct::getShopId, shopId)
+                .eq(PlatformPromotionProduct::getItemStatus, ActivityProductStatus.ACTIVE)
+                .list().stream().map(e -> (Object) e).collect(Collectors.toList());
+    }
 
-        PlatformPromotionProduct res = new PlatformPromotionProduct();
-        // res.setGoodsId(sku.getGoodsId());
-        // res.setActivityId(act.getId());
-        // res.setConfigId(((PlatformPromotionConfig) config).getId());
+    @Override
+    protected Object findExistingRecord(String shopProductId, String shopSkuId, String shopId) {
+        return productService.lambdaQuery()
+                .eq(PlatformPromotionProduct::getShopProductId, shopProductId)
+                .eq(PlatformPromotionProduct::getShopId, shopId)
+                .one();
+    }
 
-        return resultService.save(res) ? ItemProcessResult.success() : ItemProcessResult.fail("平台促销结果保存失败");
+    @Override
+    protected String getActivityIdFromRecord(Object record) {
+        return ((PlatformPromotionProduct) record).getActivityId();
+    }
+
+    @Override
+    protected ItemProcessResult saveResult(GoodsRevisionItem sku, Object activity, Object config,
+            Object existingRecord) {
+        PlatformPromotionProduct res = (existingRecord != null)
+                ? (PlatformPromotionProduct) existingRecord
+                : new PlatformPromotionProduct();
+
+        res.setShopProductId(sku.getShopProductId());
+        res.setShopId(sku.getShopId());
+        res.setActivityId(((PlatformPromotionActivity) activity).getActivityId());
+
+        if (config != null) {
+            res.setItemStatus(ActivityProductStatus.ACTIVE);
+            // 这里根据实际 PlatformPromotionProduct 字段填充金额或配置ID
+        } else {
+            res.setItemStatus(ActivityProductStatus.REMOVED);
+        }
+
+        return productService.saveOrUpdate(res) ? ItemProcessResult.success() : ItemProcessResult.fail("保存失败");
     }
 }
