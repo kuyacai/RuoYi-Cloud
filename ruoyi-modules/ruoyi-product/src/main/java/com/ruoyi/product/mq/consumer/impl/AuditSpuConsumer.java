@@ -14,11 +14,11 @@ import org.springframework.transaction.annotation.Transactional;
 import com.ruoyi.common.core.utils.DateUtils;
 import com.ruoyi.common.core.utils.StringUtils;
 import com.ruoyi.product.constant.AsyncTaskCode;
-import com.ruoyi.product.constant.AsyncTaskStatus;
 import com.ruoyi.product.constant.MQConstant;
 import com.ruoyi.product.constant.RevStatus;
 import com.ruoyi.product.domain.AsyncTask;
 import com.ruoyi.product.domain.GoodsRevision;
+import com.ruoyi.product.enums.AsyncTaskStatus;
 import com.ruoyi.product.mq.dto.AsyncTaskMsg;
 import com.ruoyi.product.service.IAsyncTaskService;
 import com.ruoyi.product.service.IGoodsRevisionService;
@@ -171,7 +171,7 @@ public class AuditSpuConsumer implements RocketMQListener<AsyncTaskMsg> {
         }
 
         // 4. 更新异步任务状态为完成
-        task.setTaskStatus(AsyncTaskStatus.DONE.getCode());
+        task.setTaskStatus(AsyncTaskStatus.DONE);
         task.setFinishTime(DateUtils.getNowDate());
 
         boolean taskUpdated = asyncTaskService.updateById(task);

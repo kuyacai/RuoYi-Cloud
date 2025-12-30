@@ -15,8 +15,7 @@ import lombok.NoArgsConstructor;
 @Builder
 @NoArgsConstructor // 必须：给 ExcelUtil 反射创建实例用
 @AllArgsConstructor // 建议：在使用 @Builder 时必须配合全参构造
-// TODO 参数值临时设置
-@ExcelBusiness(value = "业务表示", exportName = "数据导出", templateName = "导入模板")
+@ExcelBusiness(value = "simple_product", exportName = "简单导入导出", templateName = "简单导入导出")
 public class SimpleProduct implements Serializable {
 
     private static final long serialVersionUID = 1L;
@@ -24,10 +23,10 @@ public class SimpleProduct implements Serializable {
     @Excel(name = "商品ID", type = Type.ALL)
     private String productId;
 
-    @Excel(name = "商品标题", type = Type.IMPORT)
+    @Excel(name = "商品标题", type = Type.ALL)
     private String title;
 
-    @Excel(name = "SKUID", type = Type.IMPORT)
+    @Excel(name = "SKUID", type = Type.ALL)
     private String skuId;
 
 }

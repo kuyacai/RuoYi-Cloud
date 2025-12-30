@@ -10,16 +10,20 @@ import java.net.HttpURLConnection;
 import java.net.SocketTimeoutException;
 import java.net.URL;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
 import org.apache.rocketmq.spring.core.RocketMQListener;
 import org.springframework.beans.factory.annotation.Autowired;
 
+import com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper;
 import com.ruoyi.common.core.utils.StringUtils;
-import com.ruoyi.product.constant.AsyncTaskStatus;
 import com.ruoyi.product.domain.AsyncTask;
+import com.ruoyi.product.domain.dto.DuplicateRecord;
+import com.ruoyi.product.domain.dto.DuplicateResult;
 import com.ruoyi.product.domain.dto.ItemProcessResult;
+import com.ruoyi.product.enums.AsyncTaskStatus;
 import com.ruoyi.product.exception.TaskCancelException;
 import com.ruoyi.product.mq.dto.AsyncTaskMsg;
 import com.ruoyi.product.service.IAsyncTaskService;
@@ -63,7 +67,7 @@ public abstract class AbstractImportConsumer<T> implements RocketMQListener<Asyn
             // 这里可以根据业务决定：
             // 1. 抛出异常让 MQ 重试（慎用，会阻塞顺序队列）
             // 2. 捕获并 finish 任务，返回成功（推荐用于文件导入场景）
-            asyncTaskService.finish(msg.getTaskId(), null, AsyncTaskStatus.DONE.getCode());
+            asyncTaskService.finish(msg.getTaskId(), null, AsyncTaskStatus.DONE);
         }
     }
 
@@ -78,20 +82,27 @@ public abstract class AbstractImportConsumer<T> implements RocketMQListener<Asyn
     /**
      * 过滤重复数据
      */
-    private List<T> filterDuplicateItems(List<T> itemList) {
-        List<T> filteredList = new ArrayList<>();
-        java.util.Set<String> seenKeys = new java.util.HashSet<>();
+    protected DuplicateResult<T> separateDuplicateItems(List<T> itemList) {
+        List<T> validItems = new ArrayList<>();
+        List<DuplicateRecord<T>> duplicateRecords = new ArrayList<>();
+        Map<String, Integer> keyCountMap = new HashMap<>();
 
         for (T item : itemList) {
             String key = getUniqueKey(item);
-            // 如果子类没实现去重逻辑，或者 key 还没出现过
-            if (key == null || seenKeys.add(key)) {
-                filteredList.add(item);
+            if (key == null) {
+                validItems.add(item);
             } else {
-                log.debug("发现重复数据，已过滤: key={}", key);
+                keyCountMap.put(key, keyCountMap.getOrDefault(key, 0) + 1);
+                // 如果是第一次出现，加入有效列表；否则加入重复列表
+                if (keyCountMap.get(key) == 1) {
+                    validItems.add(item);
+                } else {
+                    duplicateRecords.add(new DuplicateRecord<>(item, key));
+                }
             }
         }
-        return filteredList;
+
+        return new DuplicateResult<>(validItems, duplicateRecords);
     }
 
     /**
@@ -126,32 +137,52 @@ public abstract class AbstractImportConsumer<T> implements RocketMQListener<Asyn
             tempFile = downloadToTemp(fileUrl);
             if (tempFile == null) {
                 log.error("获取文件失败。fileUrl:{}", fileUrl);
-                // task.setTaskStatus(AsyncTaskStatus.DONE.getCode());
+                // task.setTaskStatus(AsyncTaskStatus.DONE);
                 // task.setFinishTime(DateUtils.getNowDate());
                 errorMessages.add("获取文件失败。fileUrl:" + fileUrl);
                 failFileUrl = ProductFileUtils.uploadFailFile(taskId, errorMessages);
                 task.setFailFileUrl(failFileUrl);
-                asyncTaskService.finish(taskId, failFileUrl, AsyncTaskStatus.DONE.getCode());
+                asyncTaskService.finish(taskId, failFileUrl, AsyncTaskStatus.DONE);
                 return;
             }
 
             // 3. 解析Excel文件（抽象方法，子类实现）
             log.debug("开始处理导入任务: taskId={}, file={}", taskId, tempFile.getAbsolutePath());
-            List<T> itemList = parseExcelFile(tempFile);
-            log.debug("解析到 {} 条数据", itemList.size());
+            List<T> rawItemList = parseExcelFile(tempFile);
+            log.debug("解析到 {} 条数据", rawItemList.size());
+            int totalRaw = rawItemList.size();
+
             // 过滤重复数据
-            itemList = filterDuplicateItems(itemList);
-            log.debug("去重后剩余 {} 条数据", itemList.size());
+            // 执行去重，返回两个列表：有效数据和重复数据
+            DuplicateResult<T> duplicateResult = separateDuplicateItems(rawItemList);
+            List<T> validItems = duplicateResult.getValidItems();
+            List<DuplicateRecord<T>> duplicateItems = duplicateResult.getDuplicateRecords();
+
+            log.debug("去重后剩余 {} 条数据", validItems.size());
+            // 将重复记录添加到错误信息中
+            for (DuplicateRecord<T> dup : duplicateItems) {
+                errorMessages.add(formatDuplicateMessage(dup.getItem(), dup.getDuplicateKey()));
+            }
 
             // 更新任务为进行中，并设置总数
-            AsyncTask doingTask = new AsyncTask();
-            doingTask.setTaskId(taskId);
-            doingTask.setTaskStatus(AsyncTaskStatus.DOING.getCode());
-            doingTask.setTotal(itemList.size());
-            asyncTaskService.updateById(doingTask);
+            /**
+             * AsyncTask doingTask = new AsyncTask();
+             * doingTask.setTaskId(taskId);
+             * doingTask.setTaskStatus(AsyncTaskStatus.DOING);
+             * doingTask.setTotal(totalRaw);
+             * doingTask.setDuplicate(duplicateItems.size()); // 设置重复数量
+             * asyncTaskService.updateById(doingTask);
+             */
+
+            // 更新任务为进行中，并设置总数
+            asyncTaskService.update(new LambdaUpdateWrapper<AsyncTask>()
+                    .eq(AsyncTask::getTaskId, taskId)
+                    .set(AsyncTask::getTaskStatus, AsyncTaskStatus.DOING)
+                    .set(AsyncTask::getTotal, totalRaw)
+                    .set(AsyncTask::getDuplicate, duplicateItems.size()));
 
             // 4. 逐条处理数据
-            processItems(itemList, shopId, task, errorMessages);
+            processItems(validItems, shopId, task, errorMessages);
 
             // 5. 最终完成处理
 
@@ -160,12 +191,12 @@ public abstract class AbstractImportConsumer<T> implements RocketMQListener<Asyn
             }
 
             // 使用优化后的 finish 方法更新最终状态
-            asyncTaskService.finish(taskId, failFileUrl, AsyncTaskStatus.DONE.getCode());
+            asyncTaskService.finish(taskId, failFileUrl, AsyncTaskStatus.DONE);
 
             // 重新获取一次最新进度用于日志打印（可选）
             AsyncTask finalTask = asyncTaskService.getById(taskId);
             log.debug("导入任务完成: taskId={}, 总计={}, 成功={}, 跳过={}, 失败={}",
-                    taskId, itemList.size(), finalTask.getSuccess(), finalTask.getSkip(), finalTask.getFailure());
+                    taskId, validItems.size(), finalTask.getSuccess(), finalTask.getSkip(), finalTask.getFailure());
 
         } catch (TaskCancelException e) {
             log.warn("检测到任务已被手动取消，停止处理。taskId: {}", e.getTaskId());
@@ -173,10 +204,10 @@ public abstract class AbstractImportConsumer<T> implements RocketMQListener<Asyn
             // 这里可以执行一些特定的清理工作
         } catch (IOException e) {
             log.error("处理导入任务失败: taskId={}", taskId, e);
-            asyncTaskService.finish(taskId, null, AsyncTaskStatus.DONE.getCode());
+            asyncTaskService.finish(taskId, null, AsyncTaskStatus.DONE);
         } catch (Exception e) { // 建议捕获 Exception 保证健壮性
             log.error("处理导入任务过程中发生系统异常: taskId={}", taskId, e);
-            asyncTaskService.finish(taskId, null, AsyncTaskStatus.DONE.getCode()); //
+            asyncTaskService.finish(taskId, null, AsyncTaskStatus.DONE); //
         } finally {
             // 7. 清理临时文件
             if (tempFile != null && tempFile.exists()) {
@@ -200,10 +231,8 @@ public abstract class AbstractImportConsumer<T> implements RocketMQListener<Asyn
             // 1. 每处理一批数据前，检查任务是否被取消
             if (i % BATCH_UPDATE_SIZE == 0) {
                 AsyncTask currentStatus = asyncTaskService.getById(taskId);
-                // 假设 AsyncTaskStatus.CANCELLED 是您定义的取消状态码
-                // 检查状态是否为 CANCELLED (请确认你的常量类中有此状态)
                 if (currentStatus != null
-                        && AsyncTaskStatus.CANCELLED.getCode().equals(currentStatus.getTaskStatus())) {
+                        && AsyncTaskStatus.CANCELLED.equals(currentStatus.getTaskStatus())) {
                     throw new TaskCancelException(taskId); // 抛出异常直接中断整个循环
                 }
             }
@@ -419,5 +448,9 @@ public abstract class AbstractImportConsumer<T> implements RocketMQListener<Asyn
         }
 
         return cleaned;
+    }
+
+    protected String formatDuplicateMessage(T item, String duplicateKey) {
+        return String.format("重复数据: %s, 重复键: %s", item.toString(), duplicateKey);
     }
 }

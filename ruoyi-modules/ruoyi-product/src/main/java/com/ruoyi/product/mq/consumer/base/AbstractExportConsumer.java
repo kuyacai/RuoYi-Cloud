@@ -5,8 +5,8 @@ import java.util.List;
 import org.apache.rocketmq.spring.core.RocketMQListener;
 import org.springframework.beans.factory.annotation.Autowired;
 
-import com.ruoyi.product.constant.AsyncTaskStatus;
 import com.ruoyi.product.domain.AsyncTask;
+import com.ruoyi.product.enums.AsyncTaskStatus;
 import com.ruoyi.product.mq.dto.AsyncTaskMsg;
 import com.ruoyi.product.service.IAsyncTaskService;
 import com.ruoyi.product.service.excel.ExcelDataHandler;
@@ -49,12 +49,12 @@ public abstract class AbstractExportConsumer<T> implements RocketMQListener<Asyn
 
             // 4. 结束任务
             // 复用 finish 方法，将生成的 URL 填入 importedFileUrl 字段（导出场景即为结果链接）
-            asyncTaskService.finish(taskId, fileUrl, AsyncTaskStatus.DONE.getCode());
+            asyncTaskService.finish(taskId, fileUrl, AsyncTaskStatus.DONE);
             log.info("异步导出任务完成: {}", taskId);
 
         } catch (Exception e) {
             log.error("异步导出任务失败: {}", taskId, e);
-            asyncTaskService.finish(taskId, null, "failed"); // 扩展状态或记录错误
+            asyncTaskService.finish(taskId, null, AsyncTaskStatus.DONE); // 扩展状态或记录错误
         }
     }
 

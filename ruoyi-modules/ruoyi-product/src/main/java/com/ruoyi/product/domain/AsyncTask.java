@@ -1,18 +1,20 @@
 package com.ruoyi.product.domain;
 
 import java.util.Date;
-import java.util.HashMap;
+import java.util.Map;
 
+import com.baomidou.mybatisplus.annotation.IdType;
+import com.baomidou.mybatisplus.annotation.TableField;
+import com.baomidou.mybatisplus.annotation.TableId;
+import com.baomidou.mybatisplus.annotation.TableName;
 import com.fasterxml.jackson.annotation.JsonFormat;
+import com.ruoyi.common.core.mybatis.FastjsonMapTypeHandler; // 之前写的转换器
 import com.ruoyi.product.core.mybatisplus.ProductBaseEntity;
+import com.ruoyi.product.enums.AsyncTaskStatus;
 
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.ToString;
-
-import com.baomidou.mybatisplus.annotation.*;
-import com.ruoyi.common.core.mybatis.FastjsonMapTypeHandler; // 之前写的转换器
-import java.util.Map;
 
 /**
  * 异步任务对象 async_task
@@ -33,7 +35,7 @@ public class AsyncTask extends ProductBaseEntity {
     private String taskId;
 
     /** 任务编码 */
-    
+
     private String taskCode;
 
     /** 任务名称 */
@@ -50,7 +52,8 @@ public class AsyncTask extends ProductBaseEntity {
 
     /** 总数 */
     private Integer total;
-
+    /** 重复数 */
+    private Integer duplicate;
     /** 成功数 */
     private Integer success;
 
@@ -67,13 +70,13 @@ public class AsyncTask extends ProductBaseEntity {
     private String exportedFileUrl;
 
     /** 任务状态 */
-    private String taskStatus;
+    private AsyncTaskStatus taskStatus;
 
     /** 完成时间 */
     @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")
     private Date finishTime;
 
     @TableField(typeHandler = FastjsonMapTypeHandler.class)
-    private Map<String, Object> paramsMap=new HashMap<>();;
+    private Map<String, Object> paramsMap;
 
 }

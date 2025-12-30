@@ -475,6 +475,7 @@ CREATE TABLE IF NOT EXISTS `async_task` (
   `shop_id`             varchar(255) DEFAULT NULL COMMENT '店铺ID',
   `imported_file_url`   TEXT         DEFAULT NULL COMMENT '导入文件链接',
   `total`               int          DEFAULT 0 COMMENT '总数',
+  `duplicate`           int          DEFAULT 0 COMMENT '重复数',
   `success`             int          DEFAULT 0 COMMENT '成功数',
   `skip`                int          DEFAULT 0 COMMENT '跳过数',
   `failure`             int          DEFAULT 0 COMMENT '失败数',

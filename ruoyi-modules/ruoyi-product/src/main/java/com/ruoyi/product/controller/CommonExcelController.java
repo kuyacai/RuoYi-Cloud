@@ -1,6 +1,5 @@
 package com.ruoyi.product.controller;
 
-import java.io.IOException;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -34,14 +33,13 @@ import com.ruoyi.product.service.excel.ExcelDataHandler;
 import com.ruoyi.product.utils.EnhancedExcelUtil;
 import com.ruoyi.system.api.domain.SysFile;
 
-import jakarta.servlet.ServletOutputStream;
 import jakarta.servlet.http.HttpServletResponse;
 
 /**
  * 数据导入控制器
  */
 @RestController
-@RequestMapping("/import")
+@RequestMapping("/excel")
 public class CommonExcelController extends BaseController {
 
     @Autowired
@@ -86,6 +84,7 @@ public class CommonExcelController extends BaseController {
     @PostMapping("/sku")
     public AjaxResult importSku(@RequestParam("file") MultipartFile file,
             @RequestParam(value = "shopId", required = false) String shopId) {
+        logger.debug("shopId is {}", shopId);
         return createImportTask(file, shopId, null, AsyncTaskCode.SKU_IMPORT);
     }
 
@@ -181,75 +180,76 @@ public class CommonExcelController extends BaseController {
 
     /**
      * 下载SPU模板
-     */
-    @GetMapping("/template/spu")
-    public void downloadSpuTemplate(HttpServletResponse response) {
-        downloadTemplate(response, "spu", "spu_template.xlsx");
-    }
-
-    /**
-     * 下载SKU模板
-     */
-    @GetMapping("/template/sku")
-    public void downloadSkuTemplate(HttpServletResponse response) {
-        downloadTemplate(response, "sku", "sku_template.xlsx");
-    }
-
-    private void downloadTemplate(HttpServletResponse response, String templateType, String templateName) {
-        try {
-            byte[] data = importService.getTemplate(templateType);
-
-            // 设置响应头
-            setExcelResponseHeader(response, templateName);
-
-            // 输出文件流
-            ServletOutputStream outputStream = response.getOutputStream();
-            outputStream.write(data);
-            outputStream.flush();
-            outputStream.close();
-
-        } catch (Exception e) {
-            logger.error(templateName, e);
-            setErrorResponse(response, "下载模板失败: " + e.getMessage());
-        }
-    }
-
-    /**
+     * 
+     * @GetMapping("/template/spu")
+     * public void downloadSpuTemplate(HttpServletResponse response) {
+     * downloadTemplate(response, "spu", "spu_template.xlsx");
+     * }
+     * 
+     * 
+     * @GetMapping("/template/sku")
+     * public void downloadSkuTemplate(HttpServletResponse response) {
+     * downloadTemplate(response, "sku", "sku_template.xlsx");
+     * }
+     * 
+     * private void downloadTemplate(HttpServletResponse response, String
+     * templateType, String templateName) {
+     * try {
+     * byte[] data = importService.getTemplate(templateType);
+     * 
+     * // 设置响应头
+     * setExcelResponseHeader(response, templateName);
+     * 
+     * // 输出文件流
+     * ServletOutputStream outputStream = response.getOutputStream();
+     * outputStream.write(data);
+     * outputStream.flush();
+     * outputStream.close();
+     * 
+     * } catch (Exception e) {
+     * logger.error(templateName, e);
+     * setErrorResponse(response, "下载模板失败: " + e.getMessage());
+     * }
+     * }
+     * 
+     * /**
      * 通用的Excel响应头设置
-     */
-    private void setExcelResponseHeader(HttpServletResponse response, String filename) {
-        response.reset();
-        response.setContentType("application/vnd.openxmlformats-officedocument.spreadsheetml.sheet");
-        response.setCharacterEncoding("utf-8");
-
-        // 处理中文文件名
-        String encodedFilename;
-        try {
-            encodedFilename = new String(filename.getBytes("UTF-8"), "ISO-8859-1");
-        } catch (Exception e) {
-            encodedFilename = filename;
-        }
-
-        response.setHeader("Content-Disposition",
-                "attachment;filename=" + encodedFilename);
-        response.setHeader("Pragma", "no-cache");
-        response.setHeader("Cache-Control", "no-cache");
-    }
-
-    /**
+     * 
+     * private void setExcelResponseHeader(HttpServletResponse response, String
+     * filename) {
+     * response.reset();
+     * response.setContentType("application/vnd.openxmlformats-officedocument.spreadsheetml.sheet");
+     * response.setCharacterEncoding("utf-8");
+     * 
+     * // 处理中文文件名
+     * String encodedFilename;
+     * try {
+     * encodedFilename = new String(filename.getBytes("UTF-8"), "ISO-8859-1");
+     * } catch (Exception e) {
+     * encodedFilename = filename;
+     * }
+     * 
+     * response.setHeader("Content-Disposition",
+     * "attachment;filename=" + encodedFilename);
+     * response.setHeader("Pragma", "no-cache");
+     * response.setHeader("Cache-Control", "no-cache");
+     * }
+     * 
+     * /**
      * 设置错误响应
+     * 
+     * private void setErrorResponse(HttpServletResponse response, String
+     * errorMessage) {
+     * try {
+     * response.reset();
+     * response.setContentType("application/json");
+     * response.setCharacterEncoding("utf-8");
+     * response.getWriter().write("{\"error\": \"" + errorMessage + "\"}");
+     * } catch (IOException e) {
+     * logger.error("设置错误响应失败", e);
+     * }
+     * }
      */
-    private void setErrorResponse(HttpServletResponse response, String errorMessage) {
-        try {
-            response.reset();
-            response.setContentType("application/json");
-            response.setCharacterEncoding("utf-8");
-            response.getWriter().write("{\"error\": \"" + errorMessage + "\"}");
-        } catch (IOException e) {
-            logger.error("设置错误响应失败", e);
-        }
-    }
-
     /**
      * 检查导入状态
      */
@@ -283,17 +283,47 @@ public class CommonExcelController extends BaseController {
      * 通用模板下载
      * URL 示例: /excel/common/template/product
      */
-    @GetMapping("/template/{businessKey}")
+    @PostMapping("/template/{businessKey}")
     public void downloadTemplate(@PathVariable String businessKey, HttpServletResponse response) {
+        logger.debug("downloadTemplate:{}", businessKey);
         Class<?> clazz = registry.getDtoClass(businessKey);
         if (clazz == null) {
+            logger.debug("Cannot find the class by the key:{}", businessKey);
             throw new ServiceException("未找到对应的业务导出配置：" + businessKey);
         }
+        logger.debug("Get the class :", clazz.getSimpleName());
 
         ExcelBusiness meta = clazz.getAnnotation(ExcelBusiness.class);
+        if (meta == null) {
+            logger.error("Class {} 没有 @ExcelBusiness 注解", clazz.getName());
+            throw new ServiceException("业务配置错误：缺少@ExcelBusiness注解");
+        }
+        logger.debug("Template name from annotation: {}", meta.templateName());
         EnhancedExcelUtil<?> util = new EnhancedExcelUtil<>(clazz);
-        // 使用注解中定义的模板名
-        util.importTemplateExcel(response, meta.templateName());
+        try {
+            // 添加响应头设置的日志
+            logger.debug("Setting response headers...");
+            logger.debug("Content-Type: {}", response.getContentType());
+            logger.debug("CharacterEncoding: {}", response.getCharacterEncoding());
+
+            // 使用注解中定义的模板名
+            util.importTemplateExcel(response, meta.templateName());
+            // List list = new ArrayList();
+            // util.exportExcel(response, list, "用户数据");
+
+            // List<SysUser> list = new ArrayList<>();
+            // ExcelUtil<SysUser> util = new ExcelUtil<SysUser>(SysUser.class);
+            // util.exportExcel(response, list, "用户数据");
+
+            // 检查输出流状态
+            logger.debug("Excel写入完成");
+            logger.debug("Response output stream: {}", response.getOutputStream());
+            logger.debug("Response committed: {}", response.isCommitted());
+
+        } catch (Exception e) {
+            logger.error("生成Excel模板失败", e);
+            throw new ServiceException("生成模板失败：" + e.getMessage());
+        }
     }
 
     @PostMapping("/export/{businessKey}")
