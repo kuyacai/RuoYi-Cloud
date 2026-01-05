@@ -17,5 +17,5 @@ public interface INewUserGiftConfigService extends IBaseService<NewUserGiftConfi
      * 
      * @return 符合条件的配置对象，未匹配到返回 null
      */
-    NewUserGiftConfig matchConfigByPrice(Integer marketPrice);
+    NewUserGiftConfig matchConfigByPrice(Long marketPrice);
 }

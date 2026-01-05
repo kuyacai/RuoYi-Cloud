@@ -4,6 +4,7 @@ import com.baomidou.mybatisplus.annotation.IdType;
 import com.baomidou.mybatisplus.annotation.TableField;
 import com.baomidou.mybatisplus.annotation.TableId;
 import com.baomidou.mybatisplus.annotation.TableName;
+import com.ruoyi.common.core.annotation.Money;
 import com.ruoyi.product.core.mybatisplus.ProductBaseEntity;
 import com.ruoyi.product.enums.SkuStatus;
 
@@ -78,13 +79,14 @@ public class GoodsRevisionItem extends ProductBaseEntity {
     @TableField("ship_45d_qty")
     private Integer ship45dQty;
 
-    private Integer orignialPrice;
-
-    private Integer marketPrice;
-
-    private Integer lowestPrice;
-
-    private Integer highestPrice;
+    @Money
+    private Long orignialPrice;
+    @Money
+    private Long marketPrice;
+    @Money
+    private Long lowestPrice;
+    @Money
+    private Long highestPrice;
 
     private SkuStatus skuStatus;
 

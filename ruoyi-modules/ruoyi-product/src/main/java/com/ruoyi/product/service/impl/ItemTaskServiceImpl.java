@@ -54,7 +54,9 @@ public class ItemTaskServiceImpl extends BaseServiceImpl<ItemTaskMapper, ItemTas
         ItemTask existingTask = this.getByBizIdAndCode(itemTask.getBizId(), itemTask.getTaskCode().getCode());
 
         if (existingTask != null) {
-            throw new BusinessException("同一业务ID和任务类型的任务已存在");
+            // throw new BusinessException("同一业务ID和任务类型的任务已存在");
+            // 已经存在，直接返回。
+            return true;
         }
 
         // 3. 插入任务记录（MP 自动处理 ID 和时间填充）

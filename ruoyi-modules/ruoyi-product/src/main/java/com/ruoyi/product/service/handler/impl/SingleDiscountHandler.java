@@ -127,7 +127,7 @@ public class SingleDiscountHandler extends AbstractActivityHandler {
             product.setDeductionAmount(ref.getActualDiscountAmount());
             product.setItemStatus(ActivityProductStatus.ACTIVE);
         } else {
-            product.setDeductionAmount(0); // 不符合配置，优惠清零
+            product.setDeductionAmount(0L); // 不符合配置，优惠清零
             product.setItemStatus(ActivityProductStatus.REMOVED);
         }
 

@@ -20,7 +20,7 @@ public class PlatformPromotionConfigServiceImpl
         extends BaseServiceImpl<PlatformPromotionConfigMapper, PlatformPromotionConfig>
         implements IPlatformPromotionConfigService {
     @Override
-    public PlatformPromotionConfig matchConfigByPrice(Integer markedPrice) {
+    public PlatformPromotionConfig matchConfigByPrice(Long markedPrice) {
         if (markedPrice == null)
             return null;
         return this.getOne(new LambdaQueryWrapper<PlatformPromotionConfig>()

@@ -20,7 +20,7 @@ public class NewUserGiftConfigServiceImpl extends BaseServiceImpl<NewUserGiftCon
         implements INewUserGiftConfigService {
 
     @Override
-    public NewUserGiftConfig matchConfigByPrice(Integer marketPrice) {
+    public NewUserGiftConfig matchConfigByPrice(Long marketPrice) {
         if (marketPrice == null) {
             return null;
         }

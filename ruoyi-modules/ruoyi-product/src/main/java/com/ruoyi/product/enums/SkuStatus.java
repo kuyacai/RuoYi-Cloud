@@ -13,6 +13,7 @@ import com.ruoyi.common.core.enums.ExposeEnum;
 public enum SkuStatus implements BaseEnum, IEnum<String> {
 
     NOMAL("nomal", "可上架"),
+    ACTIVE("active", "已上架"),
     DELETED("deleted", "已删除"),
     INACTIVE("inactive", "不可上架");
 

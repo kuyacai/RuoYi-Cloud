@@ -13,5 +13,5 @@ public interface IPlatformPromotionConfigService extends IBaseService<PlatformPr
     /**
      * 根据标价匹配配置：priceMin <= price < priceMax
      */
-    PlatformPromotionConfig matchConfigByPrice(Integer markedPrice);
+    PlatformPromotionConfig matchConfigByPrice(Long markedPrice);
 }

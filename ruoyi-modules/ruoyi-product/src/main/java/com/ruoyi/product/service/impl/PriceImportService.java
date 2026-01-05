@@ -73,7 +73,7 @@ public class PriceImportService {
             // 4.逐条修改sku的价格
             String taskId = "";
             for (GoodsRevisionItem sku : skuList) {
-                int org_price = sku.getOrignialPrice();
+                long org_price = sku.getOrignialPrice();
                 PriceReference priceRef = priceReferenceService.getByOriginalPrice(org_price);
                 if (priceRef == null) {
                     transactionManager.rollback(status);

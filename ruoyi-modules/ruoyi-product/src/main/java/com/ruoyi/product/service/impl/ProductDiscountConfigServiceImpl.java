@@ -19,7 +19,7 @@ import com.ruoyi.product.service.IProductDiscountConfigService;
 public class ProductDiscountConfigServiceImpl extends
         BaseServiceImpl<ProductDiscountConfigMapper, ProductDiscountConfig> implements IProductDiscountConfigService {
     @Override
-    public ProductDiscountConfig matchConfigByPrice(Integer markedPrice) {
+    public ProductDiscountConfig matchConfigByPrice(Long markedPrice) {
         if (markedPrice == null)
             return null;
         return this.getOne(new LambdaQueryWrapper<ProductDiscountConfig>()

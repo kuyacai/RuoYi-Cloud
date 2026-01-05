@@ -20,7 +20,7 @@ public class RepurchaseCouponConfigServiceImpl
         extends BaseServiceImpl<RepurchaseCouponConfigMapper, RepurchaseCouponConfig>
         implements IRepurchaseCouponConfigService {
     @Override
-    public RepurchaseCouponConfig matchConfigByPrice(Integer markedPrice) {
+    public RepurchaseCouponConfig matchConfigByPrice(Long markedPrice) {
         if (markedPrice == null)
             return null;
         return this.getOne(new LambdaQueryWrapper<RepurchaseCouponConfig>()

@@ -16,5 +16,5 @@ public interface IPriceReferenceService extends IBaseService<PriceReference> {
      * 
      * @return 价格参考实体，不存在则返回 null
      */
-    PriceReference getByOriginalPrice(Integer originalPrice);
+    PriceReference getByOriginalPrice(Long originalPrice);
 }

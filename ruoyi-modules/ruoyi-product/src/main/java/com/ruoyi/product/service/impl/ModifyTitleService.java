@@ -64,14 +64,15 @@ public class ModifyTitleService {
             List<GoodsRevisionSpu> spuList = goodsRevisionSpuService.listNeedTitleUpdate(goods.getGoodsId());
             if (spuList == null || spuList.isEmpty()) {
                 transactionManager.rollback(status);
-                return ItemProcessResult.skip("找不到需要修改的的商品SKU信息。商品ID:" + pt.getProductId());
+                return ItemProcessResult.skip("找不到需要修改的的商品信息。商品ID:" + pt.getProductId());
             }
 
             // 4.逐条修改sku的价格
             String taskId = "";
             for (GoodsRevisionSpu spu : spuList) {
                 spu.setNewTitle(pt.getNewTitle());
-                spu.setGuideShortTitle(pt.getGuideShortTitle());
+                spu.setNewGuideShortTitle(pt.getGuideShortTitle());
+                // spu.setGuideShortTitle(pt.getGuideShortTitle());
                 spu.setSearchKeywords(pt.getSearchKeywords());
                 spu.setVideoScript(pt.getVideoScript());
 

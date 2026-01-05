@@ -13,5 +13,5 @@ public interface IProductDiscountConfigService extends IBaseService<ProductDisco
     /**
      * 根据标价匹配配置：priceMin <= price < priceMax
      */
-    ProductDiscountConfig matchConfigByPrice(Integer markedPrice);
+    ProductDiscountConfig matchConfigByPrice(Long markedPrice);
 }

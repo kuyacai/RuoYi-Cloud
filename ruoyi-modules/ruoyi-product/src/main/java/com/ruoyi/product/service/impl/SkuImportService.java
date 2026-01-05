@@ -8,7 +8,6 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.lang.reflect.Method;
-import java.math.BigDecimal;
 import java.nio.charset.Charset;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -306,16 +305,17 @@ public class SkuImportService {
         item.setShip35dQty(sku.getShip35dQty() == null ? 0 : sku.getShip35dQty());
         item.setShip45dQty(sku.getShip45dQty() == null ? 0 : sku.getShip45dQty());
 
-        // 金额转为“分"
-        item.setOrignialPrice(sku.getPrice() == null ? 0
-                : sku.getPrice().multiply(BigDecimal.valueOf(100)).intValue());
+        if (log.isDebugEnabled()) {
+            log.debug("MiaoShouSKU price is :{}", sku.getPrice());
+            log.debug("MiaoShouSKU lowestPrice is :{}", sku.getLowestPrice());
+            log.debug("MiaoShouSKU highestPrice is :{}", sku.getHighestPrice());
+        }
 
-        item.setLowestPrice(sku.getLowestPrice() == null ? 0
-                : sku.getLowestPrice().multiply(BigDecimal.valueOf(100)).intValue());
-
-        item.setHighestPrice(sku.getHighestPrice() == null ? 0
-                : sku.getHighestPrice().multiply(BigDecimal.valueOf(100)).intValue());
-
+        if (log.isDebugEnabled()) {
+            log.debug("GoodsRevisionItem price is :{}", item.getOrignialPrice());
+            log.debug("GoodsRevisionItem lowestPrice is :{}", item.getLowestPrice());
+            log.debug("GoodsRevisionItem highestPrice is :{}", item.getHighestPrice());
+        }
         item.setSkuStatus(SkuStatus.of(sku.getSkuStatus()));
 
         item.setBarcode(sku.getBarcode());

@@ -3,6 +3,8 @@ package com.ruoyi.product.domain;
 import com.baomidou.mybatisplus.annotation.IdType;
 import com.baomidou.mybatisplus.annotation.TableId;
 import com.baomidou.mybatisplus.annotation.TableName;
+import com.ruoyi.common.core.annotation.Money;
+import com.ruoyi.common.core.annotation.Rate;
 import com.ruoyi.product.core.mybatisplus.ProductBaseEntity;
 
 import lombok.Data;
@@ -25,16 +27,17 @@ public class PriceReference extends ProductBaseEntity {
     @TableId(value = "id", type = IdType.INPUT)
     private String id;
 
-    private Integer originalPrice;
-
+    @Money
+    private Long originalPrice;
+    @Rate(base = 10000)
     private Integer multiplier;
-
-    private Integer originalMarkedPrice;
-
-    private Integer effectiveMarkedPrice;
-
-    private Integer referenceShippingFee;
-
-    private Integer actualDiscountAmount;
+    @Money
+    private Long originalMarkedPrice;
+    @Money
+    private Long effectiveMarkedPrice;
+    @Money
+    private Long referenceShippingFee;
+    @Money
+    private Long actualDiscountAmount;
 
 }

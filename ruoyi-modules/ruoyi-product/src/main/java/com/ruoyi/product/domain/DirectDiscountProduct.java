@@ -6,6 +6,8 @@ import com.baomidou.mybatisplus.annotation.IdType;
 import com.baomidou.mybatisplus.annotation.TableId;
 import com.baomidou.mybatisplus.annotation.TableName;
 import com.fasterxml.jackson.annotation.JsonFormat;
+import com.ruoyi.common.core.annotation.Money;
+import com.ruoyi.common.core.annotation.Rate;
 import com.ruoyi.product.core.mybatisplus.ProductBaseEntity;
 import com.ruoyi.product.enums.ActivityProductStatus;
 import com.ruoyi.product.enums.SyncStatus;
@@ -41,8 +43,14 @@ public class DirectDiscountProduct extends ProductBaseEntity {
     private Integer fixedPrice;
     // 立减金额
     // TODO: 目前仅支持立减模式 (actualDiscountAmount)，后续需扩展“一口价”和“折扣率”核算逻辑。
-    private Integer deductionAmount;
-    // 折扣率
+    @Money
+    private Long deductionAmount;
+    /**
+     * 折扣率（存储万分位）
+     * 数据库存：7500 (代表 75% 或 7.5折)
+     * 前端展示：75.00 (通过 scale=2 保持两位小数)
+     */
+    @Rate(base = 10000, scale = 2)
     private Integer discountRate;
     // 默认限制2
     private Integer userLimit;

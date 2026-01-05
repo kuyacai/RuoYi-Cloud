@@ -13,5 +13,5 @@ public interface IRepurchaseCouponConfigService extends IBaseService<RepurchaseC
     /**
      * 根据标价匹配配置：priceMin <= price < priceMax
      */
-    RepurchaseCouponConfig matchConfigByPrice(Integer markedPrice);
+    RepurchaseCouponConfig matchConfigByPrice(Long markedPrice);
 }

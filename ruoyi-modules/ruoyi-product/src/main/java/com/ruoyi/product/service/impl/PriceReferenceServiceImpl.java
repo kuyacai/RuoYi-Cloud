@@ -2,10 +2,10 @@ package com.ruoyi.product.service.impl;
 
 import org.springframework.stereotype.Service;
 
-import com.ruoyi.product.mapper.PriceReferenceMapper;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.ruoyi.product.core.mybatisplus.impl.BaseServiceImpl;
 import com.ruoyi.product.domain.PriceReference;
+import com.ruoyi.product.mapper.PriceReferenceMapper;
 import com.ruoyi.product.service.IPriceReferenceService;
 
 /**
@@ -23,7 +23,7 @@ public class PriceReferenceServiceImpl extends BaseServiceImpl<PriceReferenceMap
      * 使用 getOne 确保返回单个对象
      */
     @Override
-    public PriceReference getByOriginalPrice(Integer originalPrice) {
+    public PriceReference getByOriginalPrice(Long originalPrice) {
         if (originalPrice == null) {
             return null;
         }
