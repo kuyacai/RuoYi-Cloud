@@ -17,6 +17,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.ruoyi.common.core.utils.StringUtils;
+import com.ruoyi.common.core.utils.uuid.UUID;
 import com.ruoyi.common.core.web.controller.BaseController;
 import com.ruoyi.common.core.web.domain.AjaxResult;
 import com.ruoyi.common.core.web.page.TableDataInfo;
@@ -92,6 +93,7 @@ public class DirectDiscountActivityController extends BaseController {
     @Log(title = "单品直降活动", businessType = BusinessType.INSERT)
     @PostMapping
     public AjaxResult add(@RequestBody DirectDiscountActivity directDiscountActivity) {
+        directDiscountActivity.setActivityId(UUID.fastUUID().toString(true));
         return toAjax(directDiscountActivityService.save(directDiscountActivity));
     }
 

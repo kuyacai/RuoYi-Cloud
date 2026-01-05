@@ -38,11 +38,6 @@ import com.ruoyi.common.core.utils.file.FileUtils;
 import com.ruoyi.common.core.utils.poi.ExcelUtil;
 import com.ruoyi.common.core.utils.uuid.UUID;
 import com.ruoyi.common.core.web.domain.AjaxResult;
-import com.ruoyi.product.constant.ImageType;
-import com.ruoyi.product.constant.ItemTaskCode;
-import com.ruoyi.product.constant.ItemTaskStatus;
-import com.ruoyi.product.constant.RevStatus;
-import com.ruoyi.product.constant.RevisionType;
 import com.ruoyi.product.domain.Goods;
 import com.ruoyi.product.domain.GoodsRevision;
 import com.ruoyi.product.domain.GoodsRevisionImage;
@@ -50,6 +45,12 @@ import com.ruoyi.product.domain.GoodsRevisionItem;
 import com.ruoyi.product.domain.ItemTask;
 import com.ruoyi.product.domain.dto.ItemProcessResult;
 import com.ruoyi.product.domain.dto.MiaoShouSKU;
+import com.ruoyi.product.enums.ImageType;
+import com.ruoyi.product.enums.ItemTaskCode;
+import com.ruoyi.product.enums.ItemTaskStatus;
+import com.ruoyi.product.enums.RevStatus;
+import com.ruoyi.product.enums.RevisionType;
+import com.ruoyi.product.enums.SkuStatus;
 import com.ruoyi.product.service.IGoodsRevisionImageService;
 import com.ruoyi.product.service.IGoodsRevisionItemService;
 import com.ruoyi.product.service.IGoodsRevisionService;
@@ -128,8 +129,8 @@ public class SkuImportService {
             insertSkuAndImages(sku, goods, editingRev, shopId);
 
             /* 6. 写任务 */
-            ItemTask task = buildItemTask(ItemTaskCode.EDIT_SPEC.getCode(),
-                    editingRev.getRevisionId(), ItemTaskStatus.PENDING.getCode());
+            ItemTask task = buildItemTask(ItemTaskCode.EDIT_SPEC,
+                    editingRev.getRevisionId(), ItemTaskStatus.PENDING);
             itemTaskService.insertItemTask(task);
 
             transactionManager.commit(status);
@@ -215,41 +216,41 @@ public class SkuImportService {
 
         // 2. 图片去重后写入
         saveImageIfAbsent(goodsRev.getRevisionId(), goods.getGoodsId(), sku.getMainImage1(),
-                ImageType.MAIN, 1);
+                ImageType.MAIN, 1, null);
         saveImageIfAbsent(goodsRev.getRevisionId(), goods.getGoodsId(), sku.getMainImage2(),
-                ImageType.MAIN, 2);
+                ImageType.MAIN, 2, null);
         saveImageIfAbsent(goodsRev.getRevisionId(), goods.getGoodsId(), sku.getMainImage3(),
-                ImageType.MAIN, 3);
+                ImageType.MAIN, 3, null);
         saveImageIfAbsent(goodsRev.getRevisionId(), goods.getGoodsId(), sku.getMainImage4(),
-                ImageType.MAIN, 4);
+                ImageType.MAIN, 4, null);
         saveImageIfAbsent(goodsRev.getRevisionId(), goods.getGoodsId(), sku.getMainImage5(),
-                ImageType.MAIN, 5);
+                ImageType.MAIN, 5, null);
 
         saveImageIfAbsent(goodsRev.getRevisionId(), goods.getGoodsId(), sku.getMainImage341(),
-                ImageType.MAIN34, 1);
+                ImageType.MAIN34, 1, null);
         saveImageIfAbsent(goodsRev.getRevisionId(), goods.getGoodsId(), sku.getMainImage342(),
-                ImageType.MAIN34, 2);
+                ImageType.MAIN34, 2, null);
         saveImageIfAbsent(goodsRev.getRevisionId(), goods.getGoodsId(), sku.getMainImage343(),
-                ImageType.MAIN34, 3);
+                ImageType.MAIN34, 3, null);
         saveImageIfAbsent(goodsRev.getRevisionId(), goods.getGoodsId(), sku.getMainImage344(),
-                ImageType.MAIN34, 4);
+                ImageType.MAIN34, 4, null);
         saveImageIfAbsent(goodsRev.getRevisionId(), goods.getGoodsId(), sku.getMainImage345(),
-                ImageType.MAIN34, 5);
+                ImageType.MAIN34, 5, null);
 
         saveImageIfAbsent(goodsRev.getRevisionId(), goods.getGoodsId(), sku.getSpecImage(),
-                ImageType.SPEC, 1);
+                ImageType.SPEC, 1, sku.getSkuId());
 
         // 3. 详情图
         List<String> detailList = listDetailImages(sku.getDetailImageUrls());
         for (int i = 0; i < detailList.size(); i++) {
             saveImageIfAbsent(goodsRev.getRevisionId(), goods.getGoodsId(),
-                    detailList.get(i), ImageType.DETAIL, i + 1);
+                    detailList.get(i), ImageType.DETAIL, i + 1, null);
         }
     }
 
     /* ====== 3. 私有方法：图片去重写入 ====== */
     private void saveImageIfAbsent(String revisionId, String goodsId,
-            String url, ImageType imageType, int position) {
+            String url, ImageType imageType, int position, String goodsSkuId) {
         if (StringUtils.isBlank(url)) {
             return;
         }
@@ -263,8 +264,9 @@ public class SkuImportService {
         img.setImageId(UUID.fastUUID().toString(true));
         img.setRevisionId(revisionId);
         img.setGoodsId(goodsId);
-        img.setGoodsSkuId(null);
-        img.setImageType(imageType.getCode());
+        // TODO 注意，这里是goodsskuId，而GoodsRevisionItem 中则是shopskuid
+        img.setGoodsSkuId(goodsSkuId);
+        img.setImageType(imageType);
         img.setSourceUrl(url);
         img.setSelfUrl(null);
         img.setLocalUri(null);
@@ -280,6 +282,7 @@ public class SkuImportService {
         item.setShopId(shopId);
         item.setShopProductId(sku.getProductId());
         item.setShopSkuId(sku.getSkuId());
+        // TODO 这里sku code定义的作用待查？？？？
         item.setSkuCode(sku.getSkuId());
         item.setSellerSku(sku.getSellerSku());
         item.setSpec1(sku.getSpec1());
@@ -313,7 +316,8 @@ public class SkuImportService {
         item.setHighestPrice(sku.getHighestPrice() == null ? 0
                 : sku.getHighestPrice().multiply(BigDecimal.valueOf(100)).intValue());
 
-        item.setSkuStatus(sku.getSkuStatus());
+        item.setSkuStatus(SkuStatus.of(sku.getSkuStatus()));
+
         item.setBarcode(sku.getBarcode());
         return item;
     }
@@ -470,7 +474,7 @@ public class SkuImportService {
             img.setRevisionId(revisionId);
             img.setGoodsId(goodsId);
             img.setGoodsSkuId(null);
-            img.setImageType(imageType.getCode());
+            img.setImageType(imageType);
             img.setSourceUrl(url);
             img.setSelfUrl(null);
             img.setLocalUri(null);
@@ -484,12 +488,12 @@ public class SkuImportService {
         GoodsRevision r = new GoodsRevision();
         r.setRevisionId(revisionId);
         r.setGoodsId(goodsId);
-        r.setRevStatus(status.getCode());
-        r.setRevisionType(RevisionType.MANUAL.getCode());
+        r.setRevStatus(status);
+        r.setRevisionType(RevisionType.MANUAL);
         return r;
     }
 
-    private ItemTask buildItemTask(String taskCode, String bizId, String taskStatus) {
+    private ItemTask buildItemTask(ItemTaskCode taskCode, String bizId, ItemTaskStatus taskStatus) {
         ItemTask task = new ItemTask();
         task.setTaskId(UUID.fastUUID().toString(true));
         task.setTaskCode(taskCode);

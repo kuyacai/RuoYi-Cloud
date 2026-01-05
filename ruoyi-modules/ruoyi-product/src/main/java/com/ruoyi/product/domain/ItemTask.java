@@ -4,6 +4,8 @@ import com.baomidou.mybatisplus.annotation.IdType;
 import com.baomidou.mybatisplus.annotation.TableId;
 import com.baomidou.mybatisplus.annotation.TableName;
 import com.ruoyi.product.core.mybatisplus.ProductBaseEntity;
+import com.ruoyi.product.enums.ItemTaskCode;
+import com.ruoyi.product.enums.ItemTaskStatus;
 
 import lombok.Data;
 import lombok.EqualsAndHashCode;
@@ -25,10 +27,10 @@ public class ItemTask extends ProductBaseEntity {
     @TableId(value = "task_id", type = IdType.INPUT)
     private String taskId;
 
-    private String taskCode;
+    private ItemTaskCode taskCode;
 
     private String bizId;
 
-    private String taskStatus;
+    private ItemTaskStatus taskStatus;
 
 }

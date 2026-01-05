@@ -1,10 +1,16 @@
-package com.ruoyi.product.constant;
+package com.ruoyi.product.enums;
 
+import com.baomidou.mybatisplus.annotation.IEnum;
+import com.fasterxml.jackson.annotation.JsonFormat;
+import com.ruoyi.common.core.enums.BaseEnum;
+import com.ruoyi.common.core.enums.ExposeEnum;
 
 /**
  * SPU 状态
  */
-public enum SpuStatus {
+@ExposeEnum(group = "product", description = "SPU状态") // 供 EnumScanner 扫描
+@JsonFormat(shape = JsonFormat.Shape.OBJECT)
+public enum SpuStatus implements BaseEnum, IEnum<String> {
 
     ACTIVE("active", "上架"),
     INACTIVE("inactive", "下架"),
@@ -18,12 +24,19 @@ public enum SpuStatus {
         this.label = label;
     }
 
+    @Override
     public String getCode() {
         return code;
     }
 
+    @Override
     public String getLabel() {
-        return label;
+        return this.label;
+    }
+
+    @Override
+    public String getValue() {
+        return this.code; // MyBatis Plus 数据库存储值
     }
 
     public static SpuStatus of(String code) {

@@ -4,6 +4,8 @@ import com.baomidou.mybatisplus.annotation.IdType;
 import com.baomidou.mybatisplus.annotation.TableId;
 import com.baomidou.mybatisplus.annotation.TableName;
 import com.ruoyi.product.core.mybatisplus.ProductBaseEntity;
+import com.ruoyi.product.enums.RevStatus;
+import com.ruoyi.product.enums.RevisionType;
 
 import lombok.Data;
 import lombok.EqualsAndHashCode;
@@ -27,8 +29,8 @@ public class GoodsRevision extends ProductBaseEntity {
 
     private String goodsId;
 
-    private String revStatus;
+    private RevStatus revStatus;
 
-    private String revisionType;
+    private RevisionType revisionType;
 
 }

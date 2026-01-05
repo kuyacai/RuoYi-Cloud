@@ -14,10 +14,10 @@ import org.apache.rocketmq.spring.annotation.SelectorType;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
-import com.ruoyi.product.constant.AsyncTaskCode;
 import com.ruoyi.product.constant.MQConstant;
 import com.ruoyi.product.domain.dto.ItemProcessResult;
 import com.ruoyi.product.domain.dto.SimpleProduct;
+import com.ruoyi.product.enums.AsyncTaskCode;
 import com.ruoyi.product.mq.consumer.base.AbstractActivityDiscountConsumer;
 import com.ruoyi.product.service.IActivityDiscountService;
 import com.ruoyi.product.utils.EnhancedExcelUtil;

@@ -9,13 +9,13 @@ import org.springframework.transaction.TransactionStatus;
 import org.springframework.transaction.support.DefaultTransactionDefinition;
 
 import com.ruoyi.common.core.utils.StringUtils;
-import com.ruoyi.product.constant.ItemTaskStatus;
 import com.ruoyi.product.domain.Goods;
 import com.ruoyi.product.domain.GoodsRevisionItem;
 import com.ruoyi.product.domain.ItemTask;
 import com.ruoyi.product.domain.PriceReference;
 import com.ruoyi.product.domain.dto.ItemProcessResult;
 import com.ruoyi.product.domain.dto.SimpleProduct;
+import com.ruoyi.product.enums.ItemTaskStatus;
 import com.ruoyi.product.service.IGoodsRevisionItemService;
 import com.ruoyi.product.service.IGoodsService;
 import com.ruoyi.product.service.IItemTaskService;
@@ -92,7 +92,7 @@ public class PriceImportService {
                 // 修改点：使用 getById 替代 selectItemTaskByTaskId
                 ItemTask task = itemTaskService.getById(taskId);
                 if (task != null) {
-                    task.setTaskStatus(ItemTaskStatus.DONE.getCode());
+                    task.setTaskStatus(ItemTaskStatus.DONE);
 
                     // 重要：保持调用此方法以触发内部的计数器(task_counter)更新逻辑和消息发送
                     itemTaskService.updateItemTask(task);

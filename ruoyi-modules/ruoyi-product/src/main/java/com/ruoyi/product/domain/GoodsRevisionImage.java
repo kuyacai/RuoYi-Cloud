@@ -4,6 +4,7 @@ import com.baomidou.mybatisplus.annotation.IdType;
 import com.baomidou.mybatisplus.annotation.TableId;
 import com.baomidou.mybatisplus.annotation.TableName;
 import com.ruoyi.product.core.mybatisplus.ProductBaseEntity;
+import com.ruoyi.product.enums.ImageType;
 
 import lombok.Data;
 import lombok.EqualsAndHashCode;
@@ -31,7 +32,7 @@ public class GoodsRevisionImage extends ProductBaseEntity {
 
     private String goodsSkuId;
 
-    private String imageType;
+    private ImageType imageType;
 
     private String sourceUrl;
 

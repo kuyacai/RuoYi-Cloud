@@ -6,6 +6,8 @@ import java.util.stream.Collectors;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
+import com.ruoyi.common.core.utils.StringUtils;
+import com.ruoyi.common.core.utils.uuid.UUID;
 import com.ruoyi.product.domain.GoodsRevisionItem;
 import com.ruoyi.product.domain.ProductDiscountActivity;
 import com.ruoyi.product.domain.ProductDiscountProduct;
@@ -55,6 +57,7 @@ public class ProductDiscountHandler extends AbstractActivityHandler {
         return productService.lambdaQuery()
                 .eq(ProductDiscountProduct::getShopProductId, shopProductId)
                 .eq(ProductDiscountProduct::getShopId, shopId)
+                .last("LIMIT 1")
                 .one();
     }
 
@@ -69,7 +72,9 @@ public class ProductDiscountHandler extends AbstractActivityHandler {
         ProductDiscountProduct res = (existingRecord != null)
                 ? (ProductDiscountProduct) existingRecord
                 : new ProductDiscountProduct();
-
+        if (StringUtils.isEmpty(res.getId())) {
+            res.setId(UUID.fastUUID().toString(true));
+        }
         res.setShopProductId(sku.getShopProductId());
         res.setShopId(sku.getShopId());
         res.setActivityId(((ProductDiscountActivity) activity).getActivityId());

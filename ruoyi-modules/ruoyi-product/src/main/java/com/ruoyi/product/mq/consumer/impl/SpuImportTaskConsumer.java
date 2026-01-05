@@ -14,10 +14,10 @@ import org.apache.rocketmq.spring.annotation.SelectorType;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
-import com.ruoyi.product.constant.AsyncTaskCode;
 import com.ruoyi.product.constant.MQConstant;
 import com.ruoyi.product.domain.dto.ItemProcessResult;
 import com.ruoyi.product.domain.dto.MiaoShouSPU;
+import com.ruoyi.product.enums.AsyncTaskCode;
 import com.ruoyi.product.mq.consumer.base.AbstractImportConsumer;
 import com.ruoyi.product.service.impl.SpuImportService;
 import com.ruoyi.product.utils.EnhancedExcelUtil;
@@ -40,8 +40,8 @@ import lombok.extern.slf4j.Slf4j;
  * </li>
  * <li>2. <b>双版本机制构建</b>：
  * <ul>
- * <li><b>冻结版本 ({@link com.ruoyi.product.constant.RevStatus#FROZEN FROZEN})</b>：记录导入时的原始状态，作为后续比对与审计的基准，不可修改。</li>
- * <li><b>编辑版本 ({@link com.ruoyi.product.constant.RevStatus#EDITING EDITING})</b>：作为当前可操作副本，承载后续所有 SPU 信息变更逻辑。</li>
+ * <li><b>冻结版本 ({@link com.ruoyi.product.enums.RevStatus#FROZEN FROZEN})</b>：记录导入时的原始状态，作为后续比对与审计的基准，不可修改。</li>
+ * <li><b>编辑版本 ({@link com.ruoyi.product.enums.RevStatus#EDITING EDITING})</b>：作为当前可操作副本，承载后续所有 SPU 信息变更逻辑。</li>
  * </ul>
  * </li>
  * <li>3. <b>多表联动存储</b>：

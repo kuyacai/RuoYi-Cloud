@@ -9,12 +9,12 @@ import org.springframework.transaction.TransactionStatus;
 import org.springframework.transaction.support.DefaultTransactionDefinition;
 
 import com.ruoyi.common.core.utils.StringUtils;
-import com.ruoyi.product.constant.ItemTaskStatus;
 import com.ruoyi.product.domain.Goods;
 import com.ruoyi.product.domain.GoodsRevisionSpu;
 import com.ruoyi.product.domain.ItemTask;
 import com.ruoyi.product.domain.dto.ItemProcessResult;
 import com.ruoyi.product.domain.dto.ProductTitle;
+import com.ruoyi.product.enums.ItemTaskStatus;
 import com.ruoyi.product.service.IGoodsRevisionSpuService;
 import com.ruoyi.product.service.IGoodsService;
 import com.ruoyi.product.service.IItemTaskService;
@@ -84,7 +84,7 @@ public class ModifyTitleService {
                 // 3. 使用 getById 获取任务对象
                 ItemTask task = itemTaskService.getById(taskId);
                 if (task != null) {
-                    task.setTaskStatus(ItemTaskStatus.DONE.getCode());
+                    task.setTaskStatus(ItemTaskStatus.DONE);
                     // 4. 保持调用 updateItemTask 以触发内部计数器和异步消息逻辑
                     itemTaskService.updateItemTask(task);
                 }

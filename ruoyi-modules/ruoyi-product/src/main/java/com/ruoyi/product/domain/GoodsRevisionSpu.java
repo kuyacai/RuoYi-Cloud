@@ -5,6 +5,7 @@ import com.baomidou.mybatisplus.annotation.TableField;
 import com.baomidou.mybatisplus.annotation.TableId;
 import com.baomidou.mybatisplus.annotation.TableName;
 import com.ruoyi.product.core.mybatisplus.ProductBaseEntity;
+import com.ruoyi.product.enums.ReviewStatus;
 
 import lombok.Data;
 import lombok.EqualsAndHashCode;
@@ -50,7 +51,7 @@ public class GoodsRevisionSpu extends ProductBaseEntity {
 
     private String copyErrorReason;
 
-    private String reviewStatus;
+    private ReviewStatus reviewStatus;
 
     private String shippingMode;
 

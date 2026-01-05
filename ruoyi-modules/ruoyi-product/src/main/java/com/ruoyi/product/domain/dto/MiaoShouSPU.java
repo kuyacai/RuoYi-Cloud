@@ -2,19 +2,25 @@ package com.ruoyi.product.domain.dto;
 
 import java.io.Serializable;
 import java.math.BigDecimal;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
 
 import com.ruoyi.common.core.annotation.Excel;
 import com.ruoyi.common.core.annotation.Excel.Type;
+import com.ruoyi.common.core.utils.StringUtils;
 import com.ruoyi.product.core.annotation.ExcelBusiness;
 
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 
 /**
  * 妙手商品-SPU 导入 DTO
  */
+@Slf4j
 @Data
 @Builder
 @NoArgsConstructor // 必须：给 ExcelUtil 反射创建实例用
@@ -30,8 +36,11 @@ public class MiaoShouSPU implements Serializable {
     @Excel(name = "导购短标题", type = Type.ALL)
     private String guideShortTitle;
 
+    /**
+     * 这里的skuId，是该商品的所有skuid，以逗号分割。
+     */
     @Excel(name = "SKUID", type = Type.ALL)
-    private String skuId;
+    private String skuIds;
 
     @Excel(name = "商品标题", type = Type.ALL)
     private String title;
@@ -45,15 +54,29 @@ public class MiaoShouSPU implements Serializable {
     @Excel(name = "推荐语", type = Type.ALL)
     private String recommendation;
 
+    /**
+     * 这里的库存是该商品所有sku的库存之和。
+     */
     @Excel(name = "库存", type = Type.ALL)
     private Integer stock;
 
+    /**
+     * 该商品的售价，如果该商品的所有sku的售价一致，这里就是一个价格。
+     * 如果该商品的sku的售价不一致，则是'最低价-最高价'形式。
+     * 所以这里是字符串
+     */
     @Excel(name = "售价", type = Type.ALL)
     private String priceStr;
 
+    /**
+     * 该商品售价最低的sku的价格。
+     */
     @Excel(name = "最低售价", type = Type.ALL)
     private BigDecimal lowestPrice;
 
+    /**
+     * 该商品售价最高的sku的价格
+     */
     @Excel(name = "最高售价", type = Type.ALL)
     private BigDecimal highestPrice;
 
@@ -123,6 +146,11 @@ public class MiaoShouSPU implements Serializable {
     @Excel(name = "3:4主图5", type = Type.ALL)
     private String mainImage345;
 
+    /**
+     * 注意，在excel文件中并不是以','分割额，而是回车换行符号分割的。
+     * 我们在ExcelUtil的子类EnhancedExcelUtil来解决这个问题。
+     * 注意，这里不要定义成List
+     */
     @Excel(name = "详情图链接", type = Type.ALL)
     private String detailImageUrls;
 
@@ -138,15 +166,25 @@ public class MiaoShouSPU implements Serializable {
     @Excel(name = "尺码表尺码标题", type = Type.ALL)
     private String sizeChartSizeTitles;
 
+    /**
+     * 该商品所有sku的销量之和
+     */
     @Excel(name = "销量", type = Type.ALL)
     private Integer sales;
 
+    /**
+     * 指从来源平台复制到目标平台，例如从1688复制到抖店
+     */
     @Excel(name = "复制状态", type = Type.ALL)
     private String copyStatus;
 
     @Excel(name = "复制失败原因", type = Type.ALL)
     private String copyErrorReason;
 
+    /**
+     * 这里指目标平台的审核状态，例如从1688复制到抖店，抖店的审核状态，注意，如果是复制到草稿箱，那么
+     * 抖店是不会审核的，只有复制为直接上架，抖店才审核。
+     */
     @Excel(name = "审核状态", type = Type.ALL)
     private String reviewStatus;
 
@@ -162,4 +200,45 @@ public class MiaoShouSPU implements Serializable {
     @Excel(name = "七天无理由", type = Type.ALL)
     private String sevenDayNoReasonReturn;
 
+    /**
+     * 给业务逻辑使用的“快捷 Getter”
+     */
+    public List<String> getDetailImageUrlList() {
+        if (StringUtils.isEmpty(this.detailImageUrls)) {
+            return new ArrayList<>();
+        }
+        return Arrays.asList(this.detailImageUrls.split(","));
+    }
+
+    /**
+     * 给业务逻辑使用的“快捷 Setter”
+     */
+    public void setDetailImageUrlList(List<String> list) {
+        if (list != null && !list.isEmpty()) {
+            this.detailImageUrls = StringUtils.join(list, ",");
+        } else {
+            this.detailImageUrls = "";
+        }
+    }
+
+    /**
+     * 给业务逻辑使用的“快捷 Getter”
+     */
+    public List<String> getSkuIdList() {
+        if (StringUtils.isEmpty(this.skuIds)) {
+            return new ArrayList<>();
+        }
+        return Arrays.asList(this.skuIds.split(","));
+    }
+
+    /**
+     * 给业务逻辑使用的“快捷 Setter”
+     */
+    public void setSkuIdList(List<String> list) {
+        if (list != null && !list.isEmpty()) {
+            this.skuIds = StringUtils.join(list, ",");
+        } else {
+            this.skuIds = "";
+        }
+    }
 }

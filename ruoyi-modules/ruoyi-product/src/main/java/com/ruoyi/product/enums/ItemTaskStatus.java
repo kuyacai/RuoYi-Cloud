@@ -1,10 +1,16 @@
-package com.ruoyi.product.constant;
+package com.ruoyi.product.enums;
 
+import com.baomidou.mybatisplus.annotation.IEnum;
+import com.fasterxml.jackson.annotation.JsonFormat;
+import com.ruoyi.common.core.enums.BaseEnum;
+import com.ruoyi.common.core.enums.ExposeEnum;
 
 /**
  * 任务状态
  */
-public enum ItemTaskStatus {
+@ExposeEnum(group = "product", description = "任务状态") // 供 EnumScanner 扫描
+@JsonFormat(shape = JsonFormat.Shape.OBJECT)
+public enum ItemTaskStatus implements BaseEnum, IEnum<String> {
 
     PENDING("pending", "待处理"),
     DONE("done", "已完成"),
@@ -19,12 +25,19 @@ public enum ItemTaskStatus {
         this.label = label;
     }
 
+    @Override
     public String getCode() {
         return code;
     }
 
+    @Override
     public String getLabel() {
-        return label;
+        return this.label;
+    }
+
+    @Override
+    public String getValue() {
+        return this.code; // MyBatis Plus 数据库存储值
     }
 
     public static ItemTaskStatus of(String code) {
@@ -42,13 +55,14 @@ public enum ItemTaskStatus {
     public static boolean isFinalStatus(String status) {
         return DONE.getCode().equals(status) || FAILED.getCode().equals(status) || CANCELLED.getCode().equals(status);
     }
+
     /**
      * 判断是否为完成状态（含成功和失败）
      */
     public static boolean isCompletedStatus(String status) {
         return DONE.getCode().equals(status) || FAILED.getCode().equals(status);
     }
-    
+
     /**
      * 判断是否可以重新处理
      */

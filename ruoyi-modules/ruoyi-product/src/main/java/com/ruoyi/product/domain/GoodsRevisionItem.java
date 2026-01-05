@@ -5,6 +5,7 @@ import com.baomidou.mybatisplus.annotation.TableField;
 import com.baomidou.mybatisplus.annotation.TableId;
 import com.baomidou.mybatisplus.annotation.TableName;
 import com.ruoyi.product.core.mybatisplus.ProductBaseEntity;
+import com.ruoyi.product.enums.SkuStatus;
 
 import lombok.Data;
 import lombok.EqualsAndHashCode;
@@ -54,26 +55,27 @@ public class GoodsRevisionItem extends ProductBaseEntity {
 
     private Integer fullPrepayQty;
 
+    @TableField("ship_3d_qty")
     private Integer ship3dQty;
-
+    @TableField("ship_4d_qty")
     private Integer ship4dQty;
-
+    @TableField("ship_5d_qty")
     private Integer ship5dQty;
-
+    @TableField("ship_7d_qty")
     private Integer ship7dQty;
-
+    @TableField("ship_10d_qty")
     private Integer ship10dQty;
-
+    @TableField("ship_15d_qty")
     private Integer ship15dQty;
-
+    @TableField("ship_20d_qty")
     private Integer ship20dQty;
-
+    @TableField("ship_25d_qty")
     private Integer ship25dQty;
-
+    @TableField("ship_30d_qty")
     private Integer ship30dQty;
-
+    @TableField("ship_35d_qty")
     private Integer ship35dQty;
-
+    @TableField("ship_45d_qty")
     private Integer ship45dQty;
 
     private Integer orignialPrice;
@@ -84,7 +86,7 @@ public class GoodsRevisionItem extends ProductBaseEntity {
 
     private Integer highestPrice;
 
-    private String skuStatus;
+    private SkuStatus skuStatus;
 
     private String barcode;
 

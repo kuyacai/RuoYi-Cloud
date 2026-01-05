@@ -1,6 +1,13 @@
-package com.ruoyi.product.constant;
+package com.ruoyi.product.enums;
 
-public enum AsyncTaskCode {
+import com.baomidou.mybatisplus.annotation.IEnum;
+import com.fasterxml.jackson.annotation.JsonFormat;
+import com.ruoyi.common.core.enums.BaseEnum;
+import com.ruoyi.common.core.enums.ExposeEnum;
+
+@ExposeEnum(group = "product", description = "消息类型任务状态") // 供 EnumScanner 扫描
+@JsonFormat(shape = JsonFormat.Shape.OBJECT)
+public enum AsyncTaskCode implements BaseEnum, IEnum<String> {
 
     SKU_IMPORT("sku_import", "导入SKU"),
     SPU_IMPORT("spu_import", "导入SPU"),
@@ -11,19 +18,15 @@ public enum AsyncTaskCode {
     REPURCHASE_DISCOUNT_IMPORT("repurchase_discount", "导入复购券"),
     PLATFORM_PROMOTION_IMPORT("platform_promotion", "导入平台大促优惠"),
 
-
     MODIFY_TITLE_IMPORT("modify_title", "导入修改标题"),
     MODIFY_IMAGES_IMPORT("modify_images", "导入修改图片信息"),
-
 
     /**
      * 综合审核（一次性审核所有修改）
      */
     AUDIT_SPU_COMPREHENSIVE("audit_spu_comprehensive", "综合审核商品信息"),
-    
+
     DOUDIAN_SYNC("doudian_sync", "抖店商品同步");
-
-
 
     // 公共常量
     public static final String SKU_IMPORT_CODE = "sku_import";
@@ -41,7 +44,6 @@ public enum AsyncTaskCode {
 
     public static final String DOUDIAN_SYNC_CODE = "doudian_sync";
 
-
     public static final String SKU_IMPORT_LABEL = "导入SKU";
     public static final String SPU_IMPORT_LABEL = "导入SPU";
     public static final String PRICE_IMPORT_LABEL = "批量计算价格";
@@ -55,10 +57,6 @@ public enum AsyncTaskCode {
     public static final String AUDIT_SPU_COMPREHENSIVE_LABEL = "综合审核商品信息";
     public static final String DOUDIAN_SYNC_LABEL = "抖店商品同步";
 
-
-
-
-
     private final String code;
     private final String label;
 
@@ -68,13 +66,19 @@ public enum AsyncTaskCode {
         this.label = label;
     }
 
-    /* getter */
+    @Override
     public String getCode() {
         return code;
     }
 
+    @Override
     public String getLabel() {
-        return label;
+        return this.label;
+    }
+
+    @Override
+    public String getValue() {
+        return this.code; // MyBatis Plus 数据库存储值
     }
 
     /* 数据库 code -> 枚举 */

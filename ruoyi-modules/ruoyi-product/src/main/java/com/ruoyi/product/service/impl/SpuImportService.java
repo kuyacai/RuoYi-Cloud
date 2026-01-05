@@ -10,12 +10,9 @@ import java.io.InputStreamReader;
 import java.lang.reflect.Method;
 import java.nio.charset.Charset;
 import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.stream.Collectors;
 
 import org.apache.poi.ss.usermodel.Row;
 import org.apache.poi.ss.usermodel.Sheet;
@@ -36,11 +33,6 @@ import com.ruoyi.common.core.utils.file.CharsetDetectUtil;
 import com.ruoyi.common.core.utils.file.FileUtils;
 import com.ruoyi.common.core.utils.uuid.UUID;
 import com.ruoyi.common.core.web.domain.AjaxResult;
-import com.ruoyi.product.constant.ImageType;
-import com.ruoyi.product.constant.ItemTaskCode;
-import com.ruoyi.product.constant.ItemTaskStatus;
-import com.ruoyi.product.constant.RevStatus;
-import com.ruoyi.product.constant.RevisionType;
 import com.ruoyi.product.domain.Goods;
 import com.ruoyi.product.domain.GoodsRevision;
 import com.ruoyi.product.domain.GoodsRevisionImage;
@@ -48,6 +40,13 @@ import com.ruoyi.product.domain.GoodsRevisionSpu;
 import com.ruoyi.product.domain.ItemTask;
 import com.ruoyi.product.domain.dto.ItemProcessResult;
 import com.ruoyi.product.domain.dto.MiaoShouSPU;
+import com.ruoyi.product.enums.GoodsStatus;
+import com.ruoyi.product.enums.ImageType;
+import com.ruoyi.product.enums.ItemTaskCode;
+import com.ruoyi.product.enums.ItemTaskStatus;
+import com.ruoyi.product.enums.RevStatus;
+import com.ruoyi.product.enums.ReviewStatus;
+import com.ruoyi.product.enums.RevisionType;
 import com.ruoyi.product.service.IGoodsRevisionImageService;
 import com.ruoyi.product.service.IGoodsRevisionService;
 import com.ruoyi.product.service.IGoodsRevisionSpuService;
@@ -139,26 +138,26 @@ public class SpuImportService {
             /* 7. 图片：主图1:1 / 3:4 / 详情图 全部批量插入 */
             saveRevisionImages(v1Id, goodsId, listMainImages(spu), ImageType.MAIN);
             saveRevisionImages(v1Id, goodsId, listMain34Images(spu), ImageType.MAIN34);
-            saveRevisionImages(v1Id, goodsId, listDetailImages(spu.getDetailImageUrls()), ImageType.DETAIL);
+            saveRevisionImages(v1Id, goodsId, spu.getDetailImageUrlList(), ImageType.DETAIL);
 
             /* 8. 创建待处理任务记录 */
             // 修改标题
-            ItemTask task_title = buildItemTask(ItemTaskCode.EDIT_TITLE.getCode(), v2Id,
-                    ItemTaskStatus.PENDING.getCode());
+            ItemTask task_title = buildItemTask(ItemTaskCode.EDIT_TITLE, v2Id,
+                    ItemTaskStatus.PENDING);
             boolean a = itemTaskService.insertItemTask(task_title);
             log.debug(v2Id);
             log.debug("插入任务结构:" + a);
             // 修改图片
-            ItemTask task_img = buildItemTask(ItemTaskCode.EDIT_IMAGE.getCode(), v2Id,
-                    ItemTaskStatus.PENDING.getCode());
+            ItemTask task_img = buildItemTask(ItemTaskCode.EDIT_IMAGE, v2Id,
+                    ItemTaskStatus.PENDING);
             itemTaskService.insertItemTask(task_img);
             // 修改价格
-            ItemTask task_price = buildItemTask(ItemTaskCode.EDIT_PRICE.getCode(), v2Id,
-                    ItemTaskStatus.PENDING.getCode());
+            ItemTask task_price = buildItemTask(ItemTaskCode.EDIT_PRICE, v2Id,
+                    ItemTaskStatus.PENDING);
             itemTaskService.insertItemTask(task_price);
             // 修改视频
-            ItemTask task_video = buildItemTask(ItemTaskCode.EDIT_VIDEO.getCode(), v2Id,
-                    ItemTaskStatus.PENDING.getCode());
+            ItemTask task_video = buildItemTask(ItemTaskCode.EDIT_VIDEO, v2Id,
+                    ItemTaskStatus.PENDING);
             itemTaskService.insertItemTask(task_video);
 
             /* 8. 成功提交 */
@@ -316,17 +315,6 @@ public class SpuImportService {
         return urls; // 1..5
     }
 
-    /** 解析详情图字符串 -> List<String> */
-    private List<String> listDetailImages(String urls) {
-        if (StringUtils.isBlank(urls)) {
-            return Collections.emptyList();
-        }
-        return Arrays.stream(urls.split(","))
-                .map(String::trim)
-                .filter(StringUtils::isNotBlank)
-                .collect(Collectors.toList());
-    }
-
     /** 批量构建 GoodsRevisionImage 并入库 */
     private void saveRevisionImages(String revisionId, String goodsId,
             List<String> urls, ImageType imageType) {
@@ -343,7 +331,7 @@ public class SpuImportService {
             img.setRevisionId(revisionId);
             img.setGoodsId(goodsId);
             img.setGoodsSkuId(null);
-            img.setImageType(imageType.getCode());
+            img.setImageType(imageType);
             img.setSourceUrl(url);
             img.setSelfUrl(null);
             img.setLocalUri(null);
@@ -360,6 +348,10 @@ public class SpuImportService {
         g.setSourceId(spu.getSourceId());
         g.setSourceTitle(spu.getSourceTitle());
         g.setSourceUrl(spu.getSourceUrl());
+        if (log.isDebugEnabled()) {
+            log.debug("SourceCategory is {}", spu.getSourceCategory());
+            log.debug("GoodsStatus is {}", spu.getStatus());
+        }
         g.setSourceCategory(spu.getSourceCategory());
         g.setCustomerPhone(spu.getCustomerPhone());
         g.setSourceItemNo(spu.getItemNo());
@@ -368,7 +360,7 @@ public class SpuImportService {
         if (StringUtils.isNotEmpty(shopId)) {
             g.setShopId(shopId); // 全局变量
         }
-        g.setGoodsStatus(spu.getStatus());
+        g.setGoodsStatus(GoodsStatus.of(spu.getStatus()));
         return g;
     }
 
@@ -377,8 +369,8 @@ public class SpuImportService {
         GoodsRevision r = new GoodsRevision();
         r.setRevisionId(revisionId);
         r.setGoodsId(goodsId);
-        r.setRevStatus(status.getCode());
-        r.setRevisionType(RevisionType.MANUAL.getCode());
+        r.setRevStatus(status);
+        r.setRevisionType(RevisionType.MANUAL);
         return r;
     }
 
@@ -395,14 +387,14 @@ public class SpuImportService {
         s.setSales(spu.getSales() == null ? 0 : spu.getSales());
         s.setCopyStatus(spu.getCopyStatus());
         s.setCopyErrorReason(spu.getCopyErrorReason());
-        s.setReviewStatus(spu.getReviewStatus());
+        s.setReviewStatus(ReviewStatus.of(spu.getReviewStatus()));
         s.setShippingMode(spu.getShippingMode());
         s.setInStockShipTime(spu.getInStockShipTime());
         s.setPresaleShipTime(spu.getPresaleShipTime());
         return s;
     }
 
-    private ItemTask buildItemTask(String taskCode, String bizId, String taskStatus) {
+    private ItemTask buildItemTask(ItemTaskCode taskCode, String bizId, ItemTaskStatus taskStatus) {
         ItemTask task = new ItemTask();
         task.setTaskId(UUID.fastUUID().toString(true));
         task.setTaskCode(taskCode);

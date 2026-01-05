@@ -23,12 +23,22 @@ import com.ruoyi.common.core.web.domain.AjaxResult;
 import com.ruoyi.common.log.annotation.Log;
 import com.ruoyi.common.log.enums.BusinessType;
 import com.ruoyi.common.security.annotation.RequiresPermissions;
-import com.ruoyi.product.constant.AsyncTaskCode;
 import com.ruoyi.product.core.annotation.ExcelBusiness;
 import com.ruoyi.product.core.excel.ExcelDtoRegistry;
+import com.ruoyi.product.domain.DirectDiscountActivity;
+import com.ruoyi.product.domain.NewUserGiftActivity;
+import com.ruoyi.product.domain.PlatformPromotionActivity;
+import com.ruoyi.product.domain.ProductDiscountActivity;
+import com.ruoyi.product.domain.RepurchaseCouponActivity;
+import com.ruoyi.product.enums.AsyncTaskCode;
 import com.ruoyi.product.feign.FileServiceClient;
 import com.ruoyi.product.service.IAsyncTaskService;
+import com.ruoyi.product.service.IDirectDiscountActivityService;
 import com.ruoyi.product.service.IImportService;
+import com.ruoyi.product.service.INewUserGiftActivityService;
+import com.ruoyi.product.service.IPlatformPromotionActivityService;
+import com.ruoyi.product.service.IProductDiscountActivityService;
+import com.ruoyi.product.service.IRepurchaseCouponActivityService;
 import com.ruoyi.product.service.excel.ExcelDataHandler;
 import com.ruoyi.product.utils.EnhancedExcelUtil;
 import com.ruoyi.system.api.domain.SysFile;
@@ -53,6 +63,21 @@ public class CommonExcelController extends BaseController {
 
     @Autowired
     private ExcelDtoRegistry registry;
+
+    @Autowired
+    private IDirectDiscountActivityService directDiscountActivityService;
+
+    @Autowired
+    private IProductDiscountActivityService productDiscountActivityService;
+
+    @Autowired
+    private INewUserGiftActivityService newUserGiftActivityService;
+
+    @Autowired
+    private IPlatformPromotionActivityService platformPromotionActivityService;
+
+    @Autowired
+    private IRepurchaseCouponActivityService repurchaseCouponActivityService;
 
     /**
      * 导入SPU数据
@@ -103,42 +128,70 @@ public class CommonExcelController extends BaseController {
     }
 
     @Log(title = AsyncTaskCode.SINGLE_DISCOUNT_IMPORT_LABEL, businessType = BusinessType.IMPORT)
-    @PostMapping("/single_discount")
+    @PostMapping("/single-discount")
     public AjaxResult importSingleDiscount(@RequestParam("file") MultipartFile file,
-            @RequestParam(value = "shopId", required = false) String shopId,
             @RequestParam(value = "activityId", required = false) String activityId) {
+        logger.debug("activityId is {}", activityId);
+        if (StringUtils.isEmpty(activityId))
+            return AjaxResult.error("参数错误，activityId 为空值。");
+        DirectDiscountActivity act = directDiscountActivityService.getById(activityId);
+        if (act == null)
+            return AjaxResult.error("无法根据activityId查找到活动。activityId=" + activityId);
+        String shopId = act.getShopId();
         return createImportTask(file, shopId, activityId, AsyncTaskCode.SINGLE_DISCOUNT_IMPORT);
     }
 
     @Log(title = AsyncTaskCode.PRODUCT_DISCOUNT_IMPORT_LABEL, businessType = BusinessType.IMPORT)
     @PostMapping("/product-discount")
     public AjaxResult importProductDiscount(@RequestParam("file") MultipartFile file,
-            @RequestParam(value = "shopId", required = false) String shopId,
             @RequestParam(value = "activityId", required = false) String activityId) {
+        logger.debug("activityId is {}", activityId);
+        if (StringUtils.isEmpty(activityId))
+            return AjaxResult.error("参数错误，activityId 为空值。");
+        ProductDiscountActivity act = productDiscountActivityService.getById(activityId);
+        if (act == null)
+            return AjaxResult.error("无法根据activityId查找到活动。activityId=" + activityId);
+        String shopId = act.getShopId();
+
         return createImportTask(file, shopId, activityId, AsyncTaskCode.PRODUCT_DISCOUNT_IMPORT);
     }
 
     @Log(title = AsyncTaskCode.NEW_USER_GIFT_IMPORT_LABEL, businessType = BusinessType.IMPORT)
     @PostMapping("/new-user")
     public AjaxResult importNewUserGift(@RequestParam("file") MultipartFile file,
-            @RequestParam(value = "shopId", required = false) String shopId,
             @RequestParam(value = "activityId", required = false) String activityId) {
+        if (StringUtils.isEmpty(activityId))
+            return AjaxResult.error("参数错误，activityId 为空值。");
+        NewUserGiftActivity act = newUserGiftActivityService.getById(activityId);
+        if (act == null)
+            return AjaxResult.error("无法根据activityId查找到活动。activityId=" + activityId);
+        String shopId = act.getShopId();
         return createImportTask(file, shopId, activityId, AsyncTaskCode.NEW_USER_GIFT_IMPORT);
     }
 
     @Log(title = AsyncTaskCode.REPURCHASE_DISCOUNT_IMPORT_LABEL, businessType = BusinessType.IMPORT)
     @PostMapping("/repurchase")
     public AjaxResult importRepurchase(@RequestParam("file") MultipartFile file,
-            @RequestParam(value = "shopId", required = false) String shopId,
             @RequestParam(value = "activityId", required = false) String activityId) {
+        if (StringUtils.isEmpty(activityId))
+            return AjaxResult.error("参数错误，activityId 为空值。");
+        RepurchaseCouponActivity act = repurchaseCouponActivityService.getById(activityId);
+        if (act == null)
+            return AjaxResult.error("无法根据activityId查找到活动。activityId=" + activityId);
+        String shopId = act.getShopId();
         return createImportTask(file, shopId, activityId, AsyncTaskCode.REPURCHASE_DISCOUNT_IMPORT);
     }
 
     @Log(title = AsyncTaskCode.PLATFORM_PROMOTION_IMPORT_LABEL, businessType = BusinessType.IMPORT)
     @PostMapping("/promotion")
     public AjaxResult importPlatformPromotion(@RequestParam("file") MultipartFile file,
-            @RequestParam(value = "shopId", required = false) String shopId,
             @RequestParam(value = "activityId", required = false) String activityId) {
+        if (StringUtils.isEmpty(activityId))
+            return AjaxResult.error("参数错误，activityId 为空值。");
+        PlatformPromotionActivity act = platformPromotionActivityService.getById(activityId);
+        if (act == null)
+            return AjaxResult.error("无法根据activityId查找到活动。activityId=" + activityId);
+        String shopId = act.getShopId();
         return createImportTask(file, shopId, activityId, AsyncTaskCode.PLATFORM_PROMOTION_IMPORT);
     }
 

@@ -4,6 +4,7 @@ import com.baomidou.mybatisplus.annotation.IdType;
 import com.baomidou.mybatisplus.annotation.TableId;
 import com.baomidou.mybatisplus.annotation.TableName;
 import com.ruoyi.product.core.mybatisplus.ProductBaseEntity;
+import com.ruoyi.product.enums.GoodsStatus;
 
 import lombok.Data;
 import lombok.EqualsAndHashCode;
@@ -47,6 +48,6 @@ public class Goods extends ProductBaseEntity {
 
     private String shopId;
 
-    private String goodsStatus;
+    private GoodsStatus goodsStatus;
 
 }

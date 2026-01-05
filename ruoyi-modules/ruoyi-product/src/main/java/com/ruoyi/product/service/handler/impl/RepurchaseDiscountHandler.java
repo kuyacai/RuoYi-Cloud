@@ -6,6 +6,8 @@ import java.util.stream.Collectors;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
+import com.ruoyi.common.core.utils.StringUtils;
+import com.ruoyi.common.core.utils.uuid.UUID;
 import com.ruoyi.product.domain.GoodsRevisionItem;
 import com.ruoyi.product.domain.RepurchaseCouponActivity;
 import com.ruoyi.product.domain.RepurchaseCouponProduct;
@@ -55,6 +57,7 @@ public class RepurchaseDiscountHandler extends AbstractActivityHandler {
         return productService.lambdaQuery()
                 .eq(RepurchaseCouponProduct::getShopProductId, shopProductId)
                 .eq(RepurchaseCouponProduct::getShopId, shopId)
+                .last("LIMIT 1")
                 .one();
     }
 
@@ -69,7 +72,9 @@ public class RepurchaseDiscountHandler extends AbstractActivityHandler {
         RepurchaseCouponProduct res = (existingRecord != null)
                 ? (RepurchaseCouponProduct) existingRecord
                 : new RepurchaseCouponProduct();
-
+        if (StringUtils.isEmpty(res.getId())) {
+            res.setId(UUID.fastUUID().toString(true));
+        }
         res.setShopProductId(sku.getShopProductId());
         res.setShopId(sku.getShopId());
         res.setActivityId(((RepurchaseCouponActivity) activity).getActivityId());

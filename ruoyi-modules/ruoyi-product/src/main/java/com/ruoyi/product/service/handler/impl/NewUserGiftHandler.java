@@ -6,6 +6,8 @@ import java.util.stream.Collectors;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
+import com.ruoyi.common.core.utils.StringUtils;
+import com.ruoyi.common.core.utils.uuid.UUID;
 import com.ruoyi.product.domain.GoodsRevisionItem;
 import com.ruoyi.product.domain.NewUserGiftActivity;
 import com.ruoyi.product.domain.NewUserGiftConfig;
@@ -57,6 +59,7 @@ public class NewUserGiftHandler extends AbstractActivityHandler {
         return productService.lambdaQuery()
                 .eq(NewUserGiftProduct::getShopProductId, shopProductId)
                 .eq(NewUserGiftProduct::getShopId, shopId)
+                .last("LIMIT 1")
                 .one();
     }
 
@@ -71,7 +74,9 @@ public class NewUserGiftHandler extends AbstractActivityHandler {
         NewUserGiftProduct result = (existingRecord != null)
                 ? (NewUserGiftProduct) existingRecord
                 : new NewUserGiftProduct();
-
+        if (StringUtils.isEmpty(result.getId())) {
+            result.setId(UUID.fastUUID().toString(true));
+        }
         NewUserGiftActivity act = (NewUserGiftActivity) activity;
 
         // 基础信息设置

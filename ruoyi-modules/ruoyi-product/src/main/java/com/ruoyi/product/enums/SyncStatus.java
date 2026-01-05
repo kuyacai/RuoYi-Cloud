@@ -16,8 +16,9 @@ import com.ruoyi.common.core.enums.ExposeEnum;
 @JsonFormat(shape = JsonFormat.Shape.OBJECT)
 public enum SyncStatus implements BaseEnum, IEnum<String> {
 
-    YES("yes", "已同步"),
-    NO("no", "未同步");
+    PENDING("pending", "待同步"),
+    SYNCED("synced", "已同步"),
+    FAILED("failed", "同步失败");
 
     private final String code;
     private final String label;

@@ -2,9 +2,9 @@ package com.ruoyi.product.service;
 
 import java.util.Map;
 
-import com.ruoyi.product.constant.AsyncTaskCode;
 import com.ruoyi.product.core.mybatisplus.IBaseService;
 import com.ruoyi.product.domain.AsyncTask;
+import com.ruoyi.product.enums.AsyncTaskCode;
 import com.ruoyi.product.enums.AsyncTaskStatus;
 
 /**

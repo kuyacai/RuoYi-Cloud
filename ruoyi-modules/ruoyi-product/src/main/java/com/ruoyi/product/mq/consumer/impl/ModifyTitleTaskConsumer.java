@@ -13,10 +13,10 @@ import org.apache.rocketmq.spring.annotation.SelectorType;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
-import com.ruoyi.product.constant.AsyncTaskCode;
 import com.ruoyi.product.constant.MQConstant;
 import com.ruoyi.product.domain.dto.ItemProcessResult;
 import com.ruoyi.product.domain.dto.ProductTitle;
+import com.ruoyi.product.enums.AsyncTaskCode;
 import com.ruoyi.product.mq.consumer.base.AbstractImportConsumer;
 import com.ruoyi.product.service.impl.ModifyTitleService;
 import com.ruoyi.product.utils.EnhancedExcelUtil;
@@ -33,11 +33,11 @@ import lombok.extern.slf4j.Slf4j;
  * <li>2. <b>精准定位</b>：根据查询到的 {@code goods_id}，检索状态为 {@code editing}（编辑中）的 
  * {@code goods_revision} 记录。</li>
  * <li>3. <b>任务关联</b>：通过 {@code INNER JOIN} 锁定关联的 {@code item_task}，要求任务代码为 
- * {@code edit_title} 且当前状态为 {@link com.ruoyi.product.constant.ItemTaskStatus#PENDING PENDING}。</li>
+ * {@code edit_title} 且当前状态为 {@link com.ruoyi.product.enums.ItemTaskStatus#PENDING PENDING}。</li>
  * <li>4. <b>信息覆盖</b>：更新 {@code goods_revision_spu} 表中的 {@code title}、{@code guide_short_title}、
  * {@code search_keywords} 和 {@code video_script}。</li>
  * <li>5. <b>状态流转</b>：更新完成后，将对应的 {@code item_task} 状态设置为 
- * {@link com.ruoyi.product.constant.ItemTaskStatus#DONE DONE}。</li>
+ * {@link com.ruoyi.product.enums.ItemTaskStatus#DONE DONE}。</li>
  * </ul>
  * * <p>Excel 导入项说明：</p>
  * <ul>

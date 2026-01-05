@@ -13,24 +13,24 @@ import org.springframework.stereotype.Service;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.ruoyi.product.app.display.GoodsVersionAssembler;
 import com.ruoyi.product.app.display.GoodsVersionDetail;
-import com.ruoyi.product.constant.ItemTaskCode;
-import com.ruoyi.product.constant.ItemTaskStatus;
 import com.ruoyi.product.domain.Goods;
 import com.ruoyi.product.domain.GoodsRevision;
 import com.ruoyi.product.domain.GoodsRevisionImage;
 import com.ruoyi.product.domain.GoodsRevisionItem;
 import com.ruoyi.product.domain.GoodsRevisionSpu;
 import com.ruoyi.product.domain.ItemTask;
+import com.ruoyi.product.enums.ItemTaskCode;
+import com.ruoyi.product.enums.ItemTaskStatus;
 import com.ruoyi.product.service.IGoodsDisplayService;
+import com.ruoyi.product.service.IGoodsRevisionImageService;
+import com.ruoyi.product.service.IGoodsRevisionItemService;
 import com.ruoyi.product.service.IGoodsRevisionService;
 import com.ruoyi.product.service.IGoodsRevisionSpuService;
 import com.ruoyi.product.service.IGoodsService;
-import com.ruoyi.product.service.IGoodsRevisionImageService;
-import com.ruoyi.product.service.IGoodsRevisionItemService;
 import com.ruoyi.product.service.IItemTaskService;
 
-import lombok.extern.slf4j.Slf4j;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
 @Service
@@ -70,7 +70,30 @@ public class GoodsDisplayService implements IGoodsDisplayService {
     }
 
     @Override
-    public GoodsVersionDetail getApprovingVersion(String goodsId) {
+    public GoodsVersionDetail getEditingVersion(String goodsId) {
+        Goods goods = goodsService.getById(goodsId);
+        if (goods == null) {
+            return null; // 或抛自定义异常
+        }
+        List<GoodsRevision> revisionList = revisionService.listEditingByGoodsId(goodsId);
+        if (revisionList == null || revisionList.isEmpty()) {
+            return null; // 或抛自定义异常
+        }
+        GoodsRevision revision = revisionList.get(0);
+        GoodsRevisionSpu spu = spuService.getById(revision.getRevisionId());
+        List<GoodsRevisionItem> items = itemService.listByRevisionId(revision.getRevisionId());
+        List<GoodsRevisionImage> images = imageService.listByRevisionId(revision.getRevisionId());
+        if (log.isDebugEnabled()) {
+            for (GoodsRevisionImage img : images) {
+                log.debug("Image type code:{},label:{}", img.getImageType().getCode(), img.getImageType().getLabel());
+            }
+
+        }
+        return assembler.assemble(goods, revision, spu, items, images);
+    }
+
+    @Override
+    public GoodsVersionDetail getAuditingVersion(String goodsId) {
         Goods goods = goodsService.getById(goodsId);
         if (goods == null) {
             return null; // 或抛自定义异常
@@ -88,12 +111,13 @@ public class GoodsDisplayService implements IGoodsDisplayService {
     }
 
     @Override
-    public GoodsVersionDetail getEditingVersion(String goodsId) {
+    public GoodsVersionDetail getApprovedVersion(String goodsId) {
         Goods goods = goodsService.getById(goodsId);
         if (goods == null) {
             return null; // 或抛自定义异常
         }
-        List<GoodsRevision> revisionList = revisionService.listEditingByGoodsId(goodsId);
+        // TODO 这里实现错误，待修改
+        List<GoodsRevision> revisionList = revisionService.listApprovingByGoodsId(goodsId);
         if (revisionList == null || revisionList.isEmpty()) {
             return null; // 或抛自定义异常
         }
@@ -135,7 +159,7 @@ public class GoodsDisplayService implements IGoodsDisplayService {
         }
         Map<String, GoodsVersionDetail> map = new HashMap<>();
         for (GoodsRevision rev : revisions) {
-            String key = rev.getRevStatus();
+            String key = rev.getRevStatus().getCode();
             GoodsVersionDetail detail = getVersion(rev.getRevisionId());
             map.put(key, detail);
         }
@@ -155,7 +179,7 @@ public class GoodsDisplayService implements IGoodsDisplayService {
         }
         Map<String, GoodsVersionDetail> map = new HashMap<>();
         for (GoodsRevision rev : revisions) {
-            String key = rev.getRevStatus();
+            String key = rev.getRevStatus().getCode();
             GoodsVersionDetail detail = getVersion(rev.getRevisionId());
             map.put(key, detail);
         }
@@ -174,7 +198,7 @@ public class GoodsDisplayService implements IGoodsDisplayService {
         }
         Map<String, GoodsVersionDetail> map = new HashMap<>();
         for (GoodsRevision rev : revisions) {
-            String key = rev.getRevStatus();
+            String key = rev.getRevStatus().getCode();
             GoodsVersionDetail detail = getVersion(rev.getRevisionId());
             map.put(key, detail);
         }

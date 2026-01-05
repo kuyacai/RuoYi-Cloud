@@ -14,10 +14,10 @@ import org.apache.rocketmq.spring.annotation.SelectorType;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
-import com.ruoyi.product.constant.AsyncTaskCode;
 import com.ruoyi.product.constant.MQConstant;
 import com.ruoyi.product.domain.dto.ItemProcessResult;
 import com.ruoyi.product.domain.dto.MiaoShouSKU;
+import com.ruoyi.product.enums.AsyncTaskCode;
 import com.ruoyi.product.mq.consumer.base.AbstractImportConsumer;
 import com.ruoyi.product.service.impl.SkuImportService;
 import com.ruoyi.product.utils.EnhancedExcelUtil;
@@ -32,8 +32,8 @@ import lombok.extern.slf4j.Slf4j;
  * <ul>
  * <li>1. <b>双版本并行生成</b>：
  * <ul>
- * <li><b>冻结版本 ({@link com.ruoyi.product.constant.RevStatus#FROZEN FROZEN})</b>：作为原始数据快照，其内容与导入数据完全一致，系统限制其不可被修改，用于后期审计与溯源。</li>
- * <li><b>编辑版本 ({@link com.ruoyi.product.constant.RevStatus#EDITING EDITING})</b>：作为初始可变副本，后续所有的标题、价格等修改任务均在此版本基础上进行。</li>
+ * <li><b>冻结版本 ({@link com.ruoyi.product.enums.RevStatus#FROZEN FROZEN})</b>：作为原始数据快照，其内容与导入数据完全一致，系统限制其不可被修改，用于后期审计与溯源。</li>
+ * <li><b>编辑版本 ({@link com.ruoyi.product.enums.RevStatus#EDITING EDITING})</b>：作为初始可变副本，后续所有的标题、价格等修改任务均在此版本基础上进行。</li>
  * </ul>
  * </li>
  * <li>2. <b>存储映射</b>：解析 Excel 记录并同步保存至商品快照明细表 {@code goods_revision_item}。</li>

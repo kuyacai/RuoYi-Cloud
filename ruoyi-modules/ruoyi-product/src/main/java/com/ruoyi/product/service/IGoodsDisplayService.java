@@ -4,13 +4,14 @@ import java.util.List;
 import java.util.Map;
 
 import com.ruoyi.product.app.display.GoodsVersionDetail;
-import com.ruoyi.product.constant.ItemTaskStatus;
-import com.ruoyi.product.constant.ItemTaskCode;
+import com.ruoyi.product.enums.ItemTaskCode;
+import com.ruoyi.product.enums.ItemTaskStatus;
 
 public interface IGoodsDisplayService {
 
     /**
      * 获取指定版本ID的版本
+     * 
      * @param revisionId
      * @return
      */
@@ -18,6 +19,7 @@ public interface IGoodsDisplayService {
 
     /**
      * 获取冻结版本
+     * 
      * @param goodsId
      * @return
      */
@@ -25,24 +27,34 @@ public interface IGoodsDisplayService {
 
     /**
      * 获取编辑中的版本
+     * 
      * @param goodsId
      * @return
      */
     public GoodsVersionDetail getEditingVersion(String goodsId);
 
-
     /**
      * 获取审核中的版本
+     * 
      * @param goodsId
      * @return
      */
-    public GoodsVersionDetail getApprovingVersion(String goodsId);
+    public GoodsVersionDetail getAuditingVersion(String goodsId);
+
+    /**
+     * 获取已审核的版本
+     * 
+     * @param goodsId
+     * @return
+     */
+    public GoodsVersionDetail getApprovedVersion(String goodsId);
 
     /**
      * 标题修改任务列表
      * 显示：商品基础信息、主图一张、SPU标题信息、版本状态
      * 不填充：SKU详情、多张图片、详情图等
      * 约定：mainImages 列表只传第一张图（或最多3张），其他图片列表为空
+     * 
      * @param status, 任务状态, null表示全部
      * @return
      */
@@ -53,6 +65,7 @@ public interface IGoodsDisplayService {
      * 显示：商品基础信息、主图一张、SPU标题信息、版本状态
      * 不填充：SKU详情、多张图片、详情图等
      * 约定：mainImages 列表只传第一张图（或最多3张），其他图片列表为空
+     * 
      * @param status, 任务状态, null表示全部
      * @return
      */
@@ -63,6 +76,7 @@ public interface IGoodsDisplayService {
      * 显示：商品基础信息、主图一张、SPU标题信息、版本状态
      * 不填充：SKU详情、多张图片、详情图等
      * 约定：mainImages 列表只传第一张图（或最多3张），其他图片列表为空
+     * 
      * @param status, 任务状态, null表示全部
      * @return
      */
@@ -73,6 +87,7 @@ public interface IGoodsDisplayService {
      * 显示：商品基础信息、主图一张、SPU标题信息、版本状态
      * 不填充：SKU详情、多张图片、详情图等
      * 约定：mainImages 列表只传第一张图（或最多3张），其他图片列表为空
+     * 
      * @param status, 任务状态, null表示全部
      * @return
      */
@@ -83,6 +98,7 @@ public interface IGoodsDisplayService {
      * 显示：商品基础信息、主图一张、SPU标题信息、版本状态
      * 不填充：SKU详情、多张图片、详情图等
      * 约定：mainImages 列表只传第一张图（或最多3张），其他图片列表为空
+     * 
      * @param status, 任务状态, null表示全部
      * @return
      */
@@ -93,6 +109,7 @@ public interface IGoodsDisplayService {
      * 显示：商品基础信息、主图一张、SPU标题信息、版本状态
      * 不填充：SKU详情、多张图片、详情图等
      * 约定：mainImages 列表只传第一张图（或最多3张），其他图片列表为空
+     * 
      * @param status, 任务状态, null表示全部
      * @return
      */
@@ -103,6 +120,7 @@ public interface IGoodsDisplayService {
      * 显示：商品基础信息、主图一张、SPU标题信息、版本状态
      * 不填充：SKU详情、多张图片、详情图等
      * 约定：mainImages 列表只传第一张图（或最多3张），其他图片列表为空
+     * 
      * @param status, 任务状态, null表示全部
      * @return
      */
@@ -113,6 +131,7 @@ public interface IGoodsDisplayService {
      * 显示：商品基础信息、主图一张、SPU标题信息、版本状态
      * 不填充：SKU详情、多张图片、详情图等
      * 约定：mainImages 列表只传第一张图（或最多3张），其他图片列表为空
+     * 
      * @param status, 任务状态, null表示全部
      * @return
      */
@@ -123,6 +142,7 @@ public interface IGoodsDisplayService {
      * 显示：商品基础信息、主图一张、SPU标题信息、版本状态
      * 不填充：SKU详情、多张图片、详情图等
      * 约定：mainImages 列表只传第一张图（或最多3张），其他图片列表为空
+     * 
      * @param status, 任务状态, null表示全部
      * @return
      */
@@ -133,6 +153,7 @@ public interface IGoodsDisplayService {
      * 显示：商品基础信息、主图一张、SPU标题信息、版本状态
      * 不填充：SKU详情、多张图片、详情图等
      * 约定：mainImages 列表只传第一张图（或最多3张），其他图片列表为空
+     * 
      * @param taskCode 任务代码
      * @param status   任务状态, null表示全部
      * @return
@@ -141,6 +162,7 @@ public interface IGoodsDisplayService {
 
     /**
      * 任务详情
+     * 
      * @param task_id
      * @return
      */
@@ -148,23 +170,27 @@ public interface IGoodsDisplayService {
 
     /**
      * 商品详情通过商品ID
+     * 
      * @param goods_id
      * @return
      */
-    public Map<String, GoodsVersionDetail> getGoodsDetailsByGoodsId(String goods_id,List<String> lisRevStatus);
+    public Map<String, GoodsVersionDetail> getGoodsDetailsByGoodsId(String goods_id, List<String> lisRevStatus);
 
     /**
      * 商品详情通过本店商品ID
+     * 
      * @param shopProductId
      * @return
      */
-    public Map<String, GoodsVersionDetail> getGoodsDetailsByShopProductId(String shopProductId,List<String> lisRevStatus);
+    public Map<String, GoodsVersionDetail> getGoodsDetailsByShopProductId(String shopProductId,
+            List<String> lisRevStatus);
 
     /**
      * 商品详情通过来源ID
+     * 
      * @param sourceId
      * @return
      */
-    public Map<String, GoodsVersionDetail> getGoodsDetailsBySourceId(String sourceId,List<String> lisRevStatus);
+    public Map<String, GoodsVersionDetail> getGoodsDetailsBySourceId(String sourceId, List<String> lisRevStatus);
 
 }

@@ -13,12 +13,12 @@ import org.springframework.transaction.annotation.Transactional;
 
 import com.ruoyi.common.core.utils.DateUtils;
 import com.ruoyi.common.core.utils.StringUtils;
-import com.ruoyi.product.constant.AsyncTaskCode;
 import com.ruoyi.product.constant.MQConstant;
-import com.ruoyi.product.constant.RevStatus;
 import com.ruoyi.product.domain.AsyncTask;
 import com.ruoyi.product.domain.GoodsRevision;
+import com.ruoyi.product.enums.AsyncTaskCode;
 import com.ruoyi.product.enums.AsyncTaskStatus;
+import com.ruoyi.product.enums.RevStatus;
 import com.ruoyi.product.mq.dto.AsyncTaskMsg;
 import com.ruoyi.product.service.IAsyncTaskService;
 import com.ruoyi.product.service.IGoodsRevisionService;
@@ -32,13 +32,13 @@ import lombok.extern.slf4j.Slf4j;
  * * <p>核心逻辑：</p>
  * <ul>
  * <li>1. 根据消息携带的 {@code bizId} 审核商品版本信息。</li>
- * <li>2. <b>审核通过</b>：若商品所有任务均通过审核，将商品 {@link com.ruoyi.product.constant.RevStatus#APPROVED APPROVED}。</li>
+ * <li>2. <b>审核通过</b>：若商品所有任务均通过审核，将商品 {@link com.ruoyi.product.enums.RevStatus#APPROVED APPROVED}。</li>
  * <li>3. <b>审核不通过（可修复）</b>：若某项任务审核未通过且需重新修改，将对应任务状态重置为 
- * {@link com.ruoyi.product.constant.ItemTaskStatus#PENDING PENDING}。</li>
+ * {@link com.ruoyi.product.enums.ItemTaskStatus#PENDING PENDING}。</li>
  * <li>4. <b>审核不通过（不可修复）</b>：若认为商品不具备上架性质，则无需退回，直接将商品状态设为 
- * {@link com.ruoyi.product.constant.RevStatus#DISCARDED DISCARDED}。</li>
+ * {@link com.ruoyi.product.enums.RevStatus#DISCARDED DISCARDED}。</li>
  * </ul>
- * * <p>注意：除需要退回修改的任务外，其余任务应保持 {@link com.ruoyi.product.constant.ItemTaskStatus#DONE DONE} 状态。</p>
+ * * <p>注意：除需要退回修改的任务外，其余任务应保持 {@link com.ruoyi.product.enums.ItemTaskStatus#DONE DONE} 状态。</p>
  */
 @Component
 @RocketMQMessageListener(
@@ -158,11 +158,11 @@ public class AuditSpuConsumer implements RocketMQListener<AsyncTaskMsg> {
             throw new RuntimeException("错误的bizId参数，找不到对应的 GoodsRevision，bizId: " + bizId);
         }
 
-        // 2. 验证当前状态是否允许设置为 APPROVING
+        // 2. 验证当前状态是否允许设置为 AUDITING
         validateRevisionStatus(goodsRevision);
 
         // 3. 更新商品修订状态为审核中
-        goodsRevision.setRevStatus(RevStatus.APPROVING.getCode());
+        goodsRevision.setRevStatus(RevStatus.AUDITING);
         goodsRevision.setUpdateTime(DateUtils.getNowDate());
 
         boolean updated = goodsRevisionService.updateById(goodsRevision);
@@ -186,7 +186,7 @@ public class AuditSpuConsumer implements RocketMQListener<AsyncTaskMsg> {
      * 验证商品修订状态
      */
     private void validateRevisionStatus(GoodsRevision goodsRevision) {
-        String currentStatus = goodsRevision.getRevStatus();
+        String currentStatus = goodsRevision.getRevStatus().getCode();
 
         // 只能从特定状态转为 APPROVING
         if (!RevStatus.EDITING.getCode().equals(currentStatus)) {

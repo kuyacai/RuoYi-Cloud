@@ -1,8 +1,16 @@
-package com.ruoyi.product.constant;
+package com.ruoyi.product.enums;
+
+import com.baomidou.mybatisplus.annotation.IEnum;
+import com.fasterxml.jackson.annotation.JsonFormat;
+import com.ruoyi.common.core.enums.BaseEnum;
+import com.ruoyi.common.core.enums.ExposeEnum;
+
 /**
  * 图片类型
  */
-public enum ImageType {
+@ExposeEnum(group = "product", description = "图片类型") // 供 EnumScanner 扫描
+@JsonFormat(shape = JsonFormat.Shape.OBJECT)
+public enum ImageType implements BaseEnum, IEnum<String> {
 
     MAIN("main", "主图"),
     MAIN34("main34", "3:4主图"),
@@ -19,12 +27,19 @@ public enum ImageType {
         this.label = label;
     }
 
+    @Override
     public String getCode() {
         return code;
     }
 
+    @Override
     public String getLabel() {
-        return label;
+        return this.label;
+    }
+
+    @Override
+    public String getValue() {
+        return this.code; // MyBatis Plus 数据库存储值
     }
 
     public static ImageType of(String code) {

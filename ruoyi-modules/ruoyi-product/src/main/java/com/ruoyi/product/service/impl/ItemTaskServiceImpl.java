@@ -11,11 +11,11 @@ import org.springframework.transaction.annotation.Transactional;
 
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.ruoyi.common.core.utils.StringUtils;
-import com.ruoyi.product.constant.AsyncTaskCode;
-import com.ruoyi.product.constant.ItemTaskStatus;
 import com.ruoyi.product.core.mybatisplus.impl.BaseServiceImpl;
 import com.ruoyi.product.domain.ItemTask;
 import com.ruoyi.product.domain.TaskCounter;
+import com.ruoyi.product.enums.AsyncTaskCode;
+import com.ruoyi.product.enums.ItemTaskStatus;
 import com.ruoyi.product.exception.BusinessException;
 import com.ruoyi.product.mapper.ItemTaskMapper;
 import com.ruoyi.product.service.IAsyncTaskService;
@@ -27,6 +27,7 @@ import lombok.extern.slf4j.Slf4j;
 /**
  * 任务实例Service业务层处理
  * * @author Rupert
+ * 
  * @date 2025-12-13
  */
 @Service
@@ -50,7 +51,7 @@ public class ItemTaskServiceImpl extends BaseServiceImpl<ItemTaskMapper, ItemTas
         validateItemTaskForInsert(itemTask);
 
         // 2. 检查是否已存在相同任务（同一biz_id + task_code）
-        ItemTask existingTask = this.getByBizIdAndCode(itemTask.getBizId(), itemTask.getTaskCode());
+        ItemTask existingTask = this.getByBizIdAndCode(itemTask.getBizId(), itemTask.getTaskCode().getCode());
 
         if (existingTask != null) {
             throw new BusinessException("同一业务ID和任务类型的任务已存在");
@@ -61,7 +62,7 @@ public class ItemTaskServiceImpl extends BaseServiceImpl<ItemTaskMapper, ItemTas
 
         if (result) {
             // 4. 更新计数器表（总任务数+1）
-            handleTaskCreation(itemTask.getBizId(), itemTask.getTaskCode());
+            handleTaskCreation(itemTask.getBizId(), itemTask.getTaskCode().getCode());
         }
 
         return result;
@@ -100,8 +101,8 @@ public class ItemTaskServiceImpl extends BaseServiceImpl<ItemTaskMapper, ItemTas
      * 处理任务状态变化
      */
     private void handleTaskStatusChange(ItemTask oldTask, ItemTask newTask) {
-        String oldStatus = oldTask.getTaskStatus();
-        String newStatus = newTask.getTaskStatus();
+        String oldStatus = oldTask.getTaskStatus().getCode();
+        String newStatus = newTask.getTaskStatus().getCode();
 
         if (Objects.equals(oldStatus, newStatus)) {
             return;
@@ -195,7 +196,8 @@ public class ItemTaskServiceImpl extends BaseServiceImpl<ItemTaskMapper, ItemTas
     }
 
     private boolean isBecomingCancelled(String oldStatus, String newStatus) {
-        return !ItemTaskStatus.CANCELLED.getCode().equals(oldStatus) && ItemTaskStatus.CANCELLED.getCode().equals(newStatus);
+        return !ItemTaskStatus.CANCELLED.getCode().equals(oldStatus)
+                && ItemTaskStatus.CANCELLED.getCode().equals(newStatus);
     }
 
     private boolean isCompletedStatus(String status) {
@@ -203,12 +205,16 @@ public class ItemTaskServiceImpl extends BaseServiceImpl<ItemTaskMapper, ItemTas
     }
 
     @Async
-    public void sendTasksNotAllCompletedMessage(String bizId) { }
+    public void sendTasksNotAllCompletedMessage(String bizId) {
+    }
 
     private void validateItemTaskForInsert(ItemTask itemTask) {
-        if (StringUtils.isBlank(itemTask.getBizId())) throw new IllegalArgumentException("业务ID不能为空");
-        if (StringUtils.isBlank(itemTask.getTaskCode())) throw new IllegalArgumentException("任务类型不能为空");
-        if (StringUtils.isBlank(itemTask.getTaskStatus())) throw new IllegalArgumentException("任务状态不能为空");
+        if (StringUtils.isBlank(itemTask.getBizId()))
+            throw new IllegalArgumentException("业务ID不能为空");
+        if (StringUtils.isBlank(itemTask.getTaskCode().getCode()))
+            throw new IllegalArgumentException("任务类型不能为空");
+        if (StringUtils.isBlank(itemTask.getTaskStatus().getCode()))
+            throw new IllegalArgumentException("任务状态不能为空");
     }
 
     @Async

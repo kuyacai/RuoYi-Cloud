@@ -14,10 +14,10 @@ import org.apache.rocketmq.spring.annotation.SelectorType;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
-import com.ruoyi.product.constant.AsyncTaskCode;
 import com.ruoyi.product.constant.MQConstant;
 import com.ruoyi.product.domain.dto.ItemProcessResult;
 import com.ruoyi.product.domain.dto.SimpleProduct;
+import com.ruoyi.product.enums.AsyncTaskCode;
 import com.ruoyi.product.mq.consumer.base.AbstractImportConsumer;
 import com.ruoyi.product.service.impl.PriceImportService;
 import com.ruoyi.product.utils.EnhancedExcelUtil;
@@ -35,7 +35,7 @@ import lombok.extern.slf4j.Slf4j;
  * <ul>
  * <li>基于 {@code goods_id} 锁定状态为 {@code editing} 的版本记录。</li>
  * <li>通过 {@code INNER JOIN} 关联任务代码为 {@code edit_price} 且状态为 
- * {@link com.ruoyi.product.constant.ItemTaskStatus#PENDING PENDING} 的 {@code item_task}。</li>
+ * {@link com.ruoyi.product.enums.ItemTaskStatus#PENDING PENDING} 的 {@code item_task}。</li>
  * <li>过滤掉已删除（{@code sku_status != 'deleted'}）的 SKU 记录。</li>
  * </ul>
  * </li>
@@ -47,7 +47,7 @@ import lombok.extern.slf4j.Slf4j;
  * </ul>
  * </li>
  * <li>4. <b>状态流转</b>：标价更新成功后，将对应的 {@code item_task} 状态设置为 
- * {@link com.ruoyi.product.constant.ItemTaskStatus#DONE DONE}。</li>
+ * {@link com.ruoyi.product.enums.ItemTaskStatus#DONE DONE}。</li>
  * </ul>
  * * <p>Excel 导入项说明：</p>
  * <ul>
