@@ -132,10 +132,10 @@ public class MiaoShouSKU implements Serializable {
     @Excel(name = "售价", type = Type.ALL)
     private BigDecimal price;
 
-    @Excel(name = "最低售价", type = Type.ALL)
+    @Excel(name = "最低价", type = Type.ALL)
     private BigDecimal lowestPrice;
 
-    @Excel(name = "最高售价", type = Type.ALL)
+    @Excel(name = "最高价", type = Type.ALL)
     private BigDecimal highestPrice;
 
     @Excel(name = "SKU条形码", type = Type.ALL)

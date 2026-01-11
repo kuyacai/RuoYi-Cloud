@@ -40,6 +40,7 @@ import com.ruoyi.product.domain.GoodsRevisionSpu;
 import com.ruoyi.product.domain.ItemTask;
 import com.ruoyi.product.domain.dto.ItemProcessResult;
 import com.ruoyi.product.domain.dto.MiaoShouSPU;
+import com.ruoyi.product.enums.CopyStatus;
 import com.ruoyi.product.enums.GoodsStatus;
 import com.ruoyi.product.enums.ImageType;
 import com.ruoyi.product.enums.ItemTaskCode;
@@ -385,7 +386,7 @@ public class SpuImportService {
         s.setSizeChartSizeTitles(spu.getSizeChartSizeTitles());
         s.setSizeChartTemplateName(spu.getSizeChartTemplateName());
         s.setSales(spu.getSales() == null ? 0 : spu.getSales());
-        s.setCopyStatus(spu.getCopyStatus());
+        s.setCopyStatus(CopyStatus.of(spu.getCopyStatus()));
         s.setCopyErrorReason(spu.getCopyErrorReason());
         s.setReviewStatus(ReviewStatus.of(spu.getReviewStatus()));
         s.setShippingMode(spu.getShippingMode());

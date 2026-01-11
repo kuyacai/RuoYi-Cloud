@@ -8,6 +8,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.lang.reflect.Method;
+import java.math.BigDecimal;
 import java.nio.charset.Charset;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -310,6 +311,15 @@ public class SkuImportService {
             log.debug("MiaoShouSKU lowestPrice is :{}", sku.getLowestPrice());
             log.debug("MiaoShouSKU highestPrice is :{}", sku.getHighestPrice());
         }
+        // 金额转为“分"
+        item.setOrignialPrice(sku.getPrice() == null ? 0
+                : sku.getPrice().multiply(BigDecimal.valueOf(100)).longValue());
+
+        item.setLowestPrice(sku.getLowestPrice() == null ? 0
+                : sku.getLowestPrice().multiply(BigDecimal.valueOf(100)).longValue());
+
+        item.setHighestPrice(sku.getHighestPrice() == null ? 0
+                : sku.getHighestPrice().multiply(BigDecimal.valueOf(100)).longValue());
 
         if (log.isDebugEnabled()) {
             log.debug("GoodsRevisionItem price is :{}", item.getOrignialPrice());

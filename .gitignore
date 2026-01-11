@@ -121,3 +121,4 @@ effective-pom.xml
 
 # 临时文档
 doc/
+mysql_backups/
