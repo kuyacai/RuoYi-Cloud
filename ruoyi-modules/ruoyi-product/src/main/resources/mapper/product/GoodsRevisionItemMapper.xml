@@ -1,69 +1,57 @@
-<?xml version="1.0" encoding="UTF-8" ?>
-<!DOCTYPE mapper
-PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
-"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
 <mapper namespace="com.ruoyi.product.mapper.GoodsRevisionItemMapper">
-    
+
     <resultMap type="GoodsRevisionItem" id="GoodsRevisionItemResult">
-        <result property="itemId"    column="item_id"    />
-        <result property="revisionId"    column="revision_id"    />
-        <result property="shopId"    column="shop_id"    />
-        <result property="shopProductId"    column="shop_product_id"    />
-        <result property="shopSkuId"    column="shop_sku_id"    />
-        <result property="skuCode"    column="sku_code"    />
-        <result property="sellerSku"    column="seller_sku"    />
-        <result property="spec1"    column="spec1"    />
-        <result property="spec1Note"    column="spec1_note"    />
-        <result property="spec2"    column="spec2"    />
-        <result property="spec2Note"    column="spec2_note"    />
-        <result property="spec3OrLeadTime"    column="spec3_or_lead_time"    />
-        <result property="spec3Note"    column="spec3_note"    />
-        <result property="inStockQty"    column="in_stock_qty"    />
-        <result property="fullPrepayQty"    column="full_prepay_qty"    />
-        <result property="ship3dQty"    column="ship_3d_qty"    />
-        <result property="ship4dQty"    column="ship_4d_qty"    />
-        <result property="ship5dQty"    column="ship_5d_qty"    />
-        <result property="ship7dQty"    column="ship_7d_qty"    />
-        <result property="ship10dQty"    column="ship_10d_qty"    />
-        <result property="ship15dQty"    column="ship_15d_qty"    />
-        <result property="ship20dQty"    column="ship_20d_qty"    />
-        <result property="ship25dQty"    column="ship_25d_qty"    />
-        <result property="ship30dQty"    column="ship_30d_qty"    />
-        <result property="ship35dQty"    column="ship_35d_qty"    />
-        <result property="ship45dQty"    column="ship_45d_qty"    />
-        <result property="orignialPrice"    column="orignial_price"    />
-        <result property="marketPrice"    column="market_price"    />
-        <result property="lowestPrice"    column="lowest_price"    />
-        <result property="highestPrice"    column="highest_price"    />
-        <result property="skuStatus"    column="sku_status"    />
-        <result property="barcode"    column="barcode"    />
-        <result property="gmtCreate"    column="gmt_create"    />
-        <result property="gmtModified"    column="gmt_modified"    />
+        <result property="itemId" column="item_id" />
+        <result property="revisionId" column="revision_id" />
+        <result property="shopId" column="shop_id" />
+        <result property="shopProductId" column="shop_product_id" />
+        <result property="shopSkuId" column="shop_sku_id" />
+        <result property="skuCode" column="sku_code" />
+        <result property="sellerSku" column="seller_sku" />
+        <result property="spec1" column="spec1" />
+        <result property="spec1Note" column="spec1_note" />
+        <result property="spec2" column="spec2" />
+        <result property="spec2Note" column="spec2_note" />
+        <result property="spec3OrLeadTime" column="spec3_or_lead_time" />
+        <result property="spec3Note" column="spec3_note" />
+        <result property="inStockQty" column="in_stock_qty" />
+        <result property="fullPrepayQty" column="full_prepay_qty" />
+        <result property="ship3dQty" column="ship_3d_qty" />
+        <result property="ship4dQty" column="ship_4d_qty" />
+        <result property="ship5dQty" column="ship_5d_qty" />
+        <result property="ship7dQty" column="ship_7d_qty" />
+        <result property="ship10dQty" column="ship_10d_qty" />
+        <result property="ship15dQty" column="ship_15d_qty" />
+        <result property="ship20dQty" column="ship_20d_qty" />
+        <result property="ship25dQty" column="ship_25d_qty" />
+        <result property="ship30dQty" column="ship_30d_qty" />
+        <result property="ship35dQty" column="ship_35d_qty" />
+        <result property="ship45dQty" column="ship_45d_qty" />
+        <result property="orignialPrice" column="orignial_price" />
+        <result property="marketPrice" column="market_price" />
+        <result property="lowestPrice" column="lowest_price" />
+        <result property="highestPrice" column="highest_price" />
+        <result property="skuStatus" column="sku_status" />
+        <result property="barcode" column="barcode" />
+        <result property="createdAtUtc" column="created_at_utc" />
+        <result property="updatedAtUtc" column="updated_at_utc" />
 
         <!-- 新增的关联字段映射 -->
-        <result property="taskId" column="task_id"/>
-        <result property="taskCode" column="task_code"/>
-        <result property="taskStatus" column="task_status"/>
+        <result property="taskId" column="task_id" />
+        <result property="taskCode" column="task_code" />
+        <result property="taskStatus" column="task_status" />
     </resultMap>
 
-    
-    <select id="selectSkusNeedPriceUpdate" parameterType="String" resultMap="GoodsRevisionItemResult">
-        SELECT 
-            gri.*,
-            it.task_id,
-            it.task_code,
-            it.task_status
-        FROM goods_revision_item gri
-        INNER JOIN goods_revision gr ON gri.revision_id = gr.revision_id
-        LEFT JOIN item_task it ON gr.revision_id = it.biz_id 
-            AND it.task_status = 'pending' 
-            AND it.task_code = 'edit_price'
-        WHERE gr.goods_id = #{goodsId}
-            AND gr.rev_status = 'editing'
-            AND gri.sku_status != 'deleted'
-            AND it.task_id IS NOT NULL
-        ORDER BY gri.orignial_price ASC
-    </select>
 
-    
+    <select id="selectSkusNeedPriceUpdate" parameterType="String"
+        resultMap="GoodsRevisionItemResult"> SELECT gri.*, it.task_id, it.task_code, it.task_status
+        FROM goods_revision_item gri INNER JOIN goods_revision gr ON gri.revision_id =
+        gr.revision_id LEFT JOIN item_task it ON gr.revision_id = it.biz_id AND it.task_status =
+        'pending' AND it.task_code = 'edit_price' WHERE gr.goods_id = #{goodsId} AND gr.rev_status =
+        'editing' AND gri.sku_status != 'deleted' AND it.task_id IS NOT NULL ORDER BY
+        gri.orignial_price ASC </select>
+
+
 </mapper>

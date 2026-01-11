@@ -18,8 +18,8 @@
         <result property="shippingMode" column="shipping_mode" />
         <result property="inStockShipTime" column="in_stock_ship_time" />
         <result property="presaleShipTime" column="presale_ship_time" />
-        <result property="gmtCreate" column="gmt_create" />
-        <result property="gmtModified" column="gmt_modified" />
+        <result property="createdAtUtc" column="created_at_utc" />
+        <result property="updatedAtUtc" column="updated_at_utc" />
         <!-- 新增的关联字段映射 -->
         <result property="taskId" column="task_id" />
         <result property="taskCode" column="task_code" />
@@ -31,6 +31,6 @@
         JOIN goods_revision gr ON gri.revision_id = gr.revision_id LEFT JOIN item_task it ON
         gr.revision_id = it.biz_id AND it.task_status = 'pending' AND it.task_code = 'edit_title'
         WHERE gr.goods_id = #{goodsId} AND gr.rev_status = 'editing' AND it.task_id IS NOT NULL
-        ORDER BY gri.gmt_modified DESC </select>
+        ORDER BY gri.updated_at_utc DESC </select>
 
 </mapper>
