@@ -1,11 +1,10 @@
 package com.ruoyi.product.domain;
 
-import java.util.Date;
+import java.time.Instant;
 
 import com.baomidou.mybatisplus.annotation.IdType;
 import com.baomidou.mybatisplus.annotation.TableId;
 import com.baomidou.mybatisplus.annotation.TableName;
-import com.fasterxml.jackson.annotation.JsonFormat;
 import com.ruoyi.product.core.mybatisplus.ProductBaseEntity;
 
 import lombok.Data;
@@ -48,11 +47,9 @@ public class PlatformPromotionActivity extends ProductBaseEntity {
 
     private String configId;
 
-    @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")
-    private Date startTime;
+    private Instant startTimeUtc;
 
-    @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")
-    private Date endTime;
+    private Instant endTimeUtc;
 
     private String discountStatus;
 
@@ -60,6 +57,6 @@ public class PlatformPromotionActivity extends ProductBaseEntity {
 
     private String notes;
 
-    private Date applyDeadline;
+    private Instant applyDeadlineUtc;
 
 }

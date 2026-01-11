@@ -51,7 +51,7 @@ public class AsyncTaskController extends BaseController {
         LambdaQueryWrapper<AsyncTask> lqw = new LambdaQueryWrapper<>();
         lqw.like(StringUtils.hasText(asyncTask.getTaskName()), AsyncTask::getTaskName, asyncTask.getTaskName())
                 .eq(asyncTask.getTaskStatus() != null, AsyncTask::getTaskStatus, asyncTask.getTaskStatus())
-                .orderByDesc(AsyncTask::getGmtCreate); // 使用您的 gmtCreate 字段
+                .orderByDesc(AsyncTask::getCreatedAtUtc); // 使用您的 gmtCreate 字段
 
         List<AsyncTask> list = asyncTaskService.list(lqw); // list 是 IService 提供的原生方法
         return getDataTable(list);

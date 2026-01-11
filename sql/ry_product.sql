@@ -20,8 +20,8 @@ CREATE TABLE IF NOT EXISTS goods (
     shop_product_id     VARCHAR(64) COMMENT '本店商品ID',
     shop_id             VARCHAR(32) COMMENT '店铺ID',
     goods_status        VARCHAR(20) COMMENT '商品状态',
-    gmt_create          DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3) COMMENT '创建时间',
-    gmt_modified        DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3) ON UPDATE CURRENT_TIMESTAMP(3) COMMENT '修改时间'
+    created_at_utc      DATETIME(3) NOT NULL COMMENT '创建时间',
+    updated_at_utc      DATETIME(3) NOT NULL  COMMENT '修改时间'
 ) ENGINE = InnoDB COMMENT ='云商品根表';
 
 -- 2. 商品版本
@@ -32,8 +32,8 @@ CREATE TABLE IF NOT EXISTS goods_revision (
     goods_id            CHAR(32) NOT NULL COMMENT '商品ID',
     rev_status          VARCHAR(32) COMMENT '版本状态',
     revision_type       VARCHAR(32) COMMENT '版本类型',
-    gmt_create          DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3) COMMENT '创建时间',
-    gmt_modified        DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3) ON UPDATE CURRENT_TIMESTAMP(3) COMMENT '修改时间'
+    created_at_utc      DATETIME(3) NOT NULL COMMENT '创建时间',
+    updated_at_utc      DATETIME(3) NOT NULL  COMMENT '修改时间'
 ) ENGINE = InnoDB COMMENT ='商品版本';
 
 -- 3. SPU 快照（整行覆盖，无字段级补丁）
@@ -61,8 +61,8 @@ CREATE TABLE IF NOT EXISTS goods_revision_spu (
     video_script                TEXT COMMENT '视频脚本',
     in_stock_ship_time          VARCHAR(32) COMMENT '现货发货时间',
     presale_ship_time           VARCHAR(32) COMMENT '预售发货时间',
-    gmt_create                  DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3) COMMENT '创建时间',
-    gmt_modified                DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3) ON UPDATE CURRENT_TIMESTAMP(3) COMMENT '修改时间'
+    created_at_utc              DATETIME(3) NOT NULL COMMENT '创建时间',
+    updated_at_utc              DATETIME(3) NOT NULL  COMMENT '修改时间'
 ) ENGINE = InnoDB COMMENT ='SPU 快照';
 
 -- 4. goods 图片
@@ -77,8 +77,8 @@ CREATE TABLE IF NOT EXISTS goods_revision_image (
     self_url                    TEXT COMMENT '自建URL',
     local_uri                   TEXT COMMENT '本地URI',
     position                    INT NOT NULL COMMENT '排序位置',
-    gmt_create                  DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3) COMMENT '创建时间',
-    gmt_modified        DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3) ON UPDATE CURRENT_TIMESTAMP(3) COMMENT '修改时间'
+    created_at_utc              DATETIME(3) NOT NULL COMMENT '创建时间',
+    updated_at_utc              DATETIME(3) NOT NULL  COMMENT '修改时间'
 ) ENGINE = InnoDB COMMENT ='goods 图片';
 
 -- 4. SKU 快照
@@ -116,8 +116,8 @@ CREATE TABLE IF NOT EXISTS goods_revision_item (
     highest_price               BIGINT COMMENT '最高价（分）',
     sku_status                  VARCHAR(32) COMMENT 'SKU状态',
     barcode                     VARCHAR(64) COMMENT '条形码',
-    gmt_create                  DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3) COMMENT '创建时间',
-    gmt_modified        DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3) ON UPDATE CURRENT_TIMESTAMP(3) COMMENT '修改时间'
+    created_at_utc              DATETIME(3) NOT NULL COMMENT '创建时间',
+    updated_at_utc              DATETIME(3) NOT NULL  COMMENT '修改时间'
 ) ENGINE = InnoDB COMMENT ='SKU 快照';
 
 -- 5. 店铺
@@ -129,8 +129,8 @@ CREATE TABLE IF NOT EXISTS shop (
     owner_id                    VARCHAR(32) NOT NULL COMMENT '所有者ID',
     shop_status                 VARCHAR(20) NOT NULL COMMENT '店铺状态',
     shop_description            TEXT COMMENT '店铺描述',
-    gmt_create                  DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3) COMMENT '创建时间',
-    gmt_modified                DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3) ON UPDATE CURRENT_TIMESTAMP(3) COMMENT '修改时间'
+    created_at_utc              DATETIME(3) NOT NULL COMMENT '创建时间',
+    updated_at_utc              DATETIME(3) NOT NULL  COMMENT '修改时间'
 ) ENGINE = InnoDB COMMENT ='店铺表';
 
 -- 6. 店铺 SPU 级上架开关
@@ -143,8 +143,8 @@ CREATE TABLE IF NOT EXISTS shop_listing_spu (
     category                    VARCHAR(255) COMMENT '类目',
     product_url                 TEXT COMMENT '商品链接',
     curr_status                 VARCHAR(20) NOT NULL COMMENT '当前状态',
-    gmt_create                  DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3) COMMENT '创建时间',
-    gmt_modified                DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3) ON UPDATE CURRENT_TIMESTAMP(3) COMMENT '修改时间'
+    created_at_utc               DATETIME(3) NOT NULL COMMENT '创建时间',
+    updated_at_utc               DATETIME(3) NOT NULL  COMMENT '修改时间'
 ) ENGINE = InnoDB COMMENT ='店铺商品同步状态表';
 
 -- 7. 店铺 SKU 级二次定价/库存
@@ -159,8 +159,8 @@ CREATE TABLE IF NOT EXISTS shop_listing_sku (
     market_price                BIGINT COMMENT '市场价（分）',
     channel_stock               INT NOT NULL COMMENT '渠道库存',
     sku_status                  VARCHAR(20) NOT NULL COMMENT 'SKU状态',
-    gmt_create                  DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3) COMMENT '创建时间',
-    gmt_modified                DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3) ON UPDATE CURRENT_TIMESTAMP(3) COMMENT '修改时间'
+    created_at_utc              DATETIME(3) NOT NULL COMMENT '创建时间',
+    updated_at_utc              DATETIME(3) NOT NULL  COMMENT '修改时间'
 ) ENGINE = InnoDB COMMENT ='店铺商品SKU同步状态表';
 
 -- 9. 任务实例
@@ -171,8 +171,8 @@ CREATE TABLE IF NOT EXISTS item_task (
     task_code                   VARCHAR(64) NOT NULL COMMENT '任务代码',
     biz_id                      VARCHAR(64) NOT NULL COMMENT '业务ID(revision_id)',
     task_status                 VARCHAR(20) NOT NULL COMMENT '任务状态',
-    gmt_create                  DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3) COMMENT '创建时间',
-    gmt_modified                DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3) ON UPDATE CURRENT_TIMESTAMP(3) COMMENT '修改时间'
+    created_at_utc              DATETIME(3) NOT NULL COMMENT '创建时间',
+    updated_at_utc              DATETIME(3) NOT NULL  COMMENT '修改时间'
 ) ENGINE = InnoDB COMMENT ='任务实例表';
 
 -- 任务计数器表（保持与业务解耦）
@@ -180,12 +180,12 @@ CREATE TABLE IF NOT EXISTS task_counter (
     biz_id                      VARCHAR(64) PRIMARY KEY COMMENT '业务ID',
     total_tasks                 INT NOT NULL DEFAULT 0 COMMENT '总任务数',
     completed_tasks             INT NOT NULL DEFAULT 0 COMMENT '已完成任务数',
-    last_check_time             DATETIME(3) DEFAULT CURRENT_TIMESTAMP(3) COMMENT '最后检查时间',
+    last_check_time_utc         DATETIME(3) NOT NULL COMMENT '最后检查时间',
     notified_status             VARCHAR(20) DEFAULT 'pending' COMMENT '通知状态: pending/notified',
-    notified_time               DATETIME(3) NULL COMMENT '通知时间',
+    notified_time_utc           DATETIME(3) NULL COMMENT '通知时间',
     retry_count                 INT DEFAULT 0 COMMENT '重试次数',
-    gmt_create                  DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3) COMMENT '创建时间',
-    gmt_modified                DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3) ON UPDATE CURRENT_TIMESTAMP(3) COMMENT '修改时间',
+    created_at_utc              DATETIME(3) NOT NULL COMMENT '创建时间',
+    updated_at_utc              DATETIME(3) NOT NULL  COMMENT '修改时间',
     INDEX idx_check_time (last_check_time)
 ) ENGINE = InnoDB COMMENT ='任务计数器表';
 
@@ -198,8 +198,8 @@ CREATE TABLE IF NOT EXISTS price_reference (
     effective_marked_price      BIGINT COMMENT '生效标价',
     reference_shipping_fee      BIGINT COMMENT '参考运费',
     actual_discount_amount      BIGINT COMMENT '实际立减金额',
-    gmt_create                  DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3) COMMENT '创建时间',
-    gmt_modified                DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3) ON UPDATE CURRENT_TIMESTAMP(3) COMMENT '修改时间'
+    created_at_utc              DATETIME(3) NOT NULL COMMENT '创建时间',
+    updated_at_utc              DATETIME(3) NOT NULL  COMMENT '修改时间'
 ) ENGINE = InnoDB COMMENT ='价格参考表';
 
 -- 定价倍数表
@@ -208,8 +208,8 @@ CREATE TABLE IF NOT EXISTS pricing_multiplier (
     price_min                   BIGINT COMMENT '最低价格',
     price_max                   BIGINT COMMENT '最高价格',
     multiplier                  BIGINT COMMENT '倍数',
-    gmt_create                  DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3) COMMENT '创建时间',
-    gmt_modified                DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3) ON UPDATE CURRENT_TIMESTAMP(3) COMMENT '修改时间'
+    created_at_utc              DATETIME(3) NOT NULL COMMENT '创建时间',
+    updated_at_utc              DATETIME(3) NOT NULL  COMMENT '修改时间'
 ) ENGINE = InnoDB COMMENT ='定价倍数表';
 
 -- 单品直降配置表
@@ -222,8 +222,8 @@ CREATE TABLE IF NOT EXISTS direct_discount (
     discount_rate               BIGINT COMMENT '折扣率',
     actual_discount_amount      BIGINT COMMENT '实际折扣金额',
     config_status               VARCHAR(20) COMMENT '折扣状态',
-    gmt_create                  DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3) COMMENT '创建时间',
-    gmt_modified                DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3) ON UPDATE CURRENT_TIMESTAMP(3) COMMENT '修改时间'
+    created_at_utc              DATETIME(3) NOT NULL COMMENT '创建时间',
+    updated_at_utc              DATETIME(3) NOT NULL  COMMENT '修改时间'
 ) ENGINE = InnoDB COMMENT ='单品直降配置表';
 
 -- 单品直降活动表
@@ -234,13 +234,13 @@ CREATE TABLE IF NOT EXISTS direct_discount_activity (
     activity_name               VARCHAR(200) NOT NULL COMMENT '活动名称',
     shop_id                     CHAR(32) NOT NULL COMMENT '店铺ID',
     discount_type               VARCHAR(50) NOT NULL COMMENT '折扣类型',  
-    start_time                  DATETIME(3) COMMENT '开始时间',
-    end_time                    DATETIME(3) COMMENT '结束时间',
+    start_time_utc              DATETIME(3) COMMENT '开始时间',
+    end_time_utc                DATETIME(3) COMMENT '结束时间',
     discount_status             VARCHAR(20) DEFAULT 'draft' COMMENT '折扣状态', 
     platform_activity_id        VARCHAR(100) COMMENT '平台活动ID',          
     notes                       TEXT COMMENT '备注',
-    gmt_create                  DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3) COMMENT '创建时间',
-    gmt_modified                DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3) ON UPDATE CURRENT_TIMESTAMP(3) COMMENT '修改时间'
+    created_at_utc              DATETIME(3) NOT NULL COMMENT '创建时间',
+    updated_at_utc              DATETIME(3) NOT NULL  COMMENT '修改时间'
 ) ENGINE = InnoDB COMMENT ='单品直降活动表';
 
 -- 单品直降活动商品表
@@ -255,12 +255,12 @@ CREATE TABLE IF NOT EXISTS direct_discount_product (
     discount_rate               BIGINT COMMENT '折扣率（9000表示0.9）',               
     user_limit                  INTEGER DEFAULT 1 COMMENT '限购数量',      
     item_status                 VARCHAR(20) DEFAULT 'active' COMMENT '商品状态(active/removed)',  
-    added_time                  DATETIME(3) DEFAULT CURRENT_TIMESTAMP(3) COMMENT '添加时间',
-    removed_time                DATETIME(3) COMMENT '移除时间',
+    added_time_utc              DATETIME(3) COMMENT '添加时间',
+    removed_time_utc            DATETIME(3) COMMENT '移除时间',
     platform_sync_status        VARCHAR(20) DEFAULT 'pending' COMMENT '平台同步状态(pending/synced/failed)',  
     platform_error_msg          TEXT COMMENT '平台错误信息',
-    gmt_create                  DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3) COMMENT '创建时间',
-    gmt_modified                DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3) ON UPDATE CURRENT_TIMESTAMP(3) COMMENT '修改时间'
+    created_at_utc              DATETIME(3) NOT NULL COMMENT '创建时间',
+    updated_at_utc              DATETIME(3) NOT NULL  COMMENT '修改时间'
 ) ENGINE = InnoDB COMMENT ='单品直降活动商品表';
 
 -- 新用户礼包 ------
@@ -275,8 +275,8 @@ CREATE TABLE IF NOT EXISTS new_user_gift_config (
     reference_amount_high       BIGINT COMMENT '参考金额上限',
     discount_rate               BIGINT COMMENT '折扣率',
     config_status               VARCHAR(20) COMMENT '配置状态',
-    gmt_create                  DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3) COMMENT '创建时间',
-    gmt_modified                DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3) ON UPDATE CURRENT_TIMESTAMP(3) COMMENT '修改时间'
+    created_at_utc              DATETIME(3) NOT NULL COMMENT '创建时间',
+    updated_at_utc              DATETIME(3) NOT NULL  COMMENT '修改时间'
 ) ENGINE = InnoDB COMMENT ='新用户礼包配置表';
 
 CREATE TABLE IF NOT EXISTS new_user_gift_activity (
@@ -286,14 +286,14 @@ CREATE TABLE IF NOT EXISTS new_user_gift_activity (
     deduction_amount            BIGINT COMMENT '立减金额（分）',                
     discount_rate               BIGINT COMMENT '折扣率（9000表示0.9）',                
     shop_id                     CHAR(32) NOT NULL COMMENT '店铺ID',
-    start_time                  DATETIME(3) COMMENT '开始时间',
-    end_time                    DATETIME(3) COMMENT '结束时间',
+    start_time_utc              DATETIME(3) COMMENT '开始时间',
+    end_time_utc                DATETIME(3) COMMENT '结束时间',
     activity_status             VARCHAR(20) DEFAULT 'draft' COMMENT '活动状态(draft/active/ended)',  
     platform_activity_id        VARCHAR(100) COMMENT '平台活动ID',           
     notes                       TEXT COMMENT '备注',
     min_order_amount            BIGINT COMMENT '最低订单金额限制（分）',                
-    gmt_create                  DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3) COMMENT '创建时间',
-    gmt_modified                DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3) ON UPDATE CURRENT_TIMESTAMP(3) COMMENT '修改时间'
+    created_at_utc              DATETIME(3) NOT NULL COMMENT '创建时间',
+    updated_at_utc              DATETIME(3) NOT NULL  COMMENT '修改时间'
 ) ENGINE = InnoDB COMMENT ='新用户礼包活动表';
 
 CREATE TABLE IF NOT EXISTS new_user_gift_product (
@@ -304,12 +304,12 @@ CREATE TABLE IF NOT EXISTS new_user_gift_product (
     avg_amount                  BIGINT COMMENT '平均金额',
     max_gift_amount             BIGINT COMMENT '最大礼包金额',
     item_status                 VARCHAR(20) DEFAULT 'active' COMMENT '商品状态(active/removed)',  
-    added_time                  DATETIME(3) COMMENT '添加时间',
-    removed_time                DATETIME(3) COMMENT '移除时间',
+    added_time_utc                  DATETIME(3) COMMENT '添加时间',
+    removed_time_utc                DATETIME(3) COMMENT '移除时间',
     platform_sync_status        VARCHAR(20) DEFAULT 'pending' COMMENT '平台同步状态(pending/synced/failed)',  
     platform_error_msg          TEXT COMMENT '平台错误信息',
-    gmt_create                  DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3) COMMENT '创建时间',
-    gmt_modified                DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3) ON UPDATE CURRENT_TIMESTAMP(3) COMMENT '修改时间'
+    created_at_utc              DATETIME(3) NOT NULL COMMENT '创建时间',
+    updated_at_utc              DATETIME(3) NOT NULL  COMMENT '修改时间'
 ) ENGINE = InnoDB COMMENT ='新用户礼包活动商品表';
 
 -- 通用商品优惠券配置 ------
@@ -326,8 +326,8 @@ CREATE TABLE IF NOT EXISTS product_discount_config (
     recommended_quantity        INTEGER COMMENT '推荐数量',
     config_status               VARCHAR(20) COMMENT '折扣状态',
     discount_type               VARCHAR(20) COMMENT '折扣类型',
-    gmt_create                  DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3) COMMENT '创建时间',
-    gmt_modified                DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3) ON UPDATE CURRENT_TIMESTAMP(3) COMMENT '修改时间'
+    created_at_utc              DATETIME(3) NOT NULL COMMENT '创建时间',
+    updated_at_utc              DATETIME(3) NOT NULL  COMMENT '修改时间'
 ) ENGINE = InnoDB COMMENT ='商品优惠配置表';
 
 CREATE TABLE IF NOT EXISTS product_discount_activity (
@@ -337,14 +337,14 @@ CREATE TABLE IF NOT EXISTS product_discount_activity (
     deduction_amount            BIGINT COMMENT '立减金额（分）',                
     discount_rate               BIGINT COMMENT '折扣率（9000表示0.9）',                
     shop_id                     CHAR(32) NOT NULL COMMENT '店铺ID',
-    start_time                  DATETIME(3) COMMENT '开始时间',
-    end_time                    DATETIME(3) COMMENT '结束时间',
+    start_time_utc              DATETIME(3) COMMENT '开始时间',
+    end_time_utc                DATETIME(3) COMMENT '结束时间',
     activity_status             VARCHAR(20) DEFAULT 'draft' COMMENT '活动状态(draft/active/ended)',  
     platform_activity_id        VARCHAR(100) COMMENT '平台活动ID',           
     user_limit                  INTEGER DEFAULT 1 COMMENT '每人限领次数（通常为1）',      
     notes                       TEXT COMMENT '备注',
-    gmt_create                  DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3) COMMENT '创建时间',
-    gmt_modified                DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3) ON UPDATE CURRENT_TIMESTAMP(3) COMMENT '修改时间'
+    created_at_utc              DATETIME(3) NOT NULL COMMENT '创建时间',
+    updated_at_utc              DATETIME(3) NOT NULL  COMMENT '修改时间'
 ) ENGINE = InnoDB COMMENT ='商品优惠活动表';
 
 CREATE TABLE IF NOT EXISTS product_discount_product (
@@ -353,12 +353,12 @@ CREATE TABLE IF NOT EXISTS product_discount_product (
     shop_product_id             VARCHAR(64) NOT NULL COMMENT '店铺商品ID',
     shop_id                     VARCHAR(64) NOT NULL COMMENT '店铺ID',  
     item_status                 VARCHAR(20) DEFAULT 'active' COMMENT '商品状态(active/removed)',  
-    added_time                  DATETIME(3) COMMENT '添加时间',
-    removed_time                DATETIME(3) COMMENT '移除时间',
+    added_time_utc              DATETIME(3) COMMENT '添加时间',
+    removed_time_utc            DATETIME(3) COMMENT '移除时间',
     platform_sync_status        VARCHAR(20) DEFAULT 'pending' COMMENT '平台同步状态(pending/synced/failed)',  
     platform_error_msg          TEXT COMMENT '平台错误信息',
-    gmt_create                  DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3) COMMENT '创建时间',
-    gmt_modified                DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3) ON UPDATE CURRENT_TIMESTAMP(3) COMMENT '修改时间'
+    created_at_utc              DATETIME(3) NOT NULL COMMENT '创建时间',
+    updated_at_utc              DATETIME(3) NOT NULL  COMMENT '修改时间'
 ) ENGINE = InnoDB COMMENT ='商品优惠活动商品表';
 
 -- 复购券配置
@@ -375,8 +375,8 @@ CREATE TABLE IF NOT EXISTS repurchase_coupon_config (
     config_status               VARCHAR(20) COMMENT '折扣状态',
     discount_type               VARCHAR(20) COMMENT '折扣类型',
     recommended_quantity        INTEGER COMMENT '推荐数量',
-    gmt_create                  DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3) COMMENT '创建时间',
-    gmt_modified                DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3) ON UPDATE CURRENT_TIMESTAMP(3) COMMENT '修改时间'
+    created_at_utc              DATETIME(3) NOT NULL COMMENT '创建时间',
+    updated_at_utc              DATETIME(3) NOT NULL  COMMENT '修改时间'
 ) ENGINE = InnoDB COMMENT = '复购券配置表';
 
 -- 复购券活动
@@ -387,15 +387,15 @@ CREATE TABLE IF NOT EXISTS repurchase_coupon_activity (
     deduction_amount            BIGINT COMMENT '立减金额（分）',                
     discount_rate               BIGINT COMMENT '折扣率（9000表示0.9）',                
     shop_id                     CHAR(32) NOT NULL COMMENT '店铺ID',
-    start_time                  DATETIME(3) COMMENT '开始时间',
-    end_time                    DATETIME(3) COMMENT '结束时间',
+    start_time_utc              DATETIME(3) COMMENT '开始时间',
+    end_time_utc                DATETIME(3) COMMENT '结束时间',
     activity_status             VARCHAR(20) DEFAULT 'draft' COMMENT '活动状态(draft/active/ended)',  
     platform_activity_id        VARCHAR(100) COMMENT '平台活动ID',           
     notes                       TEXT COMMENT '备注',
     min_order_count             INTEGER DEFAULT 1 COMMENT '最低购买次数门槛',      
     user_limit                  INTEGER DEFAULT 1 COMMENT '用户限领次数',      
-    gmt_create                  DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3) COMMENT '创建时间',
-    gmt_modified                DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3) ON UPDATE CURRENT_TIMESTAMP(3) COMMENT '修改时间'
+    created_at_utc              DATETIME(3) NOT NULL COMMENT '创建时间',
+    updated_at_utc              DATETIME(3) NOT NULL  COMMENT '修改时间'
 ) ENGINE = InnoDB COMMENT = '复购券活动表';
 
 CREATE TABLE IF NOT EXISTS `repurchase_coupon_product` (
@@ -404,12 +404,12 @@ CREATE TABLE IF NOT EXISTS `repurchase_coupon_product` (
     shop_product_id             VARCHAR(64) NOT NULL COMMENT '店铺商品ID',
     shop_id                     VARCHAR(64) NOT NULL COMMENT '店铺ID',    
     item_status                 VARCHAR(20) DEFAULT 'active' COMMENT '商品状态(active/removed)',  
-    added_time                  DATETIME(3) COMMENT '添加时间',
-    removed_time                DATETIME(3) COMMENT '移除时间',
+    added_time_utc              DATETIME(3) COMMENT '添加时间',
+    removed_time_utc            DATETIME(3) COMMENT '移除时间',
     platform_sync_status        VARCHAR(20) DEFAULT 'pending' COMMENT '平台同步状态(pending/synced/failed)',  
     platform_error_msg          TEXT COMMENT '平台错误信息',
-    gmt_create                  DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3) COMMENT '创建时间',
-    gmt_modified                DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3) ON UPDATE CURRENT_TIMESTAMP(3) COMMENT '修改时间'
+    created_at_utc              DATETIME(3) NOT NULL COMMENT '创建时间',
+    updated_at_utc              DATETIME(3) NOT NULL  COMMENT '修改时间'
 ) ENGINE = InnoDB COMMENT = '复购券活动商品表';
 
 -- 平台促销配置
@@ -426,8 +426,8 @@ CREATE TABLE IF NOT EXISTS `platform_promotion_config` (
     config_status               VARCHAR(20) COMMENT '折扣状态',
     discount_type               VARCHAR(20) COMMENT '折扣类型',
     recommended_quantity        INTEGER COMMENT '推荐数量',
-    gmt_create                  DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3) COMMENT '创建时间',
-    gmt_modified                DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3) ON UPDATE CURRENT_TIMESTAMP(3) COMMENT '修改时间'
+    created_at_utc              DATETIME(3) NOT NULL COMMENT '创建时间',
+    updated_at_utc              DATETIME(3) NOT NULL  COMMENT '修改时间'
 ) ENGINE = InnoDB COMMENT = '平台促销配置表';
 
 -- 平台促销活动
@@ -442,14 +442,14 @@ CREATE TABLE IF NOT EXISTS `platform_promotion_activity` (
     platform_type               VARCHAR(20) DEFAULT 'douyin' COMMENT '平台类型',
     event_code                  VARCHAR(100) COMMENT '平台大促活动编码',           
     shop_id                     CHAR(32) NOT NULL COMMENT '店铺ID',
-    start_time                  DATETIME(3) COMMENT '开始时间',
-    end_time                    DATETIME(3) COMMENT '结束时间',
+    start_time_utc              DATETIME(3) COMMENT '开始时间',
+    end_time_utc                DATETIME(3) COMMENT '结束时间',
     discount_status             VARCHAR(20) DEFAULT 'draft' COMMENT '折扣状态(draft/active/ended)',  
     platform_activity_id        VARCHAR(100) COMMENT '平台活动ID',           
     notes                       TEXT COMMENT '备注',
-    apply_deadline              DATETIME(3) COMMENT '报名截止时间',           
-    gmt_create                  DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3) COMMENT '创建时间',
-    gmt_modified                DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3) ON UPDATE CURRENT_TIMESTAMP(3) COMMENT '修改时间'
+    apply_deadline_utc          DATETIME(3) COMMENT '报名截止时间',           
+    created_at_utc              DATETIME(3) NOT NULL COMMENT '创建时间',
+    updated_at_utc              DATETIME(3) NOT NULL  COMMENT '修改时间'
 ) ENGINE = InnoDB COMMENT = '平台促销活动表';
 
 -- 平台促销活动商品
@@ -459,12 +459,12 @@ CREATE TABLE IF NOT EXISTS `platform_promotion_product` (
     shop_product_id             VARCHAR(64) NOT NULL COMMENT '店铺商品ID',  
     shop_id                     VARCHAR(64) NOT NULL COMMENT '店铺ID',  
     item_status                 VARCHAR(20) DEFAULT 'active' COMMENT '商品状态(active/removed)',  
-    added_time                  DATETIME(3) COMMENT '添加时间',
-    removed_time                DATETIME(3) COMMENT '移除时间',
+    added_time_utc              DATETIME(3) COMMENT '添加时间',
+    removed_time_utc            DATETIME(3) COMMENT '移除时间',
     platform_sync_status        VARCHAR(20) DEFAULT 'pending' COMMENT '平台同步状态(pending/synced/failed)',  
     platform_error_msg          TEXT COMMENT '平台错误信息',
-    gmt_create                  DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3) COMMENT '创建时间',
-    gmt_modified                DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3) ON UPDATE CURRENT_TIMESTAMP(3) COMMENT '修改时间'
+    created_at_utc              DATETIME(3) NOT NULL COMMENT '创建时间',
+    updated_at_utc              DATETIME(3) NOT NULL  COMMENT '修改时间'
 ) ENGINE = InnoDB COMMENT = '平台促销活动商品表';
 
 CREATE TABLE IF NOT EXISTS `async_task` (
@@ -482,10 +482,47 @@ CREATE TABLE IF NOT EXISTS `async_task` (
   `fail_file_url`       varchar(255) DEFAULT NULL COMMENT '失败文件URL',
   `exported_file_url`   TEXT         DEFAULT NULL COMMENT '导出文件链接',
   `task_status`         varchar(20)  DEFAULT 'init' COMMENT '任务状态',
-  `finish_time`         datetime     DEFAULT NULL COMMENT '完成时间',
+  `finish_time_utc`     DATETIME(3)  DEFAULT NULL COMMENT '完成时间',
   `params_map`          TEXT         DEFAULT NULL COMMENT '附加参数',
-  `gmt_create`          DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3) COMMENT '创建时间',
-  `gmt_modified`        DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3) ON UPDATE CURRENT_TIMESTAMP(3), 
+  `created_at_utc`      DATETIME(3)  NOT NULL COMMENT '创建时间',
+  `updated_at_utc`      DATETIME(3)  NOT NULL , 
   INDEX idx_code_status (task_code, task_status),
-  INDEX idx_create_time (gmt_create)
+  INDEX idx_create_time (created_at_utc)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='异步任务表';
+
+CREATE TABLE IF NOT EXISTS opportunities
+(
+    /* --- 基础标识 --- */
+    clue_id              VARCHAR(50)  NOT NULL COMMENT '商机ID',
+    query_id             VARCHAR(64)  NOT NULL COMMENT '关联Hash(query_id)',
+    platform             VARCHAR(20)  NOT NULL DEFAULT 'douyin' COMMENT '平台',
+    clue_title           VARCHAR(200) NOT NULL COMMENT '商机标题',
+
+    /* --- 核心评估指标 --- */
+    search_heat          INT                   DEFAULT 0 COMMENT '搜索热度',
+    demand_supply_rate   DOUBLE                DEFAULT 0 COMMENT '供需比',
+    pay_amount_range     VARCHAR(50) COMMENT '成交金额区间文本',
+    max_price            DOUBLE COMMENT '最高到手价门槛',
+
+    /* --- 审核/类目要求 --- */
+    category_path        VARCHAR(500) COMMENT '全类目路径',
+    title_contains       JSON COMMENT '标题必须包含的关键词列表',
+    must_submit_same     TINYINT(1)   NOT NULL DEFAULT 0 COMMENT '是否必须完全一致',
+
+    /* --- 动态数据 --- */
+    benefits             JSON COMMENT '完整权益与规则详情',
+    source_files         JSON COMMENT '来源文件列表',
+
+    /* --- 公共字段（与 Python UTCDateTime 对应）--- */
+    created_at_utc       DATETIME(3)  NOT NULL DEFAULT UTC_TIMESTAMP(3) COMMENT '创建时间(UTC)',
+    updated_at_utc       DATETIME(3)  NOT NULL DEFAULT UTC_TIMESTAMP(3) ON UPDATE UTC_TIMESTAMP(3) COMMENT '更新时间(UTC)',
+    is_deleted           VARCHAR(10)  NOT NULL DEFAULT 'NOT_DELETED' COMMENT '删除状态',
+    id                   VARCHAR(36)  NOT NULL COMMENT 'UUID主键',
+
+    /* --- 主键 & 索引 --- */
+    PRIMARY KEY (id),
+    INDEX ix_query_id (query_id),
+    INDEX ix_platform (platform),
+    INDEX ix_max_price (max_price),
+    INDEX ix_heat_price (search_heat, max_price)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='商机表';

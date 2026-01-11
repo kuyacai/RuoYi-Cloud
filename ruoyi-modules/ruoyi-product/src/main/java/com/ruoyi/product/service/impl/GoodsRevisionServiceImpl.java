@@ -2,13 +2,14 @@ package com.ruoyi.product.service.impl;
 
 import java.util.ArrayList;
 import java.util.List;
+
 import org.springframework.stereotype.Service;
 import org.springframework.util.CollectionUtils;
 
-import com.ruoyi.product.mapper.GoodsRevisionMapper;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.ruoyi.product.core.mybatisplus.impl.BaseServiceImpl;
 import com.ruoyi.product.domain.GoodsRevision;
+import com.ruoyi.product.mapper.GoodsRevisionMapper;
 import com.ruoyi.product.service.IGoodsRevisionService;
 
 /**
@@ -54,7 +55,7 @@ public class GoodsRevisionServiceImpl extends BaseServiceImpl<GoodsRevisionMappe
     public List<GoodsRevision> listByGoodsId(String goodsId) {
         return this.list(new LambdaQueryWrapper<GoodsRevision>()
                 .eq(GoodsRevision::getGoodsId, goodsId)
-                .orderByDesc(GoodsRevision::getGmtCreate)); // 对应 XML 中的 Order By gmt_create desc
+                .orderByDesc(GoodsRevision::getCreatedAtUtc)); // 对应 XML 中的 Order By gmt_create desc
     }
 
     @Override
@@ -68,7 +69,7 @@ public class GoodsRevisionServiceImpl extends BaseServiceImpl<GoodsRevisionMappe
         }
 
         // 对应 XML 中的 ORDER BY gmt_modified DESC
-        lqw.orderByDesc(GoodsRevision::getGmtModified);
+        lqw.orderByDesc(GoodsRevision::getUpdatedAtUtc);
 
         return this.list(lqw);
     }

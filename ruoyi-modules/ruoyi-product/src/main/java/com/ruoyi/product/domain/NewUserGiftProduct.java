@@ -1,11 +1,10 @@
 package com.ruoyi.product.domain;
 
-import java.util.Date;
+import java.time.Instant;
 
 import com.baomidou.mybatisplus.annotation.IdType;
 import com.baomidou.mybatisplus.annotation.TableId;
 import com.baomidou.mybatisplus.annotation.TableName;
-import com.fasterxml.jackson.annotation.JsonFormat;
 import com.ruoyi.product.core.mybatisplus.ProductBaseEntity;
 import com.ruoyi.product.enums.ActivityProductStatus;
 import com.ruoyi.product.enums.SyncStatus;
@@ -42,11 +41,9 @@ public class NewUserGiftProduct extends ProductBaseEntity {
 
     private ActivityProductStatus itemStatus;
 
-    @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")
-    private Date addedTime;
+    private Instant addedTimeUtc;
 
-    @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")
-    private Date removedTime;
+    private Instant removedTimeUtc;
 
     private SyncStatus platformSyncStatus;
 

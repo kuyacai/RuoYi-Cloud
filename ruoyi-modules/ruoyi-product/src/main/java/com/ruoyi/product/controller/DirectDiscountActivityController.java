@@ -58,7 +58,7 @@ public class DirectDiscountActivityController extends BaseController {
                                 activity.getShopId())
                         .eq(StringUtils.isNotBlank(activity.getPlatformActivityId()),
                                 DirectDiscountActivity::getPlatformActivityId, activity.getPlatformActivityId())
-                        .orderByDesc(DirectDiscountActivity::getGmtCreate)); // 默认按创建时间倒序
+                        .orderByDesc(DirectDiscountActivity::getCreatedAtUtc)); // 默认按创建时间倒序
         return getDataTable(list);
     }
 

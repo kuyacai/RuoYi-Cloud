@@ -1,13 +1,12 @@
 package com.ruoyi.product.domain;
 
-import java.util.Date;
+import java.time.Instant;
 import java.util.Map;
 
 import com.baomidou.mybatisplus.annotation.IdType;
 import com.baomidou.mybatisplus.annotation.TableField;
 import com.baomidou.mybatisplus.annotation.TableId;
 import com.baomidou.mybatisplus.annotation.TableName;
-import com.fasterxml.jackson.annotation.JsonFormat;
 import com.ruoyi.common.core.mybatis.FastjsonMapTypeHandler; // 之前写的转换器
 import com.ruoyi.product.core.mybatisplus.ProductBaseEntity;
 import com.ruoyi.product.enums.AsyncTaskStatus;
@@ -73,8 +72,8 @@ public class AsyncTask extends ProductBaseEntity {
     private AsyncTaskStatus taskStatus;
 
     /** 完成时间 */
-    @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")
-    private Date finishTime;
+
+    private Instant finishTimeUtc;
 
     @TableField(typeHandler = FastjsonMapTypeHandler.class)
     private Map<String, Object> paramsMap;

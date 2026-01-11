@@ -141,7 +141,7 @@ public abstract class AbstractActivityHandler {
     protected String getRevisionId(String goodsId) {
         GoodsRevision revision = revisionService.lambdaQuery()
                 .eq(GoodsRevision::getGoodsId, goodsId)
-                .orderByDesc(GoodsRevision::getGmtCreate).last("LIMIT 1").one();
+                .orderByDesc(GoodsRevision::getCreatedAtUtc).last("LIMIT 1").one();
         return revision != null ? revision.getRevisionId() : null;
     }
 

@@ -1,5 +1,6 @@
 package com.ruoyi.product.mq.consumer.impl;
 
+import java.time.Instant;
 import java.util.Map;
 
 import org.apache.rocketmq.spring.annotation.ConsumeMode;
@@ -11,7 +12,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 
-import com.ruoyi.common.core.utils.DateUtils;
 import com.ruoyi.common.core.utils.StringUtils;
 import com.ruoyi.product.constant.MQConstant;
 import com.ruoyi.product.domain.AsyncTask;
@@ -163,7 +163,7 @@ public class AuditSpuConsumer implements RocketMQListener<AsyncTaskMsg> {
 
         // 3. 更新商品修订状态为审核中
         goodsRevision.setRevStatus(RevStatus.AUDITING);
-        goodsRevision.setUpdateTime(DateUtils.getNowDate());
+        // goodsRevision.setUpdateTime(DateUtils.getNowDate());
 
         boolean updated = goodsRevisionService.updateById(goodsRevision);
         if (!updated) {
@@ -172,7 +172,7 @@ public class AuditSpuConsumer implements RocketMQListener<AsyncTaskMsg> {
 
         // 4. 更新异步任务状态为完成
         task.setTaskStatus(AsyncTaskStatus.DONE);
-        task.setFinishTime(DateUtils.getNowDate());
+        task.setFinishTimeUtc(Instant.now());
 
         boolean taskUpdated = asyncTaskService.updateById(task);
         if (!taskUpdated) {

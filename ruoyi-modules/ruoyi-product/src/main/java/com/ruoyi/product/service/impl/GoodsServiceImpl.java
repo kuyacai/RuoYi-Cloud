@@ -2,12 +2,14 @@ package com.ruoyi.product.service.impl;
 
 import java.util.ArrayList;
 import java.util.List;
-import org.springframework.util.CollectionUtils;
+
 import org.springframework.stereotype.Service;
-import com.ruoyi.product.mapper.GoodsMapper;
+import org.springframework.util.CollectionUtils;
+
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.ruoyi.product.core.mybatisplus.impl.BaseServiceImpl;
 import com.ruoyi.product.domain.Goods;
+import com.ruoyi.product.mapper.GoodsMapper;
 import com.ruoyi.product.service.IGoodsService;
 
 /**
@@ -51,7 +53,7 @@ public class GoodsServiceImpl extends BaseServiceImpl<GoodsMapper, Goods> implem
     public List<Goods> listBySourceId(String sourceId) {
         return this.list(new LambdaQueryWrapper<Goods>()
                 .eq(Goods::getSourceId, sourceId)
-                .orderByDesc(Goods::getGmtCreate)); // 建议查询列表时也带上默认排序
+                .orderByDesc(Goods::getCreatedAtUtc)); // 建议查询列表时也带上默认排序
     }
 
     /**
@@ -64,7 +66,7 @@ public class GoodsServiceImpl extends BaseServiceImpl<GoodsMapper, Goods> implem
     public Goods getLatestByShopProductId(String shopProductId) {
         return this.getOne(new LambdaQueryWrapper<Goods>()
                 .eq(Goods::getShopProductId, shopProductId)
-                .orderByDesc(Goods::getGmtCreate) // 按创建时间倒序
+                .orderByDesc(Goods::getCreatedAtUtc) // 按创建时间倒序
                 .last("limit 1")); // 强制只取数据库层面的第一条，避免查出多条导致报错
     }
 
@@ -92,7 +94,7 @@ public class GoodsServiceImpl extends BaseServiceImpl<GoodsMapper, Goods> implem
         if (sourceId == null) {
             return null;
         }
-        
+
         // 使用 LambdaQueryWrapper 匹配 sourceId 字段
         // 使用 last("LIMIT 1") 确保在数据库查找到第一条记录后立即返回，提高性能
         return this.getOne(new LambdaQueryWrapper<Goods>()

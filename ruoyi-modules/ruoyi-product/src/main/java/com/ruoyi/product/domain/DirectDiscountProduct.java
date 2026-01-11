@@ -1,11 +1,10 @@
 package com.ruoyi.product.domain;
 
-import java.util.Date;
+import java.time.Instant;
 
 import com.baomidou.mybatisplus.annotation.IdType;
 import com.baomidou.mybatisplus.annotation.TableId;
 import com.baomidou.mybatisplus.annotation.TableName;
-import com.fasterxml.jackson.annotation.JsonFormat;
 import com.ruoyi.common.core.annotation.Money;
 import com.ruoyi.common.core.annotation.Rate;
 import com.ruoyi.product.core.mybatisplus.ProductBaseEntity;
@@ -57,11 +56,9 @@ public class DirectDiscountProduct extends ProductBaseEntity {
     // 对应商品sku状态(active/removed)
     private ActivityProductStatus itemStatus;
 
-    @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")
-    private Date addedTime;
+    private Instant addedTimeUtc;
 
-    @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")
-    private Date removedTime;
+    private Instant removedTimeUtc;
 
     private SyncStatus platformSyncStatus;
 

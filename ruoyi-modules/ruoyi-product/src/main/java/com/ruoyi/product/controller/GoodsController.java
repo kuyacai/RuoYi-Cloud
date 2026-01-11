@@ -60,7 +60,7 @@ public class GoodsController extends BaseController {
                 .like(StringUtils.isNotBlank(goods.getSourceTitle()), Goods::getSourceTitle, goods.getSourceTitle())
                 .eq(StringUtils.isNotBlank(goods.getSourceId()), Goods::getSourceId, goods.getSourceId())
                 .eq(StringUtils.isNotBlank(goods.getShopProductId()), Goods::getShopProductId, goods.getShopProductId())
-                .orderByDesc(Goods::getGmtCreate)
+                .orderByDesc(Goods::getCreatedAtUtc)
         // 示例：模糊查询名称
         );
         return getDataTable(list);

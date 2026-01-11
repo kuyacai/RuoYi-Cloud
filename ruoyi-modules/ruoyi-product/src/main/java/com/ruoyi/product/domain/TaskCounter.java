@@ -1,6 +1,6 @@
 package com.ruoyi.product.domain;
 
-import java.util.Date;
+import java.time.Instant;
 
 import com.baomidou.mybatisplus.annotation.IdType;
 import com.baomidou.mybatisplus.annotation.TableId;
@@ -31,11 +31,11 @@ public class TaskCounter extends ProductBaseEntity {
 
     private Integer completedTasks;
 
-    private Date lastCheckTime;
+    private Instant lastCheckTimeUtc;
 
     private String notifiedStatus;
 
-    private Date notifiedTime;
+    private Instant notifiedTimeUtc;
 
     private Integer retryCount;
 
