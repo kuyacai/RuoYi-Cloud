@@ -467,7 +467,7 @@ CREATE TABLE IF NOT EXISTS `platform_promotion_product` (
     updated_at_utc              DATETIME(3) NOT NULL  COMMENT '修改时间'
 ) ENGINE = InnoDB COMMENT = '平台促销活动商品表';
 
-CREATE TABLE IF NOT EXISTS `async_task` (
+CREATE TABLE IF NOT EXISTS async_task (
   `task_id`             varchar(32)  NOT NULL PRIMARY KEY COMMENT 'ID',
   `task_code`           varchar(50)  NOT NULL COMMENT '任务编码',
   `task_name`           varchar(100) DEFAULT NULL COMMENT '任务名称',
@@ -492,37 +492,61 @@ CREATE TABLE IF NOT EXISTS `async_task` (
 
 CREATE TABLE IF NOT EXISTS opportunities
 (
-    /* --- 基础标识 --- */
-    clue_id              VARCHAR(50)  NOT NULL COMMENT '商机ID',
-    query_id             VARCHAR(64)  NOT NULL COMMENT '关联Hash(query_id)',
-    platform             VARCHAR(20)  NOT NULL DEFAULT 'douyin' COMMENT '平台',
-    clue_title           VARCHAR(200) NOT NULL COMMENT '商机标题',
-
-    /* --- 核心评估指标 --- */
-    search_heat          INT                   DEFAULT 0 COMMENT '搜索热度',
-    demand_supply_rate   DOUBLE                DEFAULT 0 COMMENT '供需比',
-    pay_amount_range     VARCHAR(50) COMMENT '成交金额区间文本',
-    max_price            DOUBLE COMMENT '最高到手价门槛',
-
-    /* --- 审核/类目要求 --- */
-    category_path        VARCHAR(500) COMMENT '全类目路径',
-    title_contains       JSON COMMENT '标题必须包含的关键词列表',
-    must_submit_same     TINYINT(1)   NOT NULL DEFAULT 0 COMMENT '是否必须完全一致',
-
-    /* --- 动态数据 --- */
-    benefits             JSON COMMENT '完整权益与规则详情',
-    source_files         JSON COMMENT '来源文件列表',
-
-    /* --- 公共字段（与 Python UTCDateTime 对应）--- */
-    created_at_utc       DATETIME(3)  NOT NULL DEFAULT UTC_TIMESTAMP(3) COMMENT '创建时间(UTC)',
-    updated_at_utc       DATETIME(3)  NOT NULL DEFAULT UTC_TIMESTAMP(3) ON UPDATE UTC_TIMESTAMP(3) COMMENT '更新时间(UTC)',
-    is_deleted           VARCHAR(10)  NOT NULL DEFAULT 'NOT_DELETED' COMMENT '删除状态',
-    id                   VARCHAR(36)  NOT NULL COMMENT 'UUID主键',
-
-    /* --- 主键 & 索引 --- */
-    PRIMARY KEY (id),
+    clue_id                     VARCHAR(50)  NOT NULL PRIMARY KEY COMMENT '商机ID',
+    query_id                    VARCHAR(64)  COMMENT '关联Hash(query_id)',
+    platform                    VARCHAR(20)  COMMENT '平台',
+    clue_title                  VARCHAR(200) COMMENT '商机标题',
+    brand_name                  VARCHAR(200) COMMENT '中文品牌名',
+    brand_name_en               VARCHAR(200) COMMENT '英文品牌名',
+    price_min_cents             BIGINT       NOT NULL DEFAULT 0 COMMENT '最低价(分)',
+    price_max_cents             BIGINT       NOT NULL DEFAULT 0 COMMENT '最高价(分)',
+    product_pic_url             TEXT COMMENT '商品图片链接',
+    product_pic_url_local       TEXT COMMENT '商品图片本地链接',
+    pic_url_list_first          TEXT COMMENT '商机图片链接',
+    pic_url_list_first_local    TEXT COMMENT '商机图片本地链接',
+    related_product_cnt         BIGINT COMMENT '相关商品数',
+    search_heat                 BIGINT       NOT NULL DEFAULT 0 COMMENT '搜索热度',
+    demand_supply_rate          BIGINT       NOT NULL DEFAULT 0 COMMENT '供需比(万分位)',
+    pay_amount_range            VARCHAR(50) COMMENT '成交金额区间文本',
+    new_max_price_cents         BIGINT       NOT NULL DEFAULT 0 COMMENT '最高到手价门槛(分)',
+    category_path               VARCHAR(500) COMMENT '全类目路径',
+    title_contains              JSON COMMENT '标题必须包含的关键词列表',
+    must_submit_same            VARCHAR(10)  NOT NULL DEFAULT 'no' COMMENT '是否必须完全一致',
+    benefits                    JSON COMMENT '完整权益与规则详情',
+    source_files                JSON COMMENT '来源文件列表',
+    created_at_utc              DATETIME(3)  COMMENT '创建时间(UTC)',
+    updated_at_utc              DATETIME(3)  COMMENT '更新时间(UTC)',
     INDEX ix_query_id (query_id),
     INDEX ix_platform (platform),
-    INDEX ix_max_price (max_price),
-    INDEX ix_heat_price (search_heat, max_price)
+    INDEX ix_heat_price (search_heat, new_max_price_cents)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='商机表';
+
+CREATE TABLE benefit
+(
+    benefit_id                  VARCHAR(32) NOT NULL PRIMARY KEY COMMENT 'benefit ID',
+    clue_id                     VARCHAR(50) NOT NULL COMMENT '商机ID',
+    profit_id                   VARCHAR(20) NOT NULL COMMENT '权益ID（该权益ID来自接口方）',
+    profit_name                 VARCHAR(200) NOT NULL COMMENT '权益名称',
+    profit_text                 TEXT COMMENT '权益描述',
+    profit_img_url              TEXT COMMENT '权益图片',
+    profit_img_local            TEXT COMMENT '权益图片本地地址',
+    profit_time                 VARCHAR(200) NOT NULL COMMENT '权益时间，来自接口方的字符串',
+    created_at_utc              DATETIME(3)  COMMENT '创建时间(UTC)',
+    updated_at_utc              DATETIME(3)  COMMENT '更新时间(UTC)',
+    INDEX idx_clue (clue_id)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='权益表';
+
+CREATE TABLE benefit_requirement
+(
+    req_id                      VARCHAR(32) NOT NULL PRIMARY KEY COMMENT 'requirement ID',
+    benefit_id                  VARCHAR(50) NOT NULL COMMENT '权益ID（内部关联用）',
+    attr_value                  VARCHAR(200) NOT NULL COMMENT '原始文本',
+    attr_symbol                 VARCHAR(10)  NOT NULL DEFAULT '' COMMENT '运算符（≥ ≤ > < = ）',
+    min_numeric                 DECIMAL(12,4) COMMENT '解析后下限',
+    max_numeric                 DECIMAL(12,4) COMMENT '解析后上限',
+    min_inclusive               TINYINT(1) DEFAULT 1 COMMENT '1 包含 0 不包含',
+    max_inclusive               TINYINT(1) DEFAULT 1 COMMENT '1 包含 0 不包含',
+    created_at_utc              DATETIME(3)  COMMENT '创建时间(UTC)',
+    updated_at_utc              DATETIME(3)  COMMENT '更新时间(UTC)',
+    INDEX idx_benefit (benefit_id)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='权益要求表';
