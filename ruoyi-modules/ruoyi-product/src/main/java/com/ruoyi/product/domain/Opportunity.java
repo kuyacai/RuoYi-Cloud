@@ -35,6 +35,8 @@ public class Opportunity extends ProductBaseEntity {
     private String picUrlListFirst;
     private String picUrlListFirstLocal;
     private Integer relatedProductCnt;
+
+    private Integer onlineProdCnt;
     /** 最低价（分） */
     @Money
     private Long priceMinCents;

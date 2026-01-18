@@ -126,6 +126,7 @@ CREATE TABLE IF NOT EXISTS shop (
     shop_id                     CHAR(32) PRIMARY KEY DEFAULT (REPLACE(UUID(), '-', '')) COMMENT '店铺ID',
     shop_name                   VARCHAR(128) NOT NULL COMMENT '店铺名称',
     platform                    VARCHAR(32) NOT NULL COMMENT '平台',
+    plat_shop_id                VARCHAR(32) COMMENT '平台侧店铺ID',
     owner_id                    VARCHAR(32) NOT NULL COMMENT '所有者ID',
     shop_status                 VARCHAR(20) NOT NULL COMMENT '店铺状态',
     shop_description            TEXT COMMENT '店铺描述',
@@ -498,20 +499,21 @@ CREATE TABLE IF NOT EXISTS opportunities
     clue_title                  VARCHAR(200) COMMENT '商机标题',
     brand_name                  VARCHAR(200) COMMENT '中文品牌名',
     brand_name_en               VARCHAR(200) COMMENT '英文品牌名',
-    price_min_cents             BIGINT       NOT NULL DEFAULT 0 COMMENT '最低价(分)',
-    price_max_cents             BIGINT       NOT NULL DEFAULT 0 COMMENT '最高价(分)',
+    price_min_cents             BIGINT       COMMENT '最低价(分)',
+    price_max_cents             BIGINT       COMMENT '最高价(分)',
     product_pic_url             TEXT COMMENT '商品图片链接',
     product_pic_url_local       TEXT COMMENT '商品图片本地链接',
     pic_url_list_first          TEXT COMMENT '商机图片链接',
     pic_url_list_first_local    TEXT COMMENT '商机图片本地链接',
     related_product_cnt         BIGINT COMMENT '相关商品数',
-    search_heat                 BIGINT       NOT NULL DEFAULT 0 COMMENT '搜索热度',
-    demand_supply_rate          BIGINT       NOT NULL DEFAULT 0 COMMENT '供需比(万分位)',
-    pay_amount_range            VARCHAR(50) COMMENT '成交金额区间文本',
-    new_max_price_cents         BIGINT       NOT NULL DEFAULT 0 COMMENT '最高到手价门槛(分)',
+    online_prod_cnt             BIGINT COMMENT '在线商品数',
+    search_heat                 BIGINT       COMMENT '搜索热度',
+    demand_supply_rate          BIGINT       COMMENT '供需比(万分位)',
+    pay_amount_range            VARCHAR(200) COMMENT '成交金额区间文本',
+    new_max_price_cents         BIGINT       COMMENT '最高到手价门槛(分)',
     category_path               VARCHAR(500) COMMENT '全类目路径',
     title_contains              JSON COMMENT '标题必须包含的关键词列表',
-    must_submit_same            VARCHAR(10)  NOT NULL DEFAULT 'no' COMMENT '是否必须完全一致',
+    must_submit_same            VARCHAR(10)   COMMENT '是否必须完全一致',
     benefits                    JSON COMMENT '完整权益与规则详情',
     source_files                JSON COMMENT '来源文件列表',
     created_at_utc              DATETIME(3)  COMMENT '创建时间(UTC)',
@@ -521,7 +523,7 @@ CREATE TABLE IF NOT EXISTS opportunities
     INDEX ix_heat_price (search_heat, new_max_price_cents)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='商机表';
 
-CREATE TABLE benefit
+CREATE TABLE IF NOT EXISTS benefit
 (
     benefit_id                  VARCHAR(32) NOT NULL PRIMARY KEY COMMENT 'benefit ID',
     clue_id                     VARCHAR(50) NOT NULL COMMENT '商机ID',
@@ -530,23 +532,65 @@ CREATE TABLE benefit
     profit_text                 TEXT COMMENT '权益描述',
     profit_img_url              TEXT COMMENT '权益图片',
     profit_img_local            TEXT COMMENT '权益图片本地地址',
-    profit_time                 VARCHAR(200) NOT NULL COMMENT '权益时间，来自接口方的字符串',
+    profit_time                 VARCHAR(200) COMMENT '权益时间，来自接口方的字符串',
     created_at_utc              DATETIME(3)  COMMENT '创建时间(UTC)',
     updated_at_utc              DATETIME(3)  COMMENT '更新时间(UTC)',
     INDEX idx_clue (clue_id)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='权益表';
 
-CREATE TABLE benefit_requirement
+CREATE TABLE IF NOT EXISTS benefit_requirement
 (
     req_id                      VARCHAR(32) NOT NULL PRIMARY KEY COMMENT 'requirement ID',
     benefit_id                  VARCHAR(50) NOT NULL COMMENT '权益ID（内部关联用）',
-    attr_value                  VARCHAR(200) NOT NULL COMMENT '原始文本',
-    attr_symbol                 VARCHAR(10)  NOT NULL DEFAULT '' COMMENT '运算符（≥ ≤ > < = ）',
+    attr_value                  VARCHAR(200) COMMENT '原始文本',
+    attr_symbol                 VARCHAR(10)  COMMENT '运算符（≥ ≤ > < = ）',
     min_numeric                 DECIMAL(12,4) COMMENT '解析后下限',
     max_numeric                 DECIMAL(12,4) COMMENT '解析后上限',
-    min_inclusive               TINYINT(1) DEFAULT 1 COMMENT '1 包含 0 不包含',
-    max_inclusive               TINYINT(1) DEFAULT 1 COMMENT '1 包含 0 不包含',
+    min_inclusive               TINYINT(1) COMMENT '1 包含 0 不包含',
+    max_inclusive               TINYINT(1)   COMMENT '1 包含 0 不包含',
     created_at_utc              DATETIME(3)  COMMENT '创建时间(UTC)',
     updated_at_utc              DATETIME(3)  COMMENT '更新时间(UTC)',
     INDEX idx_benefit (benefit_id)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='权益要求表';
+
+CREATE TABLE IF NOT EXISTS shop_clue_relation
+(
+    rel_id                      VARCHAR(32) NOT NULL PRIMARY KEY COMMENT 'relation ID',
+    clue_id                     VARCHAR(50) NOT NULL COMMENT '商机id',
+    plat_shop_id                VARCHAR(200) COMMENT '商店Id（接口方）',
+    shop_name                   VARCHAR(200)  COMMENT '店铺名称',
+    is_favorite                 TINYINT(1) COMMENT '1 已收藏 0 未收藏',
+    favorite_time               DATETIME(3)  COMMENT '收藏时间',
+    created_at_utc              DATETIME(3)  COMMENT '创建时间(UTC)',
+    updated_at_utc              DATETIME(3)  COMMENT '更新时间(UTC)',
+    INDEX idx_clue (clue_id)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='店铺商机关联表';
+
+
+CREATE TABLE IF NOT EXISTS fulfillment
+(
+    id                          VARCHAR(32) NOT NULL PRIMARY KEY COMMENT 'fulfillment ID',
+    clue_id                     VARCHAR(50) NOT NULL COMMENT '商机id',
+    plat_shop_id                VARCHAR(200) COMMENT '商店Id（接口方）',
+    shop_name                   VARCHAR(200) COMMENT '店铺名称',
+    product_id                  VARCHAR(200) COMMENT '商品Id',
+    product_title               VARCHAR(200) COMMENT '商品标题',
+    audit_status                VARCHAR(20)  COMMENT '审核状态',
+    audit_msg                   VARCHAR(200) COMMENT '审核信息',
+    benefit_gap                 VARCHAR(200) COMMENT '权益',
+    created_at_utc              DATETIME(3)  COMMENT '创建时间(UTC)',
+    updated_at_utc              DATETIME(3)  COMMENT '更新时间(UTC)',
+    INDEX idx_clue (clue_id)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='店铺商机商品关联表';
+
+CREATE TABLE IF NOT EXISTS douyin_keywords
+(
+    `id`                            VARCHAR(32) NOT NULL PRIMARY KEY COMMENT 'keywords ID',
+    `keyword`                       VARCHAR(50) NOT NULL COMMENT '关键词',
+    `status`                        VARCHAR(200) COMMENT '关键词状态',
+    `opp_count`                     VARCHAR(200) COMMENT '商机数',
+    `created_at_utc`                DATETIME(3)  COMMENT '创建时间(UTC)',
+    `updated_at_utc`                DATETIME(3)  COMMENT '更新时间(UTC)',
+    INDEX `idx_keyword` (`keyword`),
+    UNIQUE KEY `uk_keyword` (`keyword`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='抖音关键词列表';

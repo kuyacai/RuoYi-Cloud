@@ -29,6 +29,8 @@ public class Shop extends ProductBaseEntity {
 
     private String platform;
 
+    private String platShopId;
+
     private String ownerId;
 
     private String shopStatus;
