@@ -2,6 +2,7 @@ package com.ruoyi.product.service.impl;
 
 import java.util.Map;
 
+import org.springframework.context.event.EventListener;
 import org.springframework.stereotype.Service;
 
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
@@ -15,6 +16,7 @@ import com.ruoyi.product.service.IWfNodeInstanceService;
 import com.ruoyi.product.service.IWfWorkflowInstanceService;
 import com.ruoyi.product.service.IWorkflowEngineService;
 import com.ruoyi.product.workflow.engine.parser.WorkflowParameterParser;
+import com.ruoyi.product.workflow.event.WorkflowTaskEvent;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -81,5 +83,12 @@ public class WorkflowEngineServiceImpl implements IWorkflowEngineService {
             log.info("☕ 执行 Java 本地算子...");
             // TODO: 实现本地执行逻辑
         }
+    }
+
+    // 这是一个桥接方法：将“事件信号”转化为“执行动作”
+    @EventListener
+    public void handleWorkflowTask(WorkflowTaskEvent event) {
+        // 这里的 this.executeNode 就是你类中原有的那个 executeNode 方法
+        this.executeNode(event.getNodeInstanceId());
     }
 }

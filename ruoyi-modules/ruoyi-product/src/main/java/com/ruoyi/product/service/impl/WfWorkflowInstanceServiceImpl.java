@@ -5,6 +5,7 @@ import java.util.Map;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.Assert;
@@ -26,7 +27,7 @@ import com.ruoyi.product.service.IWfNodeDefinitionService;
 import com.ruoyi.product.service.IWfNodeInstanceService;
 import com.ruoyi.product.service.IWfWorkflowDefinitionService;
 import com.ruoyi.product.service.IWfWorkflowInstanceService;
-import com.ruoyi.product.service.IWorkflowEngineService;
+import com.ruoyi.product.workflow.event.WorkflowTaskEvent;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -41,7 +42,7 @@ public class WfWorkflowInstanceServiceImpl extends BaseServiceImpl<WfWorkflowIns
         private final IWfNodeDefinitionService nodeDefinitionService;
         private final IWfNodeInstanceService nodeInstanceService;
         private final IWfNodeCapabilityService capabilityService;
-        private final IWorkflowEngineService workflowEngineService;
+        private final ApplicationEventPublisher eventPublisher;
 
         @Override
         @Transactional(rollbackFor = Exception.class)
@@ -120,10 +121,10 @@ public class WfWorkflowInstanceServiceImpl extends BaseServiceImpl<WfWorkflowIns
                 instance.setCurrentNodeId(firstNode.getNodeInstanceId());
                 this.updateById(instance);
 
-                log.info("🚀 实例 {} 初始化成功，正在推送首个节点 {} 至引擎...", instanceId, firstNode.getNodeInstanceId());
+                log.info("🎯 实例 {} 数据准备就绪，发布启动事件信号...", instanceId);
 
-                // 启动引擎
-                workflowEngineService.executeNode(firstNode.getNodeInstanceId());
+                // 8. 发布事件，不再直接调用引擎方法
+                eventPublisher.publishEvent(new WorkflowTaskEvent(this, firstNode.getNodeInstanceId()));
 
                 return instanceId;
         }
