@@ -322,3 +322,69 @@ values('新用户礼包活动商品删除', @parentId, '4',  '#', '', 1, 0, 'F',
 
 insert into sys_menu (menu_name, parent_id, order_num, path, component, is_frame, is_cache, menu_type, visible, status, perms, icon, create_by, create_time, update_by, update_time, remark)
 values('新用户礼包活动商品导出', @parentId, '5',  '#', '', 1, 0, 'F', '0', '0', 'product:newUserGiftProduct:export',       '#', 'admin', sysdate(), '', null, '');
+
+
+-- ----------------------------
+-- 1. 创建顶级目录：工作流系统
+-- ----------------------------
+insert into sys_menu (menu_name, parent_id, order_num, path, component, is_frame, is_cache, menu_type, visible, status, perms, icon, create_by, create_time, remark)
+values('工作流系统', 0, '10', 'workflow', null, 1, 0, 'M', '0', '0', null, 'job', 'admin', sysdate(), '工作流系统主目录');
+
+-- 获取顶级目录ID
+SELECT @workflow_id := LAST_INSERT_ID();
+
+-- ----------------------------
+-- 2. 编排管理：能力仓库
+-- ----------------------------
+insert into sys_menu (menu_name, parent_id, order_num, path, component, is_frame, is_cache, menu_type, visible, status, perms, icon, create_by, create_time, remark)
+values('能力仓库', @workflow_id, '1', 'capability', 'product/capability/index', 1, 0, 'C', '0', '0', 'product:capability:list', 'code', 'admin', sysdate(), '管理WfNodeCapability');
+
+SELECT @capId := LAST_INSERT_ID();
+-- 按钮：查询、新增、修改、删除
+insert into sys_menu (menu_name, parent_id, order_num, path, component, menu_type, perms, icon, create_by, create_time) values
+('能力查询', @capId, '1', '#', '', 'F', 'product:capability:query', '#', 'admin', sysdate()),
+('能力新增', @capId, '2', '#', '', 'F', 'product:capability:add', '#', 'admin', sysdate()),
+('能力修改', @capId, '3', '#', '', 'F', 'product:capability:edit', '#', 'admin', sysdate()),
+('能力删除', @capId, '4', '#', '', 'F', 'product:capability:remove', '#', 'admin', sysdate());
+
+
+-- ----------------------------
+-- 3. 编排管理：流程定义
+-- ----------------------------
+insert into sys_menu (menu_name, parent_id, order_num, path, component, is_frame, is_cache, menu_type, visible, status, perms, icon, create_by, create_time, remark)
+values('流程定义', @workflow_id, '2', 'definition', 'product/definition/index', 1, 0, 'C', '0', '0', 'product:definition:list', 'build', 'admin', sysdate(), '管理WfWorkflowDefinition');
+
+SELECT @defId := LAST_INSERT_ID();
+-- 按钮
+insert into sys_menu (menu_name, parent_id, order_num, path, component, menu_type, perms, icon, create_by, create_time) values
+('流程查询', @defId, '1', '#', '', 'F', 'product:definition:query', '#', 'admin', sysdate()),
+('流程新增', @defId, '2', '#', '', 'F', 'product:definition:add', '#', 'admin', sysdate()),
+('流程发布', @defId, '3', '#', '', 'F', 'product:definition:edit', '#', 'admin', sysdate()),
+('流程删除', @defId, '4', '#', '', 'F', 'product:definition:remove', '#', 'admin', sysdate());
+
+
+-- ----------------------------
+-- 4. 运行监控：执行实例
+-- ----------------------------
+insert into sys_menu (menu_name, parent_id, order_num, path, component, is_frame, is_cache, menu_type, visible, status, perms, icon, create_by, create_time, remark)
+values('执行实例', @workflow_id, '3', 'instance', 'product/instance/index', 1, 0, 'C', '0', '0', 'product:instance:list', 'run', 'admin', sysdate(), '管理WfWorkflowInstance');
+
+SELECT @instId := LAST_INSERT_ID();
+-- 按钮：重点增加“停止”和“重试”权限
+insert into sys_menu (menu_name, parent_id, order_num, path, component, menu_type, perms, icon, create_by, create_time) values
+('实例查询', @instId, '1', '#', '', 'F', 'product:instance:query', '#', 'admin', sysdate()),
+('手动启动', @instId, '2', '#', '', 'F', 'product:instance:add', '#', 'admin', sysdate()),
+('重试节点', @instId, '3', '#', '', 'F', 'product:instance:edit', '#', 'admin', sysdate()),
+('强制停止', @instId, '4', '#', '', 'F', 'product:instance:remove', '#', 'admin', sysdate());
+
+
+-- ----------------------------
+-- 5. 运行监控：节点日志
+-- ----------------------------
+insert into sys_menu (menu_name, parent_id, order_num, path, component, is_frame, is_cache, menu_type, visible, status, perms, icon, create_by, create_time, remark)
+values('节点日志', @workflow_id, '4', 'nodeLog', 'product/nodeLog/index', 1, 0, 'C', '0', '0', 'product:nodeLog:list', 'log', 'admin', sysdate(), '管理WfNodeInstance数据流');
+
+SELECT @logId := LAST_INSERT_ID();
+-- 按钮
+insert into sys_menu (menu_name, parent_id, order_num, path, component, menu_type, perms, icon, create_by, create_time) values
+('日志查询', @logId, '1', '#', '', 'F', 'product:nodeLog:query', '#', 'admin', sysdate());

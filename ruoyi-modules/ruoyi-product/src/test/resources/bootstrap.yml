@@ -1,0 +1,7 @@
+spring:
+  cloud:
+    nacos:
+      config:
+        enabled: false # 测试时不连接 Nacos 配置中心
+      discovery:
+        enabled: false # 测试时不连接 Nacos 注册中心

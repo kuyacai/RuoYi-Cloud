@@ -1,0 +1,68 @@
+server:
+  port: 9203
+spring:
+  application:
+    name: ruoyi-product
+  jackson:
+    serialization:
+      write-dates-as-timestamps: false # 返回 ISO 字符串
+    time-zone: UTC
+  datasource:
+    dynamic: # 必须套在这一层
+      primary: master # 指定 primary 名称
+      datasource:
+        master:
+          url: jdbc:mysql://127.0.0.1:3306/cloud_products?useUnicode=true&characterEncoding=utf8&zeroDateTimeBehavior=convertToNull&useSSL=true&serverTimezone=UTC&connectionTimeZone=UTC
+          username: product
+          password: Product@2025
+          driver-class-name: com.mysql.cj.jdbc.Driver
+    #url: jdbc:mysql://127.0.0.1:3306/cloud_products?useUnicode=true&characterEncoding=utf8&zeroDateTimeBehavior=convertToNull&useSSL=true&serverTimezone=GMT%2B8
+    #username: product
+    #password: Product@2025
+  redis:
+    host: 127.0.0.1
+    port: 6379
+
+  rabbitmq:
+    host: 127.0.0.1
+    port: 5672
+    username: guest
+    password: guest
+    # 业务自定义配置也挂在 spring.rabbitmq 下
+    agent:
+      exchange: agent.workflow.exchange
+      queue: agent.task.python.queue
+      routing-key: agent.task.python.key
+mybatis-plus:
+  # 搜索指定包别名，这样在 XML 中就可以直接写类名（如 type="GoodsRevisionSpu"）
+  type-aliases-package: com.ruoyi.product.domain
+  # 配置 Mapper 扫描路径，确保能找到您刚才修改的 GoodsRevisionSpuMapper.xml
+  mapper-locations: classpath*:mapper/product/*.xml
+  configuration:
+    # 是否开启自动驼峰下划线映射（默认开启）
+    map-underscore-to-camel-case: true
+    # 打印 SQL 日志（生产环境建议设为 info 或 warn）
+    log-impl: org.apache.ibatis.logging.stdout.StdOutImpl
+  global-config:
+    db-config:
+      # 全局主键策略（根据您的实体类，通常保持 INPUT 或 AUTO）
+      id-type: input
+      # 逻辑删除配置（如果您的表有逻辑删除字段）
+      logic-delete-field: delFlag
+      logic-delete-value: 1
+      logic-not-delete-value: 0
+    # 自动填充配置（如果您实现了 MetaObjectHandler）
+    banner: false
+logging:
+  level:
+    com.ruoyi.product: debug
+feign:
+  client:
+    enabled: true
+rocketmq:
+  name-server: 127.0.0.1:9876 # 你的 NameServer 地址
+  producer:
+    group: product-producer-group
+
+product:
+  enum-scan-packages: com.ruoyi.product.enums

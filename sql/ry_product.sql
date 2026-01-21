@@ -78,6 +78,7 @@ CREATE TABLE IF NOT EXISTS goods_revision_image (
     local_uri                   TEXT COMMENT '本地URI',
     position                    INT NOT NULL COMMENT '排序位置',
     created_at_utc              DATETIME(3) NOT NULL COMMENT '创建时间',
+    phash                       BIGINT UNSIGNED COMMENT '感知哈希(64位整数)',
     updated_at_utc              DATETIME(3) NOT NULL  COMMENT '修改时间'
 ) ENGINE = InnoDB COMMENT ='goods 图片';
 
@@ -594,3 +595,104 @@ CREATE TABLE IF NOT EXISTS douyin_keywords
     INDEX `idx_keyword` (`keyword`),
     UNIQUE KEY `uk_keyword` (`keyword`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='抖音关键词列表';
+
+CREATE TABLE IF NOT EXISTS `product_snapshots` (
+    `id`                            VARCHAR(32) NOT NULL PRIMARY KEY COMMENT '商品ID',
+    `trace_id`                      VARCHAR(64) COMMENT '单次任务追踪ID',
+    `platform`                      VARCHAR(20)  COMMENT '平台',
+    `original_image`                VARCHAR(255) COMMENT '原图文件名',
+    `sub_file_name`                 VARCHAR(255) COMMENT '切后小图文件名',
+    `sub_file_path`                 VARCHAR(512) COMMENT '物理存储路径',
+    `phash`                         BIGINT UNSIGNED COMMENT '感知哈希(64位整数)',
+    `index_in_page`                 INT COMMENT '在原图中的排列顺序',
+    `rect_x`                        INT DEFAULT NULL,
+    `rect_y`                        INT DEFAULT NULL,
+    `rect_w`                        INT DEFAULT NULL,
+    `rect_h`                        INT DEFAULT NULL,
+    -- 以下为待填充字段 (AI 识别后更新)
+    `title`                         VARCHAR(512) DEFAULT NULL COMMENT '商品标题',
+    `price`                         BIGINT DEFAULT NULL COMMENT '售价(分)',
+    `sales_count`                   INT DEFAULT NULL COMMENT '销量',
+    `target_keyword`                VARCHAR(128) DEFAULT NULL COMMENT '推导关键词',
+    -- 业务关联字段
+    `local_product_id`              VARCHAR(64) DEFAULT NULL COMMENT '关联本地店铺商品ID',
+    `created_at_utc`                DATETIME(3)  COMMENT '创建时间(UTC)',
+    `updated_at_utc`                DATETIME(3)  COMMENT '更新时间(UTC)',
+    `status`                        VARCHAR(20) DEFAULT NULL COMMENT '0:仅切图, 1:AI已识别, 2:已关联本地'
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='商品快照表';
+
+-- 预定义工作流节点能力元数据
+CREATE TABLE IF NOT EXISTS `wf_node_capability` (
+    `capability_id`                 VARCHAR(50)  NOT NULL PRIMARY KEY COMMENT '能力唯一标识 (如: gemini_export)',
+    `name`                          VARCHAR(100) NOT NULL COMMENT '能力名称 (如: AI商机提取)',
+    `handler_type`                  VARCHAR(20)  NOT NULL COMMENT '执行器类型 (python_agent/java_local)',
+    `description`                   TEXT         COMMENT '功能描述',
+    `config_schema`                 JSON         COMMENT '配置项定义 (UI根据此字段生成表单，如需要输入APIKey, Prompt等)',
+    `is_active`                     VARCHAR(10)   NOT NULL DEFAULT 'enable' COMMENT '是否启用',
+    `created_at_utc`                DATETIME(3)  NOT NULL COMMENT '创建时间(UTC)',
+    `updated_at_utc`                DATETIME(3)  COMMENT '更新时间(UTC)'
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='节点能力元数据表';
+
+-- 工作流定义
+CREATE TABLE IF NOT EXISTS `wf_workflow_definition` (
+    `definition_id`                 CHAR(32)     NOT NULL PRIMARY KEY COMMENT '定义ID (UUID)',
+    `name`                          VARCHAR(100) NOT NULL COMMENT '工作流名称',
+    `description`                   VARCHAR(255) COMMENT '工作流描述',
+    `business_tag`                  VARCHAR(50)  COMMENT '分类标签(AI选品, 竞品监控等)',
+    `version`                       INT          NOT NULL DEFAULT 1 COMMENT '版本号',
+    `is_active`                     VARCHAR(10)   NOT NULL DEFAULT 'enable' COMMENT '是否启用',
+    `creator`                       VARCHAR(50)  COMMENT '创建人',
+    `created_at_utc`                DATETIME(3)  NOT NULL,
+    `updated_at_utc`                DATETIME(3)  NOT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='工作流定义主表';
+
+-- 节点定义
+CREATE TABLE IF NOT EXISTS `wf_node_definition` (
+    `node_def_id`                   CHAR(32)     NOT NULL PRIMARY KEY COMMENT '节点定义ID',
+    `definition_id`                 CHAR(32)     NOT NULL COMMENT '所属工作流定义ID',
+    `capability_id`                 VARCHAR(50)  NOT NULL COMMENT '能力唯一标识 (如: gemini_export)',
+    `node_name`                     VARCHAR(100) COMMENT '节点名称 (如: 提取商品差评)',
+    `node_order`                    INT          NOT NULL COMMENT '排序',
+    `handler_type`                  VARCHAR(20) NOT NULL COMMENT '执行器类型: python_agent, java_local',
+    `is_manual`                     VARCHAR(20) DEFAULT 'no' COMMENT '是否人工节点',
+    `default_params`                JSON         COMMENT '默认配置参数 (含Prompt模板)',
+    -- 核心字段：定义如何从上一个节点拿数据
+    -- 例如: {"input_url": "node_001.output.first_link"}
+    `input_mapping`                 JSON         COMMENT '输入数据映射关系', 
+    `created_at_utc`                DATETIME(3)  NOT NULL,
+    `updated_at_utc`                DATETIME(3)  NOT NULL,
+    INDEX `idx_def_id` (`definition_id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='工作流节点定义表';
+
+-- 工作流实例，定义了一个工作流，可以点击多次start，每次点击就会生成一个实例。
+CREATE TABLE IF NOT EXISTS  `wf_workflow_instance` (
+    `workflow_instance_id`          CHAR(32)     NOT NULL PRIMARY KEY COMMENT '工作流实例ID (UUID)',
+    `definition_id`                 CHAR(32)     NOT NULL '定义ID (UUID)',
+    `workflow_name`                 VARCHAR(100) NOT NULL COMMENT '工作流名称 (如: 抖音夏季选品)',
+    `business_tag`                  VARCHAR(20)  NOT NULL COMMENT '分类标签(AI选品, 竞品监控等)',
+    `status`                        VARCHAR(20)  NOT NULL DEFAULT 'running' COMMENT '状态: running, completed, failed, suspended',
+    `current_node_id`               CHAR(32)     COMMENT '当前正在运行的节点ID',
+    `creator`                       VARCHAR(50)  COMMENT '创建人',
+    `created_at_utc`                DATETIME(3)  NOT NULL COMMENT '创建时间(UTC)',
+    `updated_at_utc`                DATETIME(3)  NOT NULL COMMENT '更新时间(UTC)',
+    INDEX `idx_status` (`status`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='工作流运行实例表';
+
+-- 节点实例，该节点需要被运行时，将会根据wf_node_definition中的定义，实例化一个节点 WfNodeInstance
+CREATE TABLE IF NOT EXISTS `wf_node_instance` (
+    `node_instance_id`              CHAR(32)     NOT NULL PRIMARY KEY COMMENT '任务节点ID (UUID)',
+    `workflow_instance_id`          CHAR(32)     NOT NULL COMMENT '所属工作流实例ID',
+    `capability_id`                 VARCHAR(50)  NOT NULL COMMENT '能力唯一标识 (如: gemini_export)',
+    `node_order`                    INT          NOT NULL COMMENT '执行顺序索引',
+    `handler_type`                  VARCHAR(20)  NOT NULL DEFAULT 'python_agent' COMMENT '执行器类型: python_agent, java_local',
+    `status`                        VARCHAR(20)  NOT NULL DEFAULT 'pending' COMMENT '状态: pending, running, success, failed, awaiting_human',
+    `is_manual`                     VARCHAR(20)  NOT NULL DEFAULT 'no' COMMENT '是否为人工作业节点 (no,yes)',
+    `input_params`                  JSON         COMMENT '输入参数 (Python读取此字段执行脚本)',
+    `output_data`                   JSON         COMMENT '输出结果 (脚本运行完回填)',
+    `error_msg`                     TEXT         COMMENT '异常堆栈信息',
+    `created_at_utc`                DATETIME(3)  NOT NULL COMMENT '创建时间(UTC)',
+    `updated_at_utc`                DATETIME(3)  NOT NULL COMMENT '更新时间(UTC)',
+    INDEX `idx_wf_instance` (`workflow_instance_id`),
+    INDEX `idx_node_status` (`status`, `is_manual`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='工作流任务节点明细表';
+
