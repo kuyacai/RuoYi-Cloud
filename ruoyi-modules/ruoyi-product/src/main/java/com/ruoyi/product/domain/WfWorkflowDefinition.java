@@ -1,6 +1,7 @@
 package com.ruoyi.product.domain;
 
 import com.baomidou.mybatisplus.annotation.IdType;
+import com.baomidou.mybatisplus.annotation.TableField;
 import com.baomidou.mybatisplus.annotation.TableId;
 import com.baomidou.mybatisplus.annotation.TableName;
 import com.ruoyi.product.core.mybatisplus.ProductBaseEntity;
@@ -27,7 +28,8 @@ public class WfWorkflowDefinition extends ProductBaseEntity {
 
     private Integer version;
 
-    private ActiveStatus isActive;
+    @TableField("is_active")
+    private ActiveStatus activeStatus;
 
     private String creator;
 }

@@ -53,7 +53,7 @@ public class WfWorkflowInstanceServiceImpl extends BaseServiceImpl<WfWorkflowIns
                 WfWorkflowDefinition definition = workflowDefinitionService.getById(definitionId);
                 Assert.notNull(definition, "未找到工作流定义");
                 // 使用正确的断言：必须为 ENABLED 才能继续
-                Assert.isTrue(ActiveStatus.ENABLE.getValue().equals(definition.getIsActive()),
+                Assert.isTrue(ActiveStatus.ENABLE.equals(definition.getActiveStatus()),
                                 "该工作流定义已被禁用，无法启动");
 
                 // 2. 获取节点定义
@@ -90,7 +90,7 @@ public class WfWorkflowInstanceServiceImpl extends BaseServiceImpl<WfWorkflowIns
                         // 安全检查：确保该节点引用的算子在仓库中可用
                         WfNodeCapability cap = capabilityMap.get(def.getCapabilityId());
                         Assert.notNull(cap, "节点 [" + def.getNodeName() + "] 引用的能力算子 " + def.getCapabilityId() + " 不存在");
-                        Assert.isTrue(ActiveStatus.ENABLE.getValue().equals(cap.getIsActive()),
+                        Assert.isTrue(ActiveStatus.ENABLE.equals(cap.getActiveStatus()),
                                         "算子 [" + cap.getName() + "] 已被禁用");
 
                         WfNodeInstance ni = new WfNodeInstance();
@@ -105,7 +105,7 @@ public class WfWorkflowInstanceServiceImpl extends BaseServiceImpl<WfWorkflowIns
                         ni.setHandlerType(cap.getHandlerType());
 
                         // 继承人工/自动状态
-                        ni.setIsManual(def.getIsManual());
+                        ni.setManualStatus(def.getManualStatus());
 
                         // 拷贝参数（后期可在此处进行动态变量替换）
                         ni.setInputParams(def.getDefaultParams());

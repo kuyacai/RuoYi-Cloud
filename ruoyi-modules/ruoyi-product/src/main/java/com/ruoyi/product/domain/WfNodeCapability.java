@@ -10,6 +10,7 @@ import com.baomidou.mybatisplus.extension.handlers.JacksonTypeHandler;
 import com.ruoyi.product.core.mybatisplus.ProductBaseEntity;
 import com.ruoyi.product.enums.ActiveStatus;
 import com.ruoyi.product.enums.HandlerType;
+import com.ruoyi.product.enums.ManualStatus;
 
 import lombok.Data;
 import lombok.EqualsAndHashCode;
@@ -38,6 +39,9 @@ public class WfNodeCapability extends ProductBaseEntity {
     /** 功能描述 */
     private String description;
 
+    @TableField("is_manual")
+    private ManualStatus manualStatus;
+
     /**
      * * 配置项定义 (JSON)
      * 用于描述该能力需要哪些输入参数，例如：{"fields": [{"name": "prompt", "type": "textarea"}]}
@@ -45,5 +49,6 @@ public class WfNodeCapability extends ProductBaseEntity {
     @TableField(typeHandler = JacksonTypeHandler.class)
     private Map<String, Object> configSchema;
 
-    private ActiveStatus isActive;
+    @TableField("is_active")
+    private ActiveStatus activeStatus;
 }

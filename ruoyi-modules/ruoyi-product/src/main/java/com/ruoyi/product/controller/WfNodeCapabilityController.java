@@ -51,7 +51,7 @@ public class WfNodeCapabilityController extends BaseController {
 
                 // 3. 修正方法名：根据实体类定义，状态字段可能是 getActiveStatus() 或 getStatus()
                 // 请检查实体类，如果是 ActiveStatus 枚举，通常字段名是 activeStatus
-                .eq(query.getIsActive() != null, WfNodeCapability::getIsActive, query.getIsActive());
+                .eq(query.getActiveStatus() != null, WfNodeCapability::getActiveStatus, query.getActiveStatus());
 
         List<WfNodeCapability> list = wfNodeCapabilityService.list(lqw);
         return getDataTable(list);
@@ -94,5 +94,17 @@ public class WfNodeCapabilityController extends BaseController {
     @DeleteMapping("/{capabilityIds}")
     public AjaxResult remove(@PathVariable String[] capabilityIds) {
         return toAjax(wfNodeCapabilityService.removeByIds(Arrays.asList(capabilityIds)));
+    }
+
+    /**
+     * 校验能力标识唯一性
+     */
+    @GetMapping("/checkUnique/{capabilityId}")
+    public AjaxResult checkUnique(@PathVariable("capabilityId") String capabilityId) {
+        long count = wfNodeCapabilityService.count(
+                new LambdaQueryWrapper<WfNodeCapability>()
+                        .eq(WfNodeCapability::getCapabilityId, capabilityId));
+        // 如果 count > 0，说明已存在，返回 false
+        return AjaxResult.success(count == 0);
     }
 }

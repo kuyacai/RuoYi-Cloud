@@ -629,6 +629,7 @@ CREATE TABLE IF NOT EXISTS `wf_node_capability` (
     `description`                   TEXT         COMMENT '功能描述',
     `config_schema`                 JSON         COMMENT '配置项定义 (UI根据此字段生成表单，如需要输入APIKey, Prompt等)',
     `is_active`                     VARCHAR(10)   NOT NULL DEFAULT 'enable' COMMENT '是否启用',
+    `is_manual`                     VARCHAR(20) DEFAULT 'no' COMMENT '是否人工节点',
     `created_at_utc`                DATETIME(3)  NOT NULL COMMENT '创建时间(UTC)',
     `updated_at_utc`                DATETIME(3)  COMMENT '更新时间(UTC)'
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='节点能力元数据表';

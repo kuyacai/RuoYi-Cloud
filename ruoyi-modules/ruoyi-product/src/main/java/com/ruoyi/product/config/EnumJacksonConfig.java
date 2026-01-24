@@ -6,8 +6,11 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
 import com.fasterxml.jackson.core.JsonParser;
+import com.fasterxml.jackson.databind.BeanProperty; // 必须导入这个
 import com.fasterxml.jackson.databind.DeserializationContext;
 import com.fasterxml.jackson.databind.JsonDeserializer;
+import com.fasterxml.jackson.databind.JsonMappingException; // 必须导入这个
+import com.fasterxml.jackson.databind.deser.ContextualDeserializer; // 必须导入这个
 import com.fasterxml.jackson.databind.module.SimpleModule;
 import com.ruoyi.common.core.enums.BaseEnum;
 
@@ -17,27 +20,58 @@ public class EnumJacksonConfig {
     @Bean
     public SimpleModule baseEnumModule() {
         SimpleModule module = new SimpleModule();
-        // 专门针对实现了 BaseEnum 接口的类进行拦截处理
-        module.addDeserializer(Enum.class, new JsonDeserializer<Enum>() {
-            @Override
-            public Enum deserialize(JsonParser jp, DeserializationContext ctxt) throws IOException {
-                // 获取当前目标字段的实际类型（例如 ActivityProductStatus.class）
-                Class<?> targetClass = ctxt.getContextualType().getRawClass();
-                String text = jp.getText(); // 获取前端传来的值，可能是 "active"
+        // 注册自定义的反序列化器
+        module.addDeserializer(Enum.class, new BaseEnumDeserializer());
+        return module;
+    }
 
-                // 只有实现了 BaseEnum 且是枚举的才处理
-                if (targetClass.isEnum() && BaseEnum.class.isAssignableFrom(targetClass)) {
-                    for (Object enumConstant : targetClass.getEnumConstants()) {
-                        BaseEnum baseEnum = (BaseEnum) enumConstant;
-                        // 匹配前端传来的 code 字符串
-                        if (baseEnum.getCode().equalsIgnoreCase(text)) {
-                            return (Enum) enumConstant;
-                        }
+    /**
+     * 实现 ContextualDeserializer 接口
+     */
+    public static class BaseEnumDeserializer extends JsonDeserializer<Enum> implements ContextualDeserializer {
+
+        private Class<?> targetClass;
+
+        // 默认构造函数必须保留
+        public BaseEnumDeserializer() {
+        }
+
+        // 带参构造函数用于在运行时锁定具体的枚举类
+        public BaseEnumDeserializer(Class<?> targetClass) {
+            this.targetClass = targetClass;
+        }
+
+        @Override
+        public Enum deserialize(JsonParser jp, DeserializationContext ctxt) throws IOException {
+            String text = jp.getText();
+            // 只有当 targetClass 是实现了 BaseEnum 的枚举时才处理
+            if (targetClass != null && targetClass.isEnum() && BaseEnum.class.isAssignableFrom(targetClass)) {
+                for (Object enumConstant : targetClass.getEnumConstants()) {
+                    BaseEnum baseEnum = (BaseEnum) enumConstant;
+                    if (baseEnum.getCode().equalsIgnoreCase(text)) {
+                        return (Enum) enumConstant;
                     }
                 }
-                return null;
             }
-        });
-        return module;
+            return null;
+        }
+
+        /**
+         * 关键方法：Jackson 在解析具体属性前会调用此方法
+         */
+        @Override
+        public JsonDeserializer<?> createContextual(DeserializationContext ctxt, BeanProperty property)
+                throws JsonMappingException {
+            // 获取当前需要反序列化的具体类型
+            Class<?> rawClass = null;
+            if (ctxt.getContextualType() != null) {
+                rawClass = ctxt.getContextualType().getRawClass();
+            } else if (property != null) {
+                rawClass = property.getType().getRawClass();
+            }
+
+            // 返回一个带有具体目标类型的反序列化器实例
+            return new BaseEnumDeserializer(rawClass);
+        }
     }
 }

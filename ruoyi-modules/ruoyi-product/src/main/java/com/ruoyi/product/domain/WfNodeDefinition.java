@@ -34,7 +34,8 @@ public class WfNodeDefinition extends ProductBaseEntity {
 
     private HandlerType handlerType;
 
-    private ManualStatus isManual;
+    @TableField("is_manual")
+    private ManualStatus manualStatus;
     /**
      * 默认配置参数 (含Prompt模板)
      */

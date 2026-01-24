@@ -57,12 +57,12 @@ public class ProductBaseEntity extends BaseEntity {
     @TableField(exist = false)
     private Map<String, Object> params = new HashMap<>();
 
-    @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")
+    @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss", timezone = "UTC")
     // 在插入时填充
     @TableField(fill = FieldFill.INSERT)
     private Instant createdAtUtc;
 
-    @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")
+    @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss", timezone = "UTC")
     // 在插入和更新时都填充（确保每次修改都记录最新时间）
     @TableField(fill = FieldFill.INSERT_UPDATE)
     private Instant updatedAtUtc;

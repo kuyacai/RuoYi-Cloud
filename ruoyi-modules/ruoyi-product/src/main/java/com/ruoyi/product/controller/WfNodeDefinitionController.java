@@ -1,6 +1,5 @@
 package com.ruoyi.product.controller;
 
-import java.util.Arrays;
 import java.util.List;
 
 import org.springframework.web.bind.annotation.DeleteMapping;
@@ -14,13 +13,16 @@ import org.springframework.web.bind.annotation.RestController;
 
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.ruoyi.common.core.utils.StringUtils;
+import com.ruoyi.common.core.utils.uuid.UUID;
 import com.ruoyi.common.core.web.controller.BaseController;
 import com.ruoyi.common.core.web.domain.AjaxResult;
 import com.ruoyi.common.core.web.page.TableDataInfo;
 import com.ruoyi.common.log.annotation.Log;
 import com.ruoyi.common.log.enums.BusinessType;
 import com.ruoyi.common.security.annotation.RequiresPermissions;
+import com.ruoyi.product.domain.WfNodeCapability;
 import com.ruoyi.product.domain.WfNodeDefinition;
+import com.ruoyi.product.service.IWfNodeCapabilityService;
 import com.ruoyi.product.service.IWfNodeDefinitionService;
 
 import lombok.RequiredArgsConstructor;
@@ -29,11 +31,12 @@ import lombok.RequiredArgsConstructor;
  * 工作流节点定义 Controller
  */
 @RestController
-@RequestMapping("/definition")
+@RequestMapping("/node-definition")
 @RequiredArgsConstructor
 public class WfNodeDefinitionController extends BaseController {
 
     private final IWfNodeDefinitionService wfNodeDefinitionService;
+    private final IWfNodeCapabilityService capabilityService; // 需要注入能力仓库的服务
 
     /**
      * 查询节点定义列表
@@ -65,12 +68,42 @@ public class WfNodeDefinitionController extends BaseController {
     }
 
     /**
-     * 新增
+     * 新增节点定义
      */
     @RequiresPermissions("product:definition:add")
     @Log(title = "节点定义", businessType = BusinessType.INSERT)
     @PostMapping
     public AjaxResult add(@RequestBody WfNodeDefinition wfNodeDefinition) {
+        // 1. 校验必要参数
+        if (StringUtils.isEmpty(wfNodeDefinition.getCapabilityId())) {
+            return AjaxResult.error("关联能力不能为空");
+        }
+
+        // 2. 根据能力仓库补全 handlerType 和 默认 manualStatus
+        WfNodeCapability capability = capabilityService.getById(wfNodeDefinition.getCapabilityId());
+        if (capability == null) {
+            return AjaxResult.error("关联的能力算子不存在");
+        }
+
+        // 设置执行器类型（从能力带入）
+        wfNodeDefinition.setHandlerType(capability.getHandlerType());
+
+        // 如果前端没有显式指定 manualStatus，则继承能力算子的默认设置
+        if (wfNodeDefinition.getManualStatus() == null) {
+            wfNodeDefinition.setManualStatus(capability.getManualStatus());
+        }
+
+        // 3. 处理 ID 和 排序
+        if (StringUtils.isEmpty(wfNodeDefinition.getNodeDefId())) {
+            wfNodeDefinition.setNodeDefId(UUID.fastUUID().toString(true));
+        }
+
+        if (wfNodeDefinition.getNodeOrder() == null) {
+            long count = wfNodeDefinitionService.count(new LambdaQueryWrapper<WfNodeDefinition>()
+                    .eq(WfNodeDefinition::getDefinitionId, wfNodeDefinition.getDefinitionId()));
+            wfNodeDefinition.setNodeOrder((int) count + 1);
+        }
+
         return toAjax(wfNodeDefinitionService.save(wfNodeDefinition));
     }
 
@@ -87,10 +120,13 @@ public class WfNodeDefinitionController extends BaseController {
     /**
      * 删除
      */
+    /**
+     * 删除节点（带自动重排）
+     */
     @RequiresPermissions("product:definition:remove")
     @Log(title = "节点定义", businessType = BusinessType.DELETE)
-    @DeleteMapping("/{nodeDefIds}")
-    public AjaxResult remove(@PathVariable String[] nodeDefIds) {
-        return toAjax(wfNodeDefinitionService.removeByIds(Arrays.asList(nodeDefIds)));
+    @DeleteMapping("/{nodeDefId}/{definitionId}")
+    public AjaxResult remove(@PathVariable String nodeDefId, @PathVariable String definitionId) {
+        return toAjax(wfNodeDefinitionService.removeAndResort(nodeDefId, definitionId));
     }
 }

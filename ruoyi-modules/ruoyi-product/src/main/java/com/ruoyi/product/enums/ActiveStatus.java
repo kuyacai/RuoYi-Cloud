@@ -15,8 +15,8 @@ import com.ruoyi.common.core.enums.ExposeEnum;
 public enum ActiveStatus implements BaseEnum, IEnum<String> {
 
     ENABLE("enable", "启用"),
-    DISABLED("disabled", "停用"),
-    DELETED("deleted", "已删除");
+    DISABLED("disabled", "停用");
+    // DELETED("deleted", "已删除");
 
     private final String code;
     private final String label;

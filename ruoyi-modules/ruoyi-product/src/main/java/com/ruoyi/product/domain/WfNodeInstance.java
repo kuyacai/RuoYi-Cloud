@@ -36,7 +36,8 @@ public class WfNodeInstance extends ProductBaseEntity {
 
     private NodeInstanceStatus status;
 
-    private ManualStatus isManual;
+    @TableField("is_manual")
+    private ManualStatus manualStatus;
 
     /**
      * * 使用 MyBatis Plus 的 JacksonTypeHandler 处理 JSON 字段
