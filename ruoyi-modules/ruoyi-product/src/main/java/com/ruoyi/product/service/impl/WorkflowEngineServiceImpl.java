@@ -4,18 +4,24 @@ import java.util.Map;
 
 import org.springframework.context.event.EventListener;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
+import com.ruoyi.common.core.utils.uuid.UUID;
+import com.ruoyi.product.domain.WfNodeDefinition;
 import com.ruoyi.product.domain.WfNodeInstance;
 import com.ruoyi.product.domain.WfWorkflowInstance;
 import com.ruoyi.product.enums.HandlerType;
+import com.ruoyi.product.enums.ManualStatus;
 import com.ruoyi.product.enums.NodeInstanceStatus;
 import com.ruoyi.product.enums.WorkflowStatus;
-import com.ruoyi.product.rq.AgentTaskProducer; // 假设这是发送 MQ 的类
-import com.ruoyi.product.service.IWfNodeInstanceService;
-import com.ruoyi.product.service.IWfWorkflowInstanceService;
+import com.ruoyi.product.mapper.WfNodeDefinitionMapper;
+import com.ruoyi.product.mapper.WfNodeInstanceMapper;
+import com.ruoyi.product.mapper.WfWorkflowInstanceMapper;
+import com.ruoyi.product.rq.AgentTaskProducer;
 import com.ruoyi.product.service.IWorkflowEngineService;
 import com.ruoyi.product.workflow.engine.parser.WorkflowParameterParser;
+import com.ruoyi.product.workflow.event.NodeCompletedEvent;
 import com.ruoyi.product.workflow.event.WorkflowTaskEvent;
 
 import lombok.RequiredArgsConstructor;
@@ -26,69 +32,121 @@ import lombok.extern.slf4j.Slf4j;
 @RequiredArgsConstructor
 public class WorkflowEngineServiceImpl implements IWorkflowEngineService {
 
-    private final IWfNodeInstanceService nodeInstanceService;
-    private final IWfWorkflowInstanceService workflowInstanceService;
+    // 直接注入 Mapper 避免 Service 间的循环引用
+    private final WfNodeInstanceMapper nodeInstanceMapper;
+    private final WfWorkflowInstanceMapper workflowInstanceMapper;
+    private final WfNodeDefinitionMapper nodeDefinitionMapper;
+
     private final WorkflowParameterParser parameterParser;
     private final AgentTaskProducer agentTaskProducer;
 
     @Override
-    public void getNextNode(String currentNodeInstanceId) {
-        // 1. 获取当前节点信息
-        WfNodeInstance currentNode = nodeInstanceService.getById(currentNodeInstanceId);
-        String instanceId = currentNode.getWorkflowInstanceId();
-
-        // 2. 寻找同一个实例下，序号比当前节点大 1 的下一个节点
-        WfNodeInstance nextNode = nodeInstanceService.getOne(
-                new LambdaQueryWrapper<WfNodeInstance>()
-                        .eq(WfNodeInstance::getWorkflowInstanceId, instanceId)
-                        .eq(WfNodeInstance::getNodeOrder, currentNode.getNodeOrder() + 1));
-
-        if (nextNode != null) {
-            log.info("⏭️ 找到下一个节点: [{}], Order: {}", nextNode.getCapabilityId(), nextNode.getNodeOrder());
-
-            // 更新工作流实例当前运行到的节点 ID
-            WfWorkflowInstance instance = workflowInstanceService.getById(instanceId);
-            instance.setCurrentNodeId(nextNode.getNodeInstanceId());
-            workflowInstanceService.updateById(instance);
-
-            // 执行下一个节点
-            this.executeNode(nextNode.getNodeInstanceId());
-        } else {
-            // 3. 没有下一个节点了，标记整个工作流完成
-            log.info("🏁 工作流实例 {} 已跑完所有节点，任务结束。", instanceId);
-            WfWorkflowInstance instance = workflowInstanceService.getById(instanceId);
-            instance.setStatus(WorkflowStatus.COMPLETED); // 假设你有 COMPLETED 枚举
-            workflowInstanceService.updateById(instance);
+    @Transactional(rollbackFor = Exception.class)
+    public void getNextNode(String workflowInstanceId) {
+        WfWorkflowInstance instance = workflowInstanceMapper.selectById(workflowInstanceId);
+        if (instance == null || WorkflowStatus.COMPLETED.equals(instance.getStatus())) {
+            return;
         }
+
+        // 1. 获取当前节点的 Order
+        Integer currentOrder = 0;
+        if (instance.getCurrentNodeId() != null) {
+            WfNodeInstance currentNode = nodeInstanceMapper.selectById(instance.getCurrentNodeId());
+            if (currentNode != null) {
+                currentOrder = currentNode.getNodeOrder();
+            }
+        }
+
+        // 2. 查找下一个节点定义
+        WfNodeDefinition nextDef = nodeDefinitionMapper.selectOne(new LambdaQueryWrapper<WfNodeDefinition>()
+                .eq(WfNodeDefinition::getDefinitionId, instance.getDefinitionId())
+                .gt(WfNodeDefinition::getNodeOrder, currentOrder)
+                .orderByAsc(WfNodeDefinition::getNodeOrder)
+                .last("LIMIT 1"));
+
+        if (nextDef == null) {
+            // 没有下一个节点，流程完成
+            instance.setStatus(WorkflowStatus.COMPLETED);
+            workflowInstanceMapper.updateById(instance);
+            log.info("🏁 工作流实例 {} 已全部执行完毕", workflowInstanceId);
+            return;
+        }
+
+        // 3. 创建节点实例
+        String nodeInstanceId = UUID.fastUUID().toString(true);
+        WfNodeInstance nodeInstance = new WfNodeInstance();
+        nodeInstance.setNodeInstanceId(nodeInstanceId);
+        nodeInstance.setWorkflowInstanceId(workflowInstanceId);
+        nodeInstance.setCapabilityId(nextDef.getCapabilityId());
+        nodeInstance.setNodeName(nextDef.getNodeName());
+        nodeInstance.setNodeOrder(nextDef.getNodeOrder());
+        nodeInstance.setHandlerType(nextDef.getHandlerType());
+        nodeInstance.setStatus(NodeInstanceStatus.INIT);
+        nodeInstance.setManualStatus(nextDef.getManualStatus());
+        // 初始拷贝：此时还是带占位符的模板
+        nodeInstance.setInputParams(nextDef.getDefaultParams());
+
+        nodeInstanceMapper.insert(nodeInstance);
+
+        // 4. 更新流程指针并触发执行
+        instance.setCurrentNodeId(nodeInstanceId);
+        workflowInstanceMapper.updateById(instance);
+
+        log.info("📌 流转至下一节点: {} (Order: {} nodeInstanceId:{})", nextDef.getNodeName(), nextDef.getNodeOrder(),
+                nodeInstanceId);
+        this.executeNode(nodeInstanceId);
     }
 
     @Override
+    @Transactional(rollbackFor = Exception.class)
     public void executeNode(String nodeInstanceId) {
-        WfNodeInstance node = nodeInstanceService.getById(nodeInstanceId);
+        WfNodeInstance node = nodeInstanceMapper.selectById(nodeInstanceId);
+        if (node == null)
+            return;
 
-        // 1. 更新节点状态为运行中
-        node.setStatus(NodeInstanceStatus.RUNNING);
-        nodeInstanceService.updateById(node);
-
-        log.info("🚀 准备执行节点: {} (ID: {})", node.getCapabilityId(), nodeInstanceId);
-
-        // 2. 核心：解析 SpEL 变量得到最终执行参数
+        // 1. 【关键修改】：解析参数。ParameterConfig 会从上游节点的 outputData 中取值。
+        // 解析后得到的 resolvedParams 是已经将 #{#node1...} 替换为真实数据的 Map
         Map<String, Object> resolvedParams = parameterParser.parse(nodeInstanceId, node.getInputParams());
 
-        // 3. 使用枚举进行路由判断，消除硬编码
+        // 2. 【持久化真实参数】：将解析后的值写回数据库，方便 UI 查看和后续重试
+        node.setInputParams(resolvedParams);
+
+        // 3. 判断是否需要人工干预
+        if (ManualStatus.YES.equals(node.getManualStatus())) {
+            log.info("✋ 节点 {} 是人工节点，挂起等待", node.getNodeName());
+            node.setStatus(NodeInstanceStatus.AWAITING_HUMAN);
+            nodeInstanceMapper.updateById(node);
+            return;
+        }
+
+        // 4. 更新状态为运行中并保存解析后的参数
+        node.setStatus(NodeInstanceStatus.RUNNING);
+        nodeInstanceMapper.updateById(node);
+
+        log.info("🚀 准备执行算子: {} (Type: {})", node.getCapabilityId(), node.getHandlerType());
+
+        // 5. 根据处理器类型执行
         if (HandlerType.PYTHON_AGENT.equals(node.getHandlerType())) {
-            // 调用重构后的 sendTask，传入解析后的参数
+            // 发送给 MQ，传参使用已经解析好的真实值
             agentTaskProducer.sendTask(node, resolvedParams);
-        } else if (HandlerType.JAVA_LOCAL.equals(node.getHandlerType())) {
-            log.info("☕ 执行 Java 本地算子...");
-            // TODO: 实现本地执行逻辑
+        } else {
+            // 其他类型处理器（如 JAVA_LOCAL）在此扩展
+            log.warn("⚠️ 暂不支持的处理器类型: {}", node.getHandlerType());
         }
     }
 
-    // 这是一个桥接方法：将“事件信号”转化为“执行动作”
+    @EventListener
+    public void handleNodeCompleted(NodeCompletedEvent event) {
+        log.info("📩 收到节点完成信号，准备寻找后续节点: {}", event.getNodeInstanceId());
+        WfNodeInstance node = nodeInstanceMapper.selectById(event.getNodeInstanceId());
+        if (node != null) {
+            this.getNextNode(node.getWorkflowInstanceId());
+        }
+    }
+
     @EventListener
     public void handleWorkflowTask(WorkflowTaskEvent event) {
-        // 这里的 this.executeNode 就是你类中原有的那个 executeNode 方法
+        log.info("📩 收到任务执行信号: {}", event.getNodeInstanceId());
         this.executeNode(event.getNodeInstanceId());
     }
 }

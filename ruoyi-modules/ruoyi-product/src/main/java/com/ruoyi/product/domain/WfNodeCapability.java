@@ -49,6 +49,9 @@ public class WfNodeCapability extends ProductBaseEntity {
     @TableField(typeHandler = JacksonTypeHandler.class)
     private Map<String, Object> configSchema;
 
+    @TableField(typeHandler = JacksonTypeHandler.class)
+    private Map<String, Object> outputSchema;
+
     @TableField("is_active")
     private ActiveStatus activeStatus;
 }

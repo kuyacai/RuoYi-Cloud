@@ -628,6 +628,7 @@ CREATE TABLE IF NOT EXISTS `wf_node_capability` (
     `handler_type`                  VARCHAR(20)  NOT NULL COMMENT '执行器类型 (python_agent/java_local)',
     `description`                   TEXT         COMMENT '功能描述',
     `config_schema`                 JSON         COMMENT '配置项定义 (UI根据此字段生成表单，如需要输入APIKey, Prompt等)',
+    `output_schema`                 JSON         COMMENT '输出数据配置项定义',
     `is_active`                     VARCHAR(10)   NOT NULL DEFAULT 'enable' COMMENT '是否启用',
     `is_manual`                     VARCHAR(20) DEFAULT 'no' COMMENT '是否人工节点',
     `created_at_utc`                DATETIME(3)  NOT NULL COMMENT '创建时间(UTC)',
@@ -647,7 +648,7 @@ CREATE TABLE IF NOT EXISTS `wf_workflow_definition` (
     `updated_at_utc`                DATETIME(3)  NOT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='工作流定义主表';
 
--- 节点定义
+-- 节点定义 
 CREATE TABLE IF NOT EXISTS `wf_node_definition` (
     `node_def_id`                   CHAR(32)     NOT NULL PRIMARY KEY COMMENT '节点定义ID',
     `definition_id`                 CHAR(32)     NOT NULL COMMENT '所属工作流定义ID',
@@ -659,6 +660,8 @@ CREATE TABLE IF NOT EXISTS `wf_node_definition` (
     `default_params`                JSON         COMMENT '默认配置参数 (含Prompt模板)',
     -- 核心字段：定义如何从上一个节点拿数据
     -- 例如: {"input_url": "node_001.output.first_link"}
+    -- 场景：节点 1 从网页抓取了 price，节点 2 需要把这个 price 存入数据库。
+    -- 由于 price 是动态抓取的，你无法在 defaultParams 里写死一个数字。
     `input_mapping`                 JSON         COMMENT '输入数据映射关系', 
     `created_at_utc`                DATETIME(3)  NOT NULL,
     `updated_at_utc`                DATETIME(3)  NOT NULL,
@@ -668,10 +671,13 @@ CREATE TABLE IF NOT EXISTS `wf_node_definition` (
 -- 工作流实例，定义了一个工作流，可以点击多次start，每次点击就会生成一个实例。
 CREATE TABLE IF NOT EXISTS  `wf_workflow_instance` (
     `workflow_instance_id`          CHAR(32)     NOT NULL PRIMARY KEY COMMENT '工作流实例ID (UUID)',
-    `definition_id`                 CHAR(32)     NOT NULL '定义ID (UUID)',
-    `workflow_name`                 VARCHAR(100) NOT NULL COMMENT '工作流名称 (如: 抖音夏季选品)',
-    `business_tag`                  VARCHAR(20)  NOT NULL COMMENT '分类标签(AI选品, 竞品监控等)',
+    `definition_id`                 CHAR(32)     NOT NULL COMMENT '定义ID (UUID)',
+    `workflow_name`                 VARCHAR(100) COMMENT '工作流名称 (如: 抖音夏季选品)',
+    `business_tag`                  VARCHAR(20)  COMMENT '分类标签(AI选品, 竞品监控等)',
     `status`                        VARCHAR(20)  NOT NULL DEFAULT 'running' COMMENT '状态: running, completed, failed, suspended',
+    -- 核心字段：全局账本
+    -- 记录格式: {"START": {...}, "node_1": {...}, "node_2": {...}}
+    `runtime_context`               JSON         COMMENT '运行上下文数据(全局账本)',
     `current_node_id`               CHAR(32)     COMMENT '当前正在运行的节点ID',
     `creator`                       VARCHAR(50)  COMMENT '创建人',
     `created_at_utc`                DATETIME(3)  NOT NULL COMMENT '创建时间(UTC)',

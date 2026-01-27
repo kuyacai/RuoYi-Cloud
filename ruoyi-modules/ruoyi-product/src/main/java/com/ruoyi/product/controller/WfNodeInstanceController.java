@@ -2,7 +2,9 @@ package com.ruoyi.product.controller;
 
 import java.util.Arrays;
 import java.util.List;
+import java.util.Map;
 
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -21,7 +23,9 @@ import com.ruoyi.common.log.enums.BusinessType;
 import com.ruoyi.common.security.annotation.RequiresPermissions;
 import com.ruoyi.product.domain.WfNodeInstance;
 import com.ruoyi.product.service.IWfNodeInstanceService;
+import com.ruoyi.product.service.IWfWorkflowInstanceService;
 import com.ruoyi.product.service.IWorkflowEngineService;
+import com.ruoyi.product.workflow.event.WorkflowTaskEvent;
 
 import lombok.RequiredArgsConstructor;
 
@@ -32,12 +36,14 @@ import lombok.RequiredArgsConstructor;
  * @date 2026-01-21
  */
 @RestController
-@RequestMapping("/instance") // 建议与前端 instance.js 中的 url 保持一致
+@RequestMapping("/node-instance") // 建议与前端 nodeInstance.js 中的 url 保持一致
 @RequiredArgsConstructor
 public class WfNodeInstanceController extends BaseController {
 
     private final IWfNodeInstanceService nodeInstanceService;
     private final IWorkflowEngineService workflowEngineService;
+    private final IWfWorkflowInstanceService workflowInstanceService;
+    private final ApplicationEventPublisher eventPublisher;
 
     /**
      * 分页查询工作流任务节点实例列表
@@ -106,5 +112,43 @@ public class WfNodeInstanceController extends BaseController {
     @DeleteMapping("/{taskNodeIds}")
     public AjaxResult remove(@PathVariable String[] taskNodeIds) {
         return toAjax(nodeInstanceService.removeByIds(Arrays.asList(taskNodeIds)));
+    }
+
+    /**
+     * 场景 A: 全人工节点点击“标记完成”
+     * 对应前端 completeManualNode 接口
+     */
+    @PutMapping("/complete-manual/{nodeInstanceId}")
+    public AjaxResult completeManual(@PathVariable String nodeInstanceId,
+            @RequestBody(required = false) Map<String, Object> manualData) {
+        // 直接调用 Service 层新封装的驱动逻辑
+        workflowInstanceService.completeManualNode(nodeInstanceId, manualData);
+        return success("节点任务已标记完成，流程已推进至下一阶段");
+    }
+
+    /**
+     * 场景 B: 人机协同节点点击“继续”
+     * 对应前端 resumeCooperation 接口
+     */
+    @PutMapping("/resume-cooperation/{nodeInstanceId}")
+    public AjaxResult resumeCooperation(@PathVariable String nodeInstanceId,
+            @RequestBody Map<String, Object> manualData) {
+        // 1. 更新当前节点的输入参数 (回填人工干预的结果，如验证码)
+        WfNodeInstance node = nodeInstanceService.getById(nodeInstanceId);
+        if (node == null)
+            return error("节点实例不存在");
+
+        if (manualData != null && !manualData.isEmpty()) {
+            Map<String, Object> params = node.getInputParams();
+            params.putAll(manualData);
+            node.setInputParams(params);
+            nodeInstanceService.updateById(node);
+        }
+
+        // 2. 重新发布执行信号，驱动自动化逻辑再次运行
+        // 注意：这里不使用 retryNode，因为它不重置后续节点状态
+        eventPublisher.publishEvent(new WorkflowTaskEvent(this, nodeInstanceId));
+
+        return success("干预数据已提交，算子恢复执行中");
     }
 }

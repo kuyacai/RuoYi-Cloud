@@ -12,7 +12,9 @@ import org.springframework.stereotype.Component;
 
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.ruoyi.product.domain.WfNodeInstance;
+import com.ruoyi.product.domain.WfWorkflowInstance;
 import com.ruoyi.product.service.IWfNodeInstanceService;
+import com.ruoyi.product.service.IWfWorkflowInstanceService;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -23,7 +25,9 @@ import lombok.extern.slf4j.Slf4j;
 public class WorkflowParameterParser {
 
     private final IWfNodeInstanceService nodeInstanceService;
+    private final IWfWorkflowInstanceService wfWorkflowInstanceService;
     private final ExpressionParser parser = new SpelExpressionParser();
+
     private final TemplateParserContext templateContext = new TemplateParserContext("#{", "}");
 
     /**
@@ -43,6 +47,12 @@ public class WorkflowParameterParser {
 
     private StandardEvaluationContext prepareContext(WfNodeInstance current) {
         StandardEvaluationContext evalContext = new StandardEvaluationContext();
+
+        // 获取工作流实例中的 RuntimeContext (里面存了 START 参数)
+        WfWorkflowInstance instance = wfWorkflowInstanceService.getById(current.getWorkflowInstanceId());
+        if (instance.getRuntimeContext() != null) {
+            evalContext.setVariables(instance.getRuntimeContext()); // 这样就能解析 #{#START['key']}
+        }
 
         // 查询当前实例之前所有已完成的节点
         List<WfNodeInstance> prevNodes = nodeInstanceService.list(

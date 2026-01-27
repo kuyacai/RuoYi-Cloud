@@ -45,7 +45,8 @@ public class AgentCallbackConsumer {
         // 从 Map 中获取字段
         String taskNodeId = (String) payload.get("taskNodeId");
         String status = (String) payload.get("status");
-        Object data = payload.get("data"); // 获取 Python 传回的结果
+        Map<String, Object> data = (Map<String, Object>) payload.get("data");
+        String errorMsg = (String) payload.get("errorMsg");
 
         log.info("📩 收到回调回执: Node={}, Status={}", taskNodeId, status);
 
@@ -56,17 +57,23 @@ public class AgentCallbackConsumer {
                 if (data instanceof Map) {
                     node.setOutputData((Map<String, Object>) data);
                 }
-                
-                // 2. 更新节点状态
-                if ("success".equalsIgnoreCase(status)) {
+                // 2. 状态判断：使用枚举 code
+                if (NodeInstanceStatus.SUCCESS.getCode().equalsIgnoreCase(status)) {
                     node.setStatus(NodeInstanceStatus.SUCCESS);
                     nodeInstanceService.updateById(node);
-                    
-                    // 3. 触发工作流引擎寻找下一个节点
                     workflowEngineService.getNextNode(taskNodeId);
+                    
+                } else if (NodeInstanceStatus.AWAITING_HUMAN.getCode().equalsIgnoreCase(status)) {
+                    // 处理人工挂起场景
+                    node.setStatus(NodeInstanceStatus.AWAITING_HUMAN);
+                    node.setErrorMsg(errorMsg);
+                    nodeInstanceService.updateById(node);
+                    log.info("⏳ 节点 {} 进入人工等待状态", taskNodeId);
+
                 } else {
+                    // 默认为失败
                     node.setStatus(NodeInstanceStatus.FAILED);
-                    node.setErrorMsg((String) payload.get("errorMsg"));
+                    node.setErrorMsg(errorMsg);
                     nodeInstanceService.updateById(node);
                 }
             }
