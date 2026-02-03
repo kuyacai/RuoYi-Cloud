@@ -1,4 +1,4 @@
-package com.ruoyi.product.rq;
+package com.ruoyi.product.rq.dto;
 
 import java.io.Serializable;
 import java.util.Map;
@@ -16,9 +16,17 @@ import lombok.NoArgsConstructor;
 public class AgentTaskMsg implements Serializable {
     private static final long serialVersionUID = 1L;
 
-    private String taskNodeId;
+    // 节点实例 ID
+    private String nodeInstanceId;
+    // 工作流实例 ID
     private String workflowInstanceId;
+    // 能力算子逻辑 ID (如: captcha_resolver)
     private String capabilityId;
+    /**
+     * 物理版本 ID (对应 wf_node_capability 表的主键 id)
+     * 值为 "capability_id:fingerprint"
+     */
+    private String capabilityVersionId;
     /**
      * 对应 Python 端 payload.get("inputParams")
      */

@@ -623,16 +623,25 @@ CREATE TABLE IF NOT EXISTS `product_snapshots` (
 
 -- 预定义工作流节点能力元数据
 CREATE TABLE IF NOT EXISTS `wf_node_capability` (
-    `capability_id`                 VARCHAR(50)  NOT NULL PRIMARY KEY COMMENT '能力唯一标识 (如: gemini_export)',
+    `id`                            VARCHAR(64)  NOT NULL PRIMARY KEY COMMENT '能力唯一物理ID (如: capability_id:fingerprint)',
+    `capability_id`                 VARCHAR(50)  NOT NULL COMMENT '能力唯一标识 (如: gemini_export)',
     `name`                          VARCHAR(100) NOT NULL COMMENT '能力名称 (如: AI商机提取)',
     `handler_type`                  VARCHAR(20)  NOT NULL COMMENT '执行器类型 (python_agent/java_local)',
     `description`                   TEXT         COMMENT '功能描述',
-    `config_schema`                 JSON         COMMENT '配置项定义 (UI根据此字段生成表单，如需要输入APIKey, Prompt等)',
+    `config_schema`                 JSON         COMMENT '配置项定义 (UI根据此字段生成表单,如需要输入APIKey, Prompt等)',
     `output_schema`                 JSON         COMMENT '输出数据配置项定义',
     `is_active`                     VARCHAR(10)   NOT NULL DEFAULT 'enable' COMMENT '是否启用',
     `is_manual`                     VARCHAR(20) DEFAULT 'no' COMMENT '是否人工节点',
+    `is_long_running`               VARCHAR(10) DEFAULT 'no' COMMENT '是否长时运行节点',
+    `is_latest`                     VARCHAR(10) DEFAULT 'no' COMMENT '是否为该能力的最新审核版本',
+    `audit_status`                  VARCHAR(20) DEFAULT 'pending' COMMENT '审核状态(pending/approved/rejected)',
+    `owner_id`                      VARCHAR(50) COMMENT '能力所有者(用户ID,为空表示系统内置)',
+    `fingerprint`                   VARCHAR(50) COMMENT '存储该能力算子最后一次同步时的 MD5 值',
+    `scope`                         VARCHAR(10) DEFAULT 'private' COMMENT '范围(private/public)',
+    `tags`                          JSON COMMENT '能力标签(用于LLM检索和分类)',
     `created_at_utc`                DATETIME(3)  NOT NULL COMMENT '创建时间(UTC)',
-    `updated_at_utc`                DATETIME(3)  COMMENT '更新时间(UTC)'
+    `updated_at_utc`                DATETIME(3)  COMMENT '更新时间(UTC)',
+    ADD INDEX `idx_cap_id_finger` (`capability_id`, `fingerprint`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='节点能力元数据表';
 
 -- 工作流定义
@@ -653,6 +662,7 @@ CREATE TABLE IF NOT EXISTS `wf_node_definition` (
     `node_def_id`                   CHAR(32)     NOT NULL PRIMARY KEY COMMENT '节点定义ID',
     `definition_id`                 CHAR(32)     NOT NULL COMMENT '所属工作流定义ID',
     `capability_id`                 VARCHAR(50)  NOT NULL COMMENT '能力唯一标识 (如: gemini_export)',
+    `capability_version_id`         VARCHAR(64)  NOT NULL COMMENT '版本锁定，确保节点始终运行在定义时的那个版本。值为wf_node_capability id',
     `node_name`                     VARCHAR(100) COMMENT '节点名称 (如: 提取商品差评)',
     `node_order`                    INT          NOT NULL COMMENT '排序',
     `handler_type`                  VARCHAR(20) NOT NULL COMMENT '执行器类型: python_agent, java_local',
@@ -690,6 +700,7 @@ CREATE TABLE IF NOT EXISTS `wf_node_instance` (
     `node_instance_id`              CHAR(32)     NOT NULL PRIMARY KEY COMMENT '任务节点ID (UUID)',
     `workflow_instance_id`          CHAR(32)     NOT NULL COMMENT '所属工作流实例ID',
     `capability_id`                 VARCHAR(50)  NOT NULL COMMENT '能力唯一标识 (如: gemini_export)',
+    `capability_version_id`         VARCHAR(64)  NOT NULL COMMENT '版本锁定，确保节点始终运行在定义时的那个版本。值为wf_node_capability id',
     `node_order`                    INT          NOT NULL COMMENT '执行顺序索引',
     `handler_type`                  VARCHAR(20)  NOT NULL DEFAULT 'python_agent' COMMENT '执行器类型: python_agent, java_local',
     `status`                        VARCHAR(20)  NOT NULL DEFAULT 'pending' COMMENT '状态: pending, running, success, failed, awaiting_human',

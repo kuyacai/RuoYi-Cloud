@@ -43,14 +43,14 @@ public class AgentCallbackConsumer {
         log.info("📩 收到 Python 端任务回调回执: {}", payload);
     try {
         // 从 Map 中获取字段
-        String taskNodeId = (String) payload.get("taskNodeId");
+        String nodeInstanceId = (String) payload.get("node_instance_id");
         String status = (String) payload.get("status");
         Map<String, Object> data = (Map<String, Object>) payload.get("data");
         String errorMsg = (String) payload.get("errorMsg");
 
-        log.info("📩 收到回调回执: Node={}, Status={}", taskNodeId, status);
+        log.info("📩 收到回调回执: Node={}, Status={}", nodeInstanceId, status);
 
-        WfNodeInstance node = nodeInstanceService.getById(taskNodeId);
+        WfNodeInstance node = nodeInstanceService.getById(nodeInstanceId);
 
         if (node != null) {
                 // 1. 回填输出数据 (这是 SpEL 能拿到数据的关键)
@@ -61,14 +61,14 @@ public class AgentCallbackConsumer {
                 if (NodeInstanceStatus.SUCCESS.getCode().equalsIgnoreCase(status)) {
                     node.setStatus(NodeInstanceStatus.SUCCESS);
                     nodeInstanceService.updateById(node);
-                    workflowEngineService.getNextNode(taskNodeId);
+                    workflowEngineService.getNextNode(nodeInstanceId);
                     
                 } else if (NodeInstanceStatus.AWAITING_HUMAN.getCode().equalsIgnoreCase(status)) {
                     // 处理人工挂起场景
                     node.setStatus(NodeInstanceStatus.AWAITING_HUMAN);
                     node.setErrorMsg(errorMsg);
                     nodeInstanceService.updateById(node);
-                    log.info("⏳ 节点 {} 进入人工等待状态", taskNodeId);
+                    log.info("⏳ 节点 {} 进入人工等待状态", nodeInstanceId);
 
                 } else {
                     // 默认为失败

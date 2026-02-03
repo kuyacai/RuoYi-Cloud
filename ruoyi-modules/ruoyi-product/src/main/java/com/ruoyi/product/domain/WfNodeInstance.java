@@ -30,6 +30,8 @@ public class WfNodeInstance extends ProductBaseEntity {
 
     private String capabilityId;
 
+    private String capabilityVersionId;
+
     private String nodeName;
 
     private Integer nodeOrder;

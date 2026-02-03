@@ -80,7 +80,7 @@ public class WfNodeDefinitionController extends BaseController {
         }
 
         // 2. 根据能力仓库补全 handlerType 和 默认 manualStatus
-        WfNodeCapability capability = capabilityService.getById(wfNodeDefinition.getCapabilityId());
+        WfNodeCapability capability = capabilityService.getById(wfNodeDefinition.getCapabilityVersionId());
         if (capability == null) {
             return AjaxResult.error("关联的能力算子不存在");
         }

@@ -60,7 +60,7 @@ public class WfWorkflowInstanceServiceImpl extends BaseServiceImpl<WfWorkflowIns
                 Assert.isTrue(ActiveStatus.ENABLE.equals(definition.getActiveStatus()),
                                 "该工作流定义已被禁用，无法启动");
 
-                // 2. 获取节点定义
+                // 2. 获取该工作流定义的所有节点
                 List<WfNodeDefinition> nodeDefs = nodeDefinitionService.list(
                                 new LambdaQueryWrapper<WfNodeDefinition>()
                                                 .eq(WfNodeDefinition::getDefinitionId, definitionId)
@@ -70,14 +70,14 @@ public class WfWorkflowInstanceServiceImpl extends BaseServiceImpl<WfWorkflowIns
                 // 3. 核心校验：算子仓库检查
                 // 提取所有节点依赖的能力ID，并从仓库中一次性查询出来
                 List<String> capabilityIds = nodeDefs.stream()
-                                .map(WfNodeDefinition::getCapabilityId)
+                                .map(WfNodeDefinition::getCapabilityVersionId)
                                 .distinct()
                                 .collect(Collectors.toList());
 
                 // 对应的 Map 结构也要同步确保 Key 是 String
                 Map<String, WfNodeCapability> capabilityMap = capabilityService.listByIds(capabilityIds)
                                 .stream()
-                                .collect(Collectors.toMap(WfNodeCapability::getCapabilityId, Function.identity()));
+                                .collect(Collectors.toMap(WfNodeCapability::getId, Function.identity()));
 
                 // 4. 创建工作流运行实例
                 String instanceId = UUID.fastUUID().toString(true);
@@ -99,8 +99,9 @@ public class WfWorkflowInstanceServiceImpl extends BaseServiceImpl<WfWorkflowIns
                 // 5. 实例化节点 (NodeDefinition -> NodeInstance)
                 List<WfNodeInstance> nodeInstances = nodeDefs.stream().map(def -> {
                         // 安全检查：确保该节点引用的算子在仓库中可用
-                        WfNodeCapability cap = capabilityMap.get(def.getCapabilityId());
-                        Assert.notNull(cap, "节点 [" + def.getNodeName() + "] 引用的能力算子 " + def.getCapabilityId() + " 不存在");
+                        WfNodeCapability cap = capabilityMap.get(def.getCapabilityVersionId());
+                        Assert.notNull(cap, "节点 [" + def.getNodeName() + "] 引用的能力算子 " + def.getCapabilityVersionId()
+                                        + " 不存在");
                         Assert.isTrue(ActiveStatus.ENABLE.equals(cap.getActiveStatus()),
                                         "算子 [" + cap.getName() + "] 已被禁用");
 
@@ -109,6 +110,7 @@ public class WfWorkflowInstanceServiceImpl extends BaseServiceImpl<WfWorkflowIns
                         ni.setWorkflowInstanceId(instanceId);
                         // ni.setNodeDefId(def.getNodeDefId());
                         ni.setCapabilityId(def.getCapabilityId());
+                        ni.setCapabilityVersionId(def.getCapabilityVersionId());
                         ni.setNodeOrder(def.getNodeOrder());
                         ni.setNodeName(def.getNodeName());
                         ni.setStatus(NodeInstanceStatus.INIT);

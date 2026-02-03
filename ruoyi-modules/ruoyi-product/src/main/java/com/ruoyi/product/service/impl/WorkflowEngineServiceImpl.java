@@ -78,6 +78,7 @@ public class WorkflowEngineServiceImpl implements IWorkflowEngineService {
         nodeInstance.setNodeInstanceId(nodeInstanceId);
         nodeInstance.setWorkflowInstanceId(workflowInstanceId);
         nodeInstance.setCapabilityId(nextDef.getCapabilityId());
+        nodeInstance.setCapabilityVersionId(nextDef.getCapabilityVersionId());
         nodeInstance.setNodeName(nextDef.getNodeName());
         nodeInstance.setNodeOrder(nextDef.getNodeOrder());
         nodeInstance.setHandlerType(nextDef.getHandlerType());
@@ -123,7 +124,7 @@ public class WorkflowEngineServiceImpl implements IWorkflowEngineService {
         node.setStatus(NodeInstanceStatus.RUNNING);
         nodeInstanceMapper.updateById(node);
 
-        log.info("🚀 准备执行算子: {} (Type: {})", node.getCapabilityId(), node.getHandlerType());
+        log.info("🚀 准备执行算子: {} (Type: {})", node.getCapabilityVersionId(), node.getHandlerType());
 
         // 5. 根据处理器类型执行
         if (HandlerType.PYTHON_AGENT.equals(node.getHandlerType())) {
